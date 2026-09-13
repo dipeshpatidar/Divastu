@@ -8,6 +8,11 @@ import {
 import { propertyService } from '../services/propertyService';
 import { RoomTag } from '../types';
 
+import { RevenueAreaChart } from './analytics/RevenueAreaChart';
+import { FunnelStepGraph } from './analytics/FunnelStepGraph';
+import { SectorPerformanceBarChart } from './analytics/SectorPerformanceBarChart';
+import { BhkDemandGaugeGrid } from './analytics/BhkDemandGaugeGrid';
+
 interface MasterAdminDashboardProps {
   activeTab: string;
   setActiveAdminTab?: (tab: string) => void;
@@ -194,7 +199,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row">
       
-      {/* 1. COLLAPSIBLE LEFT SIDEBAR NAVIGATION (TENANT PORTAL MATCHING THEME) */}
+      {/* 1. COLLAPSIBLE LEFT SIDEBAR NAVIGATION */}
       <motion.aside
         animate={{ width: isSidebarCollapsed ? 80 : 280 }}
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
@@ -289,22 +294,22 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       {/* 2. MAIN ADMIN CONTENT CONTAINER */}
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 w-full">
         
-        {/* EXECUTIVE PORTAL HEADER (TENANT PORTAL WHITE CARD THEME) */}
+        {/* EXECUTIVE PORTAL HEADER */}
         <div className="bg-white text-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm relative overflow-hidden">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-extrabold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5 font-mono">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  Executive Operations
+                  Executive Analytics Portal
                 </span>
-                <span className="text-xs text-slate-500 font-mono font-semibold">Indore Micro-Market</span>
+                <span className="text-xs text-slate-500 font-mono font-semibold">Indore Region HQ</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-black font-['Outfit'] mt-2 text-slate-900 tracking-tight">
-                Master Operations & Media Portal
+                Google Analytics Operations & Data Hub
               </h1>
               <p className="text-xs text-slate-500 mt-1">
-                Internal Staff CRM, Live GPS Telemetry, Cloudinary CDN Media Pipeline & BHK Controls.
+                Visual Area Graphs, Conversion Funnels, GPS Telemetry Radar & Cloudinary CDN Pipeline.
               </p>
             </div>
 
@@ -344,7 +349,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         {/* 3. DYNAMIC TAB VIEW DISPLAY */}
         <AnimatePresence mode="wait">
           
-          {/* TAB 1: FUNNEL HUB & ANALYTICS */}
+          {/* TAB 1: FUNNEL HUB & GOOGLE VISUAL ANALYTICS GRAPH */}
           {(activeTab === 'funnel' || activeTab === 'overview') && (
             <motion.div
               key="tab-funnel"
@@ -354,75 +359,19 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
               exit="hidden"
               className="space-y-6"
             >
-              {/* Conversion Pipeline */}
-              <motion.div variants={cardVariants} className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900 font-['Outfit']">End-to-End Conversion Pipeline</h3>
-                    <span className="text-xs text-slate-500">From Meta Lead Ad ingestion to physical lease cashback payout</span>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                    +18% MoM Growth
-                  </span>
-                </div>
-
-                <div className="space-y-4">
-                  {[
-                    { stage: "Meta Lead Ingestion", count: 482, percent: 100, color: "bg-slate-900" },
-                    { stage: "WFH Sector Routing & Screening", count: 390, percent: 80.9, color: "bg-indigo-600" },
-                    { stage: "Ground Boy Tour Escort", count: 184, percent: 38.1, color: "bg-emerald-600" },
-                    { stage: "Rent Lease Agreement Uploaded", count: 62, percent: 12.8, color: "bg-amber-500" },
-                  ].map((item, idx) => (
-                    <div key={idx} className="space-y-1.5">
-                      <div className="flex justify-between items-center text-xs font-mono">
-                        <span className="font-bold text-slate-900">{item.stage}</span>
-                        <span className="text-slate-600 font-semibold">{item.count} ({item.percent}%)</span>
-                      </div>
-                      <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200/60">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${item.percent}%` }}
-                          transition={{ duration: 0.8, delay: idx * 0.1, ease: [0.16, 1, 0.3, 1] }}
-                          className={`h-full rounded-full ${item.color}`}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              {/* GOOGLE ANALYTICS REVENUE & TOUR AREA GRAPH */}
+              <motion.div variants={cardVariants}>
+                <RevenueAreaChart />
               </motion.div>
 
-              {/* Micro-Market Table */}
-              <motion.div variants={cardVariants} className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm">
-                <h3 className="text-base font-bold text-slate-900 font-['Outfit'] mb-4">Indore Micro-Market Performance</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                        <th className="pb-3 px-3">Indore Sector</th>
-                        <th className="pb-3 px-3">Active Listings</th>
-                        <th className="pb-3 px-3">Avg 3BHK Rent</th>
-                        <th className="pb-3 px-3">Ground Boys</th>
-                        <th className="pb-3 px-3">Conversion Rate</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-mono">
-                      {[
-                        { sector: "Vijay Nagar", listings: 42, avgRent: "₹22,500", boys: "Rahul V.", conversion: "41.2%" },
-                        { sector: "Bhawarkua", listings: 38, avgRent: "₹18,000", boys: "Vikram S.", conversion: "38.5%" },
-                        { sector: "Palasia", listings: 24, avgRent: "₹26,000", boys: "Sandeep J.", conversion: "29.1%" },
-                        { sector: "Nipania / Super Corridor", listings: 19, avgRent: "₹16,500", boys: "On-Call Pool", conversion: "22.4%" }
-                      ].map((row, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                          <td className="py-3.5 px-3 font-bold text-slate-900">{row.sector}</td>
-                          <td className="py-3.5 px-3 text-slate-700">{row.listings} Homes</td>
-                          <td className="py-3.5 px-3 text-emerald-700 font-bold">{row.avgRent}</td>
-                          <td className="py-3.5 px-3 text-slate-600">{row.boys}</td>
-                          <td className="py-3.5 px-3 font-bold text-amber-700">{row.conversion}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              {/* STEPPED FUNNEL FLOW GRAPH */}
+              <motion.div variants={cardVariants}>
+                <FunnelStepGraph />
+              </motion.div>
+
+              {/* INDORE SECTOR PERFORMANCE COMPARISON BAR CHART */}
+              <motion.div variants={cardVariants}>
+                <SectorPerformanceBarChart />
               </motion.div>
             </motion.div>
           )}
@@ -625,6 +574,11 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
               exit="hidden"
               className="space-y-6"
             >
+              {/* BHK DEMAND VISUAL SCORE GAUGES */}
+              <motion.div variants={cardVariants}>
+                <BhkDemandGaugeGrid />
+              </motion.div>
+
               {/* BHK CONFIGURATION MANAGER HEADER */}
               <motion.div variants={cardVariants} className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-6 border-b border-slate-100">
