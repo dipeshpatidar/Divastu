@@ -106,42 +106,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </div>
 
-        {/* CENTER STYLISH ADMIN NAV PILL SWITCHER */}
-        {isAdminRole && (
-          <div className="hidden lg:flex items-center gap-1 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 shadow-inner">
-            {[
-              { id: 'funnel', label: 'Funnel Hub', icon: BarChart3 },
-              { id: 'crm', label: 'Staff CRM', icon: Users },
-              { id: 'approval', label: 'Approvals Queue', icon: CheckSquare },
-              { id: 'config', label: 'BHK Engine', icon: SlidersHorizontal },
-              { id: 'media', label: 'Update Properties & Media', icon: UploadCloud }
-            ].map(tab => {
-              const isActive = activeAdminTab === tab.id;
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveAdminTab && setActiveAdminTab(tab.id)}
-                  className={`relative px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all duration-200 z-10 ${
-                    isActive
-                      ? 'text-emerald-300 font-extrabold'
-                      : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
-                  }`}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="navTabIndicator"
-                      className="absolute inset-0 bg-slate-800/90 border border-emerald-500/40 rounded-xl shadow-[0_0_12px_rgba(16,185,129,0.25)] -z-10"
-                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                    />
-                  )}
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-emerald-400 animate-pulse' : 'text-slate-500'}`} />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
+
 
         {/* RIGHT ACTIONS & PROFILE MENU */}
         <div className="flex items-center gap-2 sm:gap-3">

@@ -63,7 +63,17 @@ const mockLeaveRequests = [
   { id: "LV-302", empId: "EMP-101", empName: "Rahul Verma", leaveType: "Medical Leave", startDate: "20 Sep 2026", endDate: "21 Sep 2026", reason: "Health Checkup", status: "APPROVED" }
 ];
 
-export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ activeTab, setActiveAdminTab }) => {
+export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ activeTab: externalActiveTab, setActiveAdminTab: externalSetActiveAdminTab }) => {
+  const [internalTab, setInternalTab] = useState<string>('funnel');
+  const activeTab = externalActiveTab || internalTab;
+
+  const handleTabSelect = (tabId: string) => {
+    setInternalTab(tabId);
+    if (externalSetActiveAdminTab) {
+      externalSetActiveAdminTab(tabId);
+    }
+  };
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [groundBoys, setGroundBoys] = useState(mockGroundBoys);
   const [cashbacks, setCashbacks] = useState(mockLeaseCashbacks);
@@ -248,8 +258,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveAdminTab && setActiveAdminTab(item.id)}
-                  className={`w-full relative px-3.5 py-3 rounded-2xl text-xs font-bold flex items-center justify-between transition-all duration-200 group ${
+                  onClick={() => handleTabSelect(item.id)}
+                  className={`w-full relative px-3.5 py-3 rounded-2xl text-xs font-bold flex items-center justify-between transition-all duration-200 group cursor-pointer ${
                     isActive
                       ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
                       : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
