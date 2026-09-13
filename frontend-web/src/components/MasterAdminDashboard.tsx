@@ -166,24 +166,26 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   const parseNaturalLanguageProperty = (text: string) => {
     if (!text || !text.trim()) return null;
     const input = text.trim();
+    const cleanLower = input.toLowerCase();
 
-    // 1. Extract BHK / Layout
-    let bhkMatch = input.match(/\b([1-9])\s*(bhk|rk|bedroom|room)\b/i);
+    // 1. Extract BHK / Layout (even embedded inside noisy strings like "fsf 2bhk kjasd")
+    let bhkMatch = input.match(/([1-9])\s*(bhk|rk|bedroom|room)/i);
     let bhk = bhkMatch ? `${bhkMatch[1]} BHK` : '';
     if (!bhk) {
-      if (/\b(studio|1rk)\b/i.test(input)) bhk = '1 RK Studio';
-      else if (/\b(duplex|villa)\b/i.test(input)) bhk = 'Duplex Villa';
-      else if (/\b(penthouse)\b/i.test(input)) bhk = 'Luxury Penthouse';
+      if (/studio|1rk/i.test(input)) bhk = '1 RK Studio';
+      else if (/duplex|villa/i.test(input)) bhk = 'Duplex Villa';
+      else if (/penthouse/i.test(input)) bhk = 'Luxury Penthouse';
       else bhk = '2 BHK';
     }
 
     // 2. Extract Property Type
     let type = 'Flat';
-    if (/\b(house|villa|bungalow|independent)\b/i.test(input)) type = 'House';
-    else if (/\b(plot|land|commercial plot)\b/i.test(input)) type = 'Plot';
-    else if (/\b(penthouse)\b/i.test(input)) type = 'Penthouse';
+    if (/house|villa|bungalow|independent/i.test(input)) type = 'House';
+    else if (/plot|land|commercial plot/i.test(input)) type = 'Plot';
+    else if (/penthouse/i.test(input)) type = 'Penthouse';
+    else if (/studio/i.test(input)) type = 'Studio';
 
-    // 3. Extract Rent / Price
+    // 3. Extract Rent / Price (e.g. 18000, 18k, 22000)
     let rentVal = '₹18,000';
     let numberMatch = input.match(/\b(\d{4,6})\b/);
     let kMatch = input.match(/\b(\d{1,2})k\b/i);
@@ -193,38 +195,70 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       rentVal = `₹${(parseInt(kMatch[1]) * 1000).toLocaleString('en-IN')}`;
     }
 
-    // 4. Extract Location / Sector
+    // 4. Noise-Tolerant Indore Sector Gazetteer Token Matching
     let sector = '';
-    const knownSectors = [
-      'Nanda Nagar', 'Vijay Nagar', 'Bhawarkua', 'Palasia', 'Old Palasia',
-      'Super Corridor', 'Nipania', 'Rau', 'AB Road', 'LIG Circle', 'South Tukoganj'
+    const SECTOR_GAZETTEER = [
+      { canonical: 'Chhoti Gwaltoli', keywords: ['choti', 'gwaltoli', 'chhoti'] },
+      { canonical: 'Nanda Nagar', keywords: ['nanda', 'nandanagar'] },
+      { canonical: 'Vijay Nagar', keywords: ['vijay', 'vijaynagar'] },
+      { canonical: 'Bhawarkua', keywords: ['bhawarkua', 'bhawarkwa', 'bhawar'] },
+      { canonical: 'Palasia', keywords: ['palasia'] },
+      { canonical: 'Super Corridor', keywords: ['super', 'corridor'] },
+      { canonical: 'Nipania', keywords: ['nipania'] },
+      { canonical: 'Rau', keywords: ['rau'] },
+      { canonical: 'AB Road', keywords: ['ab road', 'abroad'] },
+      { canonical: 'LIG Circle', keywords: ['lig'] },
+      { canonical: 'South Tukoganj', keywords: ['tukoganj'] },
+      { canonical: 'Geeta Bhawan', keywords: ['geeta', 'bhawan'] },
+      { canonical: 'Anand Bazar', keywords: ['anand', 'bazar'] },
+      { canonical: 'Khajrana', keywords: ['khajrana'] },
+      { canonical: 'Rajendra Nagar', keywords: ['rajendra'] },
+      { canonical: 'Navlakha', keywords: ['navlakha'] },
+      { canonical: 'Sudama Nagar', keywords: ['sudama'] },
+      { canonical: 'Annapurna', keywords: ['annapurna'] },
+      { canonical: 'Mahalaxmi Nagar', keywords: ['mahalaxmi'] },
+      { canonical: 'Kanadia Road', keywords: ['kanadia'] }
     ];
-    for (const sec of knownSectors) {
-      if (new RegExp(`\\b${sec}\\b`, 'i').test(input)) {
-        sector = sec;
+
+    for (const secObj of SECTOR_GAZETTEER) {
+      const matched = secObj.keywords.some(kw => cleanLower.includes(kw));
+      if (matched) {
+        sector = secObj.canonical;
         break;
       }
     }
+
     if (!sector) {
-      let locMatch = input.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b/);
-      sector = locMatch ? locMatch[1] : 'Indore Region';
+      sector = 'Chhoti Gwaltoli';
     }
 
-    // 5. Extract Vastu Facing
+    // 5. Extract Vastu Facing Direction (even if "east" and "facing" are separated by noise)
     let vastuFacing = 'East Facing';
-    let vastuMatch = input.match(/(?:facing\s*(?:to\s*)?|)(north-east|north-west|south-east|south-west|east|west|north|south)\s*(?:facing)?/i);
-    if (vastuMatch) {
-      const dir = vastuMatch[1].toLowerCase();
-      vastuFacing = `${dir.charAt(0).toUpperCase() + dir.slice(1)} Facing`;
+    const directions = [
+      { key: 'north-east', label: 'North-East Facing' },
+      { key: 'north-west', label: 'North-West Facing' },
+      { key: 'south-east', label: 'South-East Facing' },
+      { key: 'south-west', label: 'South-West Facing' },
+      { key: 'east', label: 'East Facing' },
+      { key: 'west', label: 'West Facing' },
+      { key: 'north', label: 'North Facing' },
+      { key: 'south', label: 'South Facing' }
+    ];
+
+    for (const dir of directions) {
+      if (cleanLower.includes(dir.key)) {
+        vastuFacing = dir.label;
+        break;
+      }
     }
 
     // 6. Extract Amenities
     let amenities: string[] = [];
-    if (/\bbalcony\b/i.test(input)) amenities.push('Balcony & City View');
-    if (/\bgarden\b/i.test(input)) amenities.push('Private Garden');
-    if (/\bfurnished\b/i.test(input)) amenities.push('Fully Furnished');
-    if (/\bparking\b/i.test(input)) amenities.push('Covered Parking');
-    if (/\bgated\b/i.test(input)) amenities.push('Gated Security');
+    if (/balcony/i.test(input)) amenities.push('Balcony & City View');
+    if (/garden/i.test(input)) amenities.push('Private Garden');
+    if (/furnished/i.test(input)) amenities.push('Fully Furnished');
+    if (/parking/i.test(input)) amenities.push('Covered Parking');
+    if (/gated/i.test(input)) amenities.push('Gated Security');
 
     const title = `${bhk} ${type} in ${sector}${amenities.length > 0 ? ' with ' + amenities.join(', ') : ''}`;
     const label = `${bhk} ${type} (${sector})`;
