@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MapPin, Building2, TrendingUp, DollarSign, Users, Award, 
   BarChart3, LayoutGrid, Layers, ArrowUpRight, Sparkles, Filter,
-  Zap, Sliders, ArrowUp, ArrowDown, ChevronRight, Compass, ShieldCheck, Activity
+  Zap, Sliders, ArrowUp, ArrowDown, ChevronRight, Compass, ShieldCheck, Activity, Clock
 } from 'lucide-react';
 
 export interface SectorData {
@@ -112,6 +112,7 @@ type MetricKey = 'activeListings' | 'avgRent' | 'toursCount' | 'conversionPct';
 type ViewMode = 'vertical' | 'horizontal' | 'matrix';
 
 export const SectorPerformanceBarChart: React.FC = () => {
+  const [timeGranularity, setTimeGranularity] = useState<'DAY' | 'WEEK' | 'MONTH' | 'YEAR'>('MONTH');
   const [activeMetric, setActiveMetric] = useState<MetricKey>('activeListings');
   const [viewMode, setViewMode] = useState<ViewMode>('vertical');
   const [hoveredSector, setHoveredSector] = useState<SectorData | null>(null);
@@ -275,6 +276,35 @@ export const SectorPerformanceBarChart: React.FC = () => {
             </button>
           </div>
 
+        </div>
+      </div>
+
+      {/* 1.5. TIME HORIZON GRANULARITY SWITCHER */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 text-white p-2 sm:p-2.5 rounded-2xl border border-slate-800 shadow-inner">
+        <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-slate-300 pl-1">
+          <Clock className="w-3.5 h-3.5 text-emerald-400 animate-spin" style={{ animationDuration: '6s' }} />
+          <span>Analysis Time Horizon:</span>
+        </div>
+
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+          {[
+            { id: 'DAY', label: '📅 Day-wise' },
+            { id: 'WEEK', label: '📆 Week-wise' },
+            { id: 'MONTH', label: '🗓️ Month-wise' },
+            { id: 'YEAR', label: '📊 Year-wise' }
+          ].map(g => (
+            <button
+              key={g.id}
+              onClick={() => setTimeGranularity(g.id as any)}
+              className={`px-3 py-1 rounded-xl text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap ${
+                timeGranularity === g.id
+                  ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30 scale-105'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              {g.label}
+            </button>
+          ))}
         </div>
       </div>
 
