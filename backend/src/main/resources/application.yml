@@ -1,0 +1,52 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+  application:
+    name: divyavastu-spaces-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/divyavastu_db}
+    username: ${SPRING_DATASOURCE_USERNAME:dipeshpatidar}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:mock-google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:mock-google-client-secret}
+            scope:
+              - email
+              - profile
+              - openid
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:DivyavastuSpacesSuperSecretKeyForJWTAuthTokenGeneration2026!}
+    expiration-ms: 86400000
+
+meta:
+  webhook:
+    verify-token: ${META_VERIFY_TOKEN:DIVYAVASTU_META_VERIFY_TOKEN_2026}
+  graph:
+    api:
+      token: ${META_GRAPH_TOKEN:MOCK_META_GRAPH_API_TOKEN}
+
+server:
+  port: 8080
+
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:hbgzetjy}
+  api-key: ${CLOUDINARY_API_KEY:634495656114524}
+  api-secret: ${CLOUDINARY_API_SECRET:n-5APnV28TMkUnQrnjI-Pc9BEGg}

@@ -1,0 +1,229 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+}
+
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .transform-gpu {
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+  }
+
+  .scanline-anim {
+    animation: scanline 4s linear infinite;
+  }
+
+  .shimmer-glow {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer-glow::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    transform: skewX(-25deg);
+    animation: shimmerBeam 3s infinite ease-in-out;
+    pointer-events: none;
+  }
+
+  .float-slow {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .pulse-ring {
+    animation: pulseRing 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+  }
+
+  .smooth-card {
+    transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), 
+                border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(1000%);
+  }
+}
+
+@keyframes shimmerBeam {
+  0% {
+    left: -100%;
+  }
+  20%, 100% {
+    left: 200%;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(1deg);
+  }
+}
+
+@keyframes sparkRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes sparkPulse {
+  0%, 100% {
+    opacity: 0.9;
+    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.8)) drop-shadow(0 0 14px rgba(16, 185, 129, 0.9));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 1)) drop-shadow(0 0 22px rgba(52, 211, 153, 1)) drop-shadow(0 0 32px rgba(56, 189, 248, 0.8));
+  }
+}
+
+@keyframes innerLightSweep {
+  0% {
+    transform: translateX(-150%) skewX(-20deg);
+  }
+  35%, 100% {
+    transform: translateX(250%) skewX(-20deg);
+  }
+}
+
+.spark-search-container {
+  position: relative;
+  border-radius: 1.35rem;
+  padding: 2.5px;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(56, 189, 248, 0.35), rgba(241, 245, 249, 0.9));
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.25), 0 0 20px rgba(16, 185, 129, 0.25);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.spark-search-container:hover,
+.spark-search-container:focus-within {
+  box-shadow: 0 15px 40px -8px rgba(16, 185, 129, 0.5), 0 0 30px rgba(56, 189, 248, 0.4);
+  transform: translateY(-2px) scale(1.008);
+}
+
+.spark-border-beam {
+  position: absolute;
+  top: -250%;
+  left: -250%;
+  width: 600%;
+  height: 600%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 260deg,
+    rgba(16, 185, 129, 0.25) 290deg,
+    #10b981 315deg,
+    #06b6d4 335deg,
+    #38bdf8 348deg,
+    #ffffff 357deg,
+    transparent 360deg
+  );
+  animation: sparkRotate 1.8s linear infinite, sparkPulse 1.4s ease-in-out infinite;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.spark-search-inner {
+  position: relative;
+  z-index: 10;
+  border-radius: 1.2rem;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+}
+
+.spark-search-inner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(16, 185, 129, 0.1),
+    rgba(56, 189, 248, 0.25),
+    rgba(255, 255, 255, 0.7),
+    rgba(56, 189, 248, 0.25),
+    transparent
+  );
+  transform: translateX(-150%) skewX(-20deg);
+  animation: innerLightSweep 2.2s infinite ease-in-out;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes pulseRing {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #059669;
+}
+
+

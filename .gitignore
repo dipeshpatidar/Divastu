@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+target/
+build/
+
+# Logs & OS metadata
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE & Editor settings
+.idea/
+
+# Temporary files
+*.tmp
+*.bak
