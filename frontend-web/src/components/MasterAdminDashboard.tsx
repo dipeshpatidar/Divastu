@@ -193,7 +193,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     { id: 'crm', label: 'Staff CRM & Telemetry', badge: `${employees.length} Staff`, icon: Users, color: 'text-indigo-600' },
     { id: 'approval', label: 'Approvals Queue', badge: `${cashbacks.filter(c => c.status === 'PENDING').length} New`, icon: CheckSquare, color: 'text-amber-600' },
     { id: 'config', label: 'BHK Engine', badge: 'Active', icon: SlidersHorizontal, color: 'text-purple-600' },
-    { id: 'media', label: 'Cloudinary CDN Media', badge: 'WebP', icon: UploadCloud, color: 'text-teal-600' }
+    { id: 'media', label: 'Update Properties & Media', badge: 'Cloudinary CDN', icon: UploadCloud, color: 'text-teal-600' }
   ];
 
   return (
@@ -202,39 +202,42 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       {/* 1. COLLAPSIBLE LEFT SIDEBAR NAVIGATION */}
       <motion.aside
         animate={{ width: isSidebarCollapsed ? 80 : 280 }}
-        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-        className="bg-white border-r border-slate-200/90 shadow-sm shrink-0 sticky top-18 h-[calc(100vh-4.5rem)] flex flex-col justify-between z-30 select-none hidden md:flex"
+        transition={{ type: "spring", stiffness: 350, damping: 32 }}
+        className="bg-white border-r border-slate-200/90 shadow-sm shrink-0 sticky top-18 h-[calc(100vh-4.5rem)] flex flex-col justify-between z-30 select-none hidden md:flex relative"
       >
+        {/* FLOATING SIDEBAR COLLAPSE CHEVRON TOGGLE PILL */}
+        <button
+          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          className="absolute -right-3.5 top-6 z-40 w-7 h-7 rounded-full bg-white border border-slate-200/90 shadow-md flex items-center justify-center text-slate-600 hover:text-emerald-700 hover:border-emerald-300 hover:scale-110 active:scale-95 transition-all group"
+          title={isSidebarCollapsed ? "Expand Sidebar Navigation" : "Collapse Sidebar Navigation"}
+        >
+          <motion.div animate={{ rotate: isSidebarCollapsed ? 180 : 0 }} transition={{ duration: 0.3 }}>
+            <ChevronLeft className="w-4 h-4" />
+          </motion.div>
+        </button>
+
         <div className="p-4 space-y-6 overflow-y-auto no-scrollbar">
           
-          {/* SIDEBAR TITLE & TOGGLE */}
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          {/* SIDEBAR TITLE */}
+          <div className="flex items-center gap-3 pb-3 border-b border-slate-100 min-h-[44px]">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold border border-emerald-200/80 shrink-0 shadow-xs">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            
             {!isSidebarCollapsed && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex items-center gap-2"
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -6 }}
+                transition={{ duration: 0.2 }}
+                className="min-w-0"
               >
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold border border-emerald-200">
-                  <ShieldCheck className="w-4.5 h-4.5" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-black font-['Outfit'] text-slate-900 leading-none">
-                    Admin Portal
-                  </h2>
-                  <span className="text-[10px] text-slate-500 font-semibold">Indore Region</span>
-                </div>
+                <h2 className="text-sm font-black font-['Outfit'] text-slate-900 leading-none truncate">
+                  Admin Portal
+                </h2>
+                <span className="text-[10px] text-slate-500 font-semibold truncate block mt-0.5">Indore Region HQ</span>
               </motion.div>
             )}
-
-            <button
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-600 flex items-center justify-center transition-colors border border-slate-200 mx-auto"
-              title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-            >
-              {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-            </button>
           </div>
 
           {/* NAV ITEMS LIST */}
@@ -246,28 +249,48 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                 <button
                   key={item.id}
                   onClick={() => setActiveAdminTab && setActiveAdminTab(item.id)}
-                  className={`w-full relative px-3 py-3 rounded-2xl text-xs font-bold flex items-center justify-between transition-all duration-200 group ${
+                  className={`w-full relative px-3.5 py-3 rounded-2xl text-xs font-bold flex items-center justify-between transition-all duration-200 group ${
                     isActive
                       ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
                       : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
                   }`}
-                  title={item.label}
+                  title={isSidebarCollapsed ? item.label : undefined}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-emerald-600'}`} />
+                    <Icon className={`w-4.5 h-4.5 shrink-0 ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-emerald-600'}`} />
                     {!isSidebarCollapsed && (
-                      <span className="truncate font-['Outfit'] font-bold text-xs">{item.label}</span>
+                      <motion.span
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.2 }}
+                        className="truncate font-['Outfit'] font-bold text-xs whitespace-nowrap"
+                      >
+                        {item.label}
+                      </motion.span>
                     )}
                   </div>
 
                   {!isSidebarCollapsed && (
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold font-mono border ${
-                      isActive 
-                        ? 'bg-emerald-700 text-emerald-100 border-emerald-500/40' 
-                        : 'bg-slate-100 text-slate-600 border-slate-200'
-                    }`}>
+                    <motion.span 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                      className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold font-mono border shrink-0 ${
+                        isActive 
+                          ? 'bg-emerald-700 text-emerald-100 border-emerald-500/40' 
+                          : 'bg-slate-100 text-slate-600 border-slate-200'
+                      }`}
+                    >
                       {item.badge}
-                    </span>
+                    </motion.span>
+                  )}
+
+                  {/* SLEEK FLOATING TOOLTIP WHEN COLLAPSED */}
+                  {isSidebarCollapsed && (
+                    <div className="absolute left-full ml-3.5 px-3 py-1.5 bg-slate-900 text-white font-['Outfit'] font-extrabold text-xs rounded-xl shadow-2xl z-50 whitespace-nowrap opacity-0 group-hover:opacity-100 group-hover:translate-x-0 translate-x-1 pointer-events-none transition-all duration-200 flex items-center gap-2 border border-slate-800">
+                      <span>{item.label}</span>
+                      <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono bg-emerald-500 text-slate-950 font-black">{item.badge}</span>
+                    </div>
                   )}
                 </button>
               );
@@ -277,7 +300,12 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
         {/* SIDEBAR FOOTER CARD */}
         {!isSidebarCollapsed && (
-          <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            className="p-4 border-t border-slate-100 bg-slate-50/50"
+          >
             <div className="bg-emerald-50 border border-emerald-200/90 rounded-2xl p-3.5 space-y-1">
               <div className="flex items-center justify-between text-xs font-bold text-emerald-900 font-['Outfit']">
                 <span>System Status</span>
@@ -287,7 +315,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                 Cloudinary CDN & PostgreSQL Database Online.
               </p>
             </div>
-          </div>
+          </motion.div>
         )}
       </motion.aside>
 
@@ -645,10 +673,10 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="text-sm font-extrabold text-slate-900 font-['Outfit'] flex items-center gap-2">
-                        <UploadCloud className="w-4.5 h-4.5 text-emerald-600 animate-bounce" /> Cloudinary Media CDN Uploader (HD Photos & MP4 Walkthroughs)
+                        <UploadCloud className="w-4.5 h-4.5 text-emerald-600 animate-bounce" /> Update Properties & Media Console (Cloudinary CDN & Room Tagging)
                       </h4>
                       <p className="text-xs text-slate-500">
-                        Upload property photos (auto WebP compression) and MP4 videos directly to Cloudinary CDN & save secure URLs to PostgreSQL DB.
+                        Upload HD property photos (with room tags & WebP compression) and MP4 video walkthroughs directly to Cloudinary CDN & PostgreSQL DB.
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

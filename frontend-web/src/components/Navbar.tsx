@@ -114,7 +114,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               { id: 'crm', label: 'Staff CRM', icon: Users },
               { id: 'approval', label: 'Approvals Queue', icon: CheckSquare },
               { id: 'config', label: 'BHK Engine', icon: SlidersHorizontal },
-              { id: 'media', label: 'Cloudinary Media CDN', icon: UploadCloud }
+              { id: 'media', label: 'Update Properties & Media', icon: UploadCloud }
             ].map(tab => {
               const isActive = activeAdminTab === tab.id;
               const Icon = tab.icon;
