@@ -163,18 +163,115 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     setBhkConfigs(bhkConfigs.map((c: any) => c.id === id ? { ...c, enabled: !c.enabled } : c));
   };
 
+  const parseNaturalLanguageProperty = (text: string) => {
+    if (!text || !text.trim()) return null;
+    const input = text.trim();
+
+    // 1. Extract BHK / Layout
+    let bhkMatch = input.match(/\b([1-9])\s*(bhk|rk|bedroom|room)\b/i);
+    let bhk = bhkMatch ? `${bhkMatch[1]} BHK` : '';
+    if (!bhk) {
+      if (/\b(studio|1rk)\b/i.test(input)) bhk = '1 RK Studio';
+      else if (/\b(duplex|villa)\b/i.test(input)) bhk = 'Duplex Villa';
+      else if (/\b(penthouse)\b/i.test(input)) bhk = 'Luxury Penthouse';
+      else bhk = '2 BHK';
+    }
+
+    // 2. Extract Property Type
+    let type = 'Flat';
+    if (/\b(house|villa|bungalow|independent)\b/i.test(input)) type = 'House';
+    else if (/\b(plot|land|commercial plot)\b/i.test(input)) type = 'Plot';
+    else if (/\b(penthouse)\b/i.test(input)) type = 'Penthouse';
+
+    // 3. Extract Rent / Price
+    let rentVal = '₹18,000';
+    let numberMatch = input.match(/\b(\d{4,6})\b/);
+    let kMatch = input.match(/\b(\d{1,2})k\b/i);
+    if (numberMatch) {
+      rentVal = `₹${parseInt(numberMatch[1]).toLocaleString('en-IN')}`;
+    } else if (kMatch) {
+      rentVal = `₹${(parseInt(kMatch[1]) * 1000).toLocaleString('en-IN')}`;
+    }
+
+    // 4. Extract Location / Sector
+    let sector = '';
+    const knownSectors = [
+      'Nanda Nagar', 'Vijay Nagar', 'Bhawarkua', 'Palasia', 'Old Palasia',
+      'Super Corridor', 'Nipania', 'Rau', 'AB Road', 'LIG Circle', 'South Tukoganj'
+    ];
+    for (const sec of knownSectors) {
+      if (new RegExp(`\\b${sec}\\b`, 'i').test(input)) {
+        sector = sec;
+        break;
+      }
+    }
+    if (!sector) {
+      let locMatch = input.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b/);
+      sector = locMatch ? locMatch[1] : 'Indore Region';
+    }
+
+    // 5. Extract Vastu Facing
+    let vastuFacing = 'East Facing';
+    let vastuMatch = input.match(/(?:facing\s*(?:to\s*)?|)(north-east|north-west|south-east|south-west|east|west|north|south)\s*(?:facing)?/i);
+    if (vastuMatch) {
+      const dir = vastuMatch[1].toLowerCase();
+      vastuFacing = `${dir.charAt(0).toUpperCase() + dir.slice(1)} Facing`;
+    }
+
+    // 6. Extract Amenities
+    let amenities: string[] = [];
+    if (/\bbalcony\b/i.test(input)) amenities.push('Balcony & City View');
+    if (/\bgarden\b/i.test(input)) amenities.push('Private Garden');
+    if (/\bfurnished\b/i.test(input)) amenities.push('Fully Furnished');
+    if (/\bparking\b/i.test(input)) amenities.push('Covered Parking');
+    if (/\bgated\b/i.test(input)) amenities.push('Gated Security');
+
+    const title = `${bhk} ${type} in ${sector}${amenities.length > 0 ? ' with ' + amenities.join(', ') : ''}`;
+    const label = `${bhk} ${type} (${sector})`;
+
+    return {
+      bhk,
+      type,
+      sector,
+      rentVal,
+      vastuFacing,
+      amenities,
+      title,
+      label
+    };
+  };
+
   const handleAddCustomBhk = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBhkLabel.trim()) return;
-    const cleanId = newBhkLabel.toUpperCase().replace(/\s+/g, '');
+
+    const parsed = parseNaturalLanguageProperty(newBhkLabel);
+    const cleanId = (parsed ? `${parsed.bhk}-${parsed.sector}` : newBhkLabel).toUpperCase().replace(/\s+/g, '-');
+
+    const displayLabel = parsed ? parsed.label : newBhkLabel;
+    const avgRent = parsed ? parsed.rentVal : '₹18,000';
+
     setBhkConfigs([...bhkConfigs, {
       id: cleanId,
-      label: newBhkLabel,
+      label: displayLabel,
       enabled: true,
-      demandScore: '90%',
-      avgRent: '₹18,000'
+      demandScore: '94%',
+      avgRent: avgRent,
+      sector: parsed?.sector,
+      vastuFacing: parsed?.vastuFacing,
+      amenities: parsed?.amenities
     }]);
-    alert(`🎉 Property BHK configuration '${newBhkLabel}' enabled on Tenant search decks!`);
+
+    if (parsed) {
+      setMediaSector(parsed.sector);
+      setMediaPriceTag(`${parsed.rentVal} / month`);
+      setMediaVastu(parsed.vastuFacing);
+      setMediaCaption(parsed.title);
+      alert(`🎉 AI Natural Language Auto-Parse Successful!\n\nAdded: '${parsed.label}'\nLocation: ${parsed.sector}\nRent: ${parsed.rentVal} / month\nVastu: ${parsed.vastuFacing}\nAmenities: ${parsed.amenities.join(', ') || 'Standard'}\n\nPre-populated Media CDN upload fields below!`);
+    } else {
+      alert(`🎉 Property BHK configuration '${newBhkLabel}' enabled on Tenant search decks!`);
+    }
+
     setNewBhkLabel('');
   };
 
@@ -839,29 +936,83 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                   </div>
                 </div>
 
-                {/* ADD CUSTOM BHK FORM */}
-                <div className="mt-8 pt-6 border-t border-slate-100">
-                  <h4 className="text-sm font-extrabold text-slate-900 font-['Outfit'] mb-1 flex items-center gap-2">
-                    <Plus className="w-4 h-4 text-emerald-600" /> Add Custom Property Layout / BHK Option
-                  </h4>
-                  <p className="text-xs text-slate-500 mb-3">
-                    Introduce specialized configurations (e.g. '5 BHK Penthouse', 'Duplex Villa') for tenant selection.
-                  </p>
+                {/* ADD CUSTOM BHK FORM WITH AI AUTO-PARSER */}
+                <div className="mt-8 pt-6 border-t border-slate-100 space-y-3">
+                  <div>
+                    <h4 className="text-sm font-extrabold text-slate-900 font-['Outfit'] flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-emerald-600 animate-pulse" /> Add Custom Property Layout / BHK Option (AI Auto-Parse Prompt)
+                    </h4>
+                    <p className="text-xs text-slate-500">
+                      Enter natural language prompts like: <em className="text-emerald-700 font-bold font-mono">"2bhk flat nanda nagar with balcony having 18000 rent per month and it is facing to east"</em> to automatically extract location, rent, Vastu facing & balcony amenities!
+                    </p>
+                  </div>
 
-                  <form onSubmit={handleAddCustomBhk} className="flex flex-col sm:flex-row gap-3 max-w-xl">
-                    <input
-                      type="text"
-                      value={newBhkLabel}
-                      onChange={(e) => setNewBhkLabel(e.target.value)}
-                      placeholder="e.g. 5 BHK Penthouse or Studio Suite..."
-                      className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600"
-                    />
-                    <button
-                      type="submit"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-xs shrink-0"
-                    >
-                      Add & Enable Configuration
-                    </button>
+                  <form onSubmit={handleAddCustomBhk} className="space-y-3">
+                    <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
+                      <input
+                        type="text"
+                        value={newBhkLabel}
+                        onChange={(e) => setNewBhkLabel(e.target.value)}
+                        placeholder='e.g. "2bhk flat nanda nagar with balcony having 18000 rent per month and it is facing to east"'
+                        className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white shadow-xs"
+                      />
+                      <button
+                        type="submit"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-5 py-3 rounded-xl shadow-md shadow-emerald-600/20 shrink-0 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        <span>Add & Enable Configuration</span>
+                      </button>
+                    </div>
+
+                    {/* LIVE AI AUTO-PARSE EXTRACTION CHIP PREVIEW CARD */}
+                    {newBhkLabel.trim() && (() => {
+                      const liveParsed = parseNaturalLanguageProperty(newBhkLabel);
+                      if (!liveParsed) return null;
+                      return (
+                        <motion.div
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="p-4 bg-slate-950 text-white rounded-2xl border border-slate-800 space-y-2 max-w-2xl shadow-xl font-mono text-xs"
+                        >
+                          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                            <span className="text-emerald-400 font-bold font-['Outfit'] flex items-center gap-1.5">
+                              <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                              AI Prompt Auto-Extraction Preview
+                            </span>
+                            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold">
+                              Parsed Live
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                            <div>
+                              <span className="text-slate-400 block uppercase text-[9px]">BHK / Type</span>
+                              <strong className="text-white font-['Outfit']">{liveParsed.bhk} {liveParsed.type}</strong>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 block uppercase text-[9px]">Location Sector</span>
+                              <strong className="text-emerald-300 font-['Outfit']">{liveParsed.sector}</strong>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 block uppercase text-[9px]">Monthly Rent</span>
+                              <strong className="text-amber-300">{liveParsed.rentVal} / mo</strong>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 block uppercase text-[9px]">Vastu Facing</span>
+                              <strong className="text-cyan-300">{liveParsed.vastuFacing}</strong>
+                            </div>
+                          </div>
+
+                          {liveParsed.amenities.length > 0 && (
+                            <div className="pt-1.5 border-t border-slate-800/60 text-[11px]">
+                              <span className="text-slate-400">Extracted Amenities: </span>
+                              <strong className="text-indigo-300">{liveParsed.amenities.join(', ')}</strong>
+                            </div>
+                          )}
+                        </motion.div>
+                      );
+                    })()}
                   </form>
                 </div>
               </motion.div>
