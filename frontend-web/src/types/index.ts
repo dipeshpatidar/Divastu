@@ -1,5 +1,33 @@
 export type UserRole = 'GUEST' | 'TENANT' | 'EMPLOYEE' | 'SUB_ADMIN' | 'SUPER_ADMIN' | 'ADMIN';
 
+export type RoomTag = 
+  | 'LIVING_ROOM' 
+  | 'BEDROOM' 
+  | 'KITCHEN' 
+  | 'BALCONY' 
+  | 'EXTERIOR' 
+  | 'AMENITIES' 
+  | 'FLOOR_PLAN';
+
+export interface PropertyMediaAsset {
+  id?: number;
+  listingId: number;
+  mediaUrl: String;
+  cloudinaryPublicId?: string;
+  mediaType: 'IMAGE' | 'VIDEO_WALKTHROUGH' | 'PANORAMA_360' | 'FLOOR_PLAN';
+  roomTag: RoomTag;
+  caption?: string;
+  isPrimaryCover?: boolean;
+  sector?: string;
+  city?: string;
+  priceTag?: string;
+  latitude?: number;
+  longitude?: number;
+  vastuFacing?: string;
+  verificationStatus?: string;
+  uploadedAt?: string;
+}
+
 export interface UserProfile {
   id: number;
   email: string;
@@ -33,6 +61,7 @@ export interface Property {
   askingPrice?: number;
   totalAreaSqFt: number;
   images: string[];
+  taggedMedia?: PropertyMediaAsset[];
   videoUrl?: string;
   vastuScore?: number;
   verified: boolean;
@@ -41,4 +70,3 @@ export interface Property {
   longitude: number;
   bachelorAllowed?: boolean;
 }
-

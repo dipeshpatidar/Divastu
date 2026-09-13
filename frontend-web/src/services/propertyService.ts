@@ -1,4 +1,4 @@
-import { Property } from '../types';
+import { Property, PropertyMediaAsset, RoomTag } from '../types';
 
 const API_BASE_URL = 'http://localhost:8080/api/v1/properties';
 
@@ -24,7 +24,6 @@ export const propertyService = {
 
       const listings = await response.json();
       
-      // Parse backend DB entity Listing objects into frontend Property format
       return listings.map((item: any) => {
         const rawMedia = item.mediaGalleryUrls ? item.mediaGalleryUrls.split(',') : [];
         const images = rawMedia.filter((m: string) => !m.endsWith('.mp4'));
@@ -52,6 +51,58 @@ export const propertyService = {
       });
     } catch (err) {
       console.warn('Backend API offline or unreachable, using live fallback properties:', err);
+      return [];
+    }
+  },
+
+  /**
+   * Admin Uploads Single Tagged Photo/Video with Metadata to Cloudinary
+   */
+  async uploadTaggedMedia(
+    propertyId: number, 
+    file: File, 
+    metadata: {
+      roomTag: RoomTag;
+      mediaType?: 'IMAGE' | 'VIDEO_WALKTHROUGH';
+      caption?: string;
+      isPrimaryCover?: boolean;
+      sector?: string;
+      priceTag?: string;
+      vastuFacing?: string;
+    }
+  ): Promise<PropertyMediaAsset> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('roomTag', metadata.roomTag);
+    formData.append('mediaType', metadata.mediaType || 'IMAGE');
+    if (metadata.caption) formData.append('caption', metadata.caption);
+    if (metadata.isPrimaryCover) formData.append('isPrimaryCover', String(metadata.isPrimaryCover));
+    if (metadata.sector) formData.append('sector', metadata.sector);
+    if (metadata.priceTag) formData.append('priceTag', metadata.priceTag);
+    if (metadata.vastuFacing) formData.append('vastuFacing', metadata.vastuFacing);
+
+    const response = await fetch(`${API_BASE_URL}/${propertyId}/tagged-media`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload tagged media to Cloudinary');
+    }
+
+    return await response.json();
+  },
+
+  /**
+   * Fetch Rich Tagged Media Assets for a Property
+   */
+  async fetchTaggedMedia(propertyId: number): Promise<PropertyMediaAsset[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/${propertyId}/tagged-media`);
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (err) {
+      console.warn('Failed to fetch tagged media:', err);
       return [];
     }
   },

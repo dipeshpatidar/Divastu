@@ -6,6 +6,7 @@ import {
   SlidersHorizontal, Plus, ToggleLeft, ToggleRight, Settings, UploadCloud, Camera, Video
 } from 'lucide-react';
 import { propertyService } from '../services/propertyService';
+import { RoomTag } from '../types';
 
 interface MasterAdminDashboardProps {
   activeTab: string;
@@ -77,15 +78,33 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   const [isUploadingCloudinary, setIsUploadingCloudinary] = useState<boolean>(false);
   const [uploadStatusMsg, setUploadStatusMsg] = useState<string | null>(null);
 
+  // Rich Media Metadata Tagging State
+  const [selectedRoomTag, setSelectedRoomTag] = useState<RoomTag>('LIVING_ROOM');
+  const [mediaCaption, setMediaCaption] = useState<string>('');
+  const [mediaPriceTag, setMediaPriceTag] = useState<string>('₹22,000 / month');
+  const [mediaSector, setMediaSector] = useState<string>('Vijay Nagar');
+  const [mediaVastu, setMediaVastu] = useState<string>('North-East Facing');
+  const [isPrimaryCover, setIsPrimaryCover] = useState<boolean>(false);
+
   const handleCloudinaryPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const files = Array.from(e.target.files);
     setIsUploadingCloudinary(true);
-    setUploadStatusMsg('Uploading property photos to Cloudinary...');
+    setUploadStatusMsg(`Uploading photo tagged as [${selectedRoomTag}] to Cloudinary...`);
     try {
-      const urls = await propertyService.uploadPhotosToCloudinary(selectedPropertyId, files);
-      setUploadStatusMsg(`✓ ${urls.length} Photos uploaded to Cloudinary & saved to Database!`);
-      alert(`🎉 Successfully uploaded ${urls.length} photos to Cloudinary CDN and updated PostgreSQL database!`);
+      for (const file of files) {
+        await propertyService.uploadTaggedMedia(selectedPropertyId, file, {
+          roomTag: selectedRoomTag,
+          mediaType: 'IMAGE',
+          caption: mediaCaption || `${selectedRoomTag.replace('_', ' ')} View`,
+          isPrimaryCover,
+          sector: mediaSector,
+          priceTag: mediaPriceTag,
+          vastuFacing: mediaVastu
+        });
+      }
+      setUploadStatusMsg(`✓ ${files.length} Tagged Photo(s) uploaded to Cloudinary with Metadata [${selectedRoomTag}, ${mediaSector}, ${mediaPriceTag}]!`);
+      alert(`🎉 Successfully uploaded ${files.length} photo(s) tagged as [${selectedRoomTag}] with Location (${mediaSector}), Price (${mediaPriceTag}) & Vastu (${mediaVastu}) to Cloudinary CDN!`);
     } catch (err) {
       console.error(err);
       setUploadStatusMsg('Cloudinary uploaded photo fallback saved.');
@@ -98,11 +117,19 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
     setIsUploadingCloudinary(true);
-    setUploadStatusMsg('Uploading MP4 walkthrough video to Cloudinary CDN...');
+    setUploadStatusMsg('Uploading MP4 walkthrough video with metadata to Cloudinary CDN...');
     try {
-      const videoUrl = await propertyService.uploadVideoToCloudinary(selectedPropertyId, file);
-      setUploadStatusMsg(`✓ Video walkthrough uploaded to Cloudinary: ${videoUrl}`);
-      alert(`🎉 Walkthrough MP4 video uploaded to Cloudinary CDN and linked to Property #${selectedPropertyId} in PostgreSQL!`);
+      const asset = await propertyService.uploadTaggedMedia(selectedPropertyId, file, {
+        roomTag: selectedRoomTag,
+        mediaType: 'VIDEO_WALKTHROUGH',
+        caption: mediaCaption || 'HD Video Walkthrough',
+        isPrimaryCover: false,
+        sector: mediaSector,
+        priceTag: mediaPriceTag,
+        vastuFacing: mediaVastu
+      });
+      setUploadStatusMsg(`✓ Video walkthrough uploaded to Cloudinary: ${asset.mediaUrl}`);
+      alert(`🎉 Walkthrough MP4 video uploaded to Cloudinary CDN with Location (${mediaSector}) & Price (${mediaPriceTag}) tags!`);
     } catch (err) {
       console.error(err);
       setUploadStatusMsg('Cloudinary video upload saved.');
@@ -804,45 +831,107 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                 ))}
               </div>
 
-              {/* CLOUDINARY MEDIA UPLOAD CONSOLE */}
-              <div className="mt-8 pt-6 border-t border-slate-100 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-extrabold text-slate-900 font-['Outfit'] flex items-center gap-2">
-                      <UploadCloud className="w-4 h-4 text-emerald-600 animate-bounce" /> Cloudinary Media CDN Uploader (HD Photos & MP4 Walkthroughs)
-                    </h4>
-                    <p className="text-xs text-slate-500">
-                      Upload property photos (auto-compressed to WebP) and MP4 videos directly to Cloudinary CDN & save secure URLs to PostgreSQL DB.
-                    </p>
+                {/* ENTERPRISE MEDIA TAGGING & METADATA SELECTION PANEL */}
+                <div className="bg-slate-900 text-white p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black uppercase tracking-wider text-emerald-400 font-mono flex items-center gap-1.5">
+                      🏷️ Asset Category & Metadata Tagging Engine
+                    </span>
+                    <label className="flex items-center gap-2 text-xs font-bold text-amber-300 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isPrimaryCover}
+                        onChange={(e) => setIsPrimaryCover(e.target.checked)}
+                        className="rounded accent-amber-500 w-4 h-4"
+                      />
+                      ⭐ Primary Cover Photo
+                    </label>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-bold text-slate-500">Target Property ID:</span>
-                    <select
-                      value={selectedPropertyId}
-                      onChange={(e) => setSelectedPropertyId(Number(e.target.value))}
-                      className="bg-slate-900 text-white text-xs font-extrabold px-3 py-1.5 rounded-xl border border-slate-800 focus:outline-none"
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((id) => (
-                        <option key={id} value={id}>Property #{id}</option>
+
+                  {/* ROOM CATEGORY SELECTOR PILLS */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] text-slate-400 font-bold uppercase block">1. Select Room / Asset Category Tag:</label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { id: 'LIVING_ROOM', label: '🛋️ Living Room' },
+                        { id: 'BEDROOM', label: '🛏️ Master Bedroom' },
+                        { id: 'KITCHEN', label: '🍳 Modular Kitchen' },
+                        { id: 'BALCONY', label: '🌳 Balcony & View' },
+                        { id: 'EXTERIOR', label: '🏢 Exterior Villa' },
+                        { id: 'AMENITIES', label: '🏊 Society Amenities' },
+                        { id: 'FLOOR_PLAN', label: '📐 Floor Plan' }
+                      ].map((tag) => (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          onClick={() => setSelectedRoomTag(tag.id as RoomTag)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all border ${
+                            selectedRoomTag === tag.id
+                              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-600/30 scale-105'
+                              : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
+                          }`}
+                        >
+                          {tag.label}
+                        </button>
                       ))}
-                    </select>
+                    </div>
+                  </div>
+
+                  {/* LOCATION, PRICING & VASTU INPUT FIELDS */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                    <div>
+                      <label className="text-[10px] text-slate-400 font-bold uppercase block mb-1">2. Location / Sector Tag:</label>
+                      <input
+                        type="text"
+                        value={mediaSector}
+                        onChange={(e) => setMediaSector(e.target.value)}
+                        placeholder="e.g. Vijay Nagar, Indore"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-400 font-bold uppercase block mb-1">3. Rent / Price Overlay:</label>
+                      <input
+                        type="text"
+                        value={mediaPriceTag}
+                        onChange={(e) => setMediaPriceTag(e.target.value)}
+                        placeholder="e.g. ₹22,000 / month"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-400 font-bold uppercase block mb-1">4. Vastu Facing:</label>
+                      <input
+                        type="text"
+                        value={mediaVastu}
+                        onChange={(e) => setMediaVastu(e.target.value)}
+                        placeholder="e.g. North-East Facing"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-amber-300 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* CAPTION DESCRIPTION INPUT */}
+                  <div>
+                    <label className="text-[10px] text-slate-400 font-bold uppercase block mb-1">5. Custom Room Description / Caption:</label>
+                    <input
+                      type="text"
+                      value={mediaCaption}
+                      onChange={(e) => setMediaCaption(e.target.value)}
+                      placeholder="e.g. South-facing Modular Kitchen with Chimney & Granite Counter"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none focus:border-emerald-500"
+                    />
                   </div>
                 </div>
-
-                {uploadStatusMsg && (
-                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl text-xs font-mono font-bold">
-                    {uploadStatusMsg}
-                  </div>
-                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Photo Uploader Box */}
                   <div className="bg-slate-50 border-2 border-dashed border-emerald-300 rounded-2xl p-5 text-center space-y-2 hover:bg-emerald-50/50 transition-colors relative">
                     <Camera className="w-7 h-7 text-emerald-600 mx-auto" />
-                    <p className="text-xs font-extrabold text-slate-900">Upload Property HD Photos (Multiple)</p>
-                    <p className="text-[10px] text-slate-500">Auto-compressed to high-resolution WebP on Cloudinary</p>
+                    <p className="text-xs font-extrabold text-slate-900">Upload Property HD Photos (Tagged)</p>
+                    <p className="text-[10px] text-slate-500">Will attach tag: <strong className="text-emerald-700 font-mono">[{selectedRoomTag}]</strong></p>
                     <label className="inline-block bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2 rounded-xl cursor-pointer shadow-xs transition-transform active:scale-95">
-                      <span>{isUploadingCloudinary ? 'Uploading...' : 'Browse Photos'}</span>
+                      <span>{isUploadingCloudinary ? 'Uploading...' : `Browse Tagged [${selectedRoomTag}] Photos`}</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -858,9 +947,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                   <div className="bg-slate-50 border-2 border-dashed border-cyan-300 rounded-2xl p-5 text-center space-y-2 hover:bg-cyan-50/50 transition-colors relative">
                     <Video className="w-7 h-7 text-cyan-600 mx-auto" />
                     <p className="text-xs font-extrabold text-slate-900">Upload Video Walkthrough (MP4)</p>
-                    <p className="text-[10px] text-slate-500">Auto-optimized for hover streaming on Tenant Dashboard</p>
+                    <p className="text-[10px] text-slate-500">Will attach tag: <strong className="text-cyan-700 font-mono">[{selectedRoomTag}]</strong></p>
                     <label className="inline-block bg-cyan-600 hover:bg-cyan-700 text-white font-extrabold text-xs px-4 py-2 rounded-xl cursor-pointer shadow-xs transition-transform active:scale-95">
-                      <span>{isUploadingCloudinary ? 'Uploading...' : 'Browse MP4 Video'}</span>
+                      <span>{isUploadingCloudinary ? 'Uploading...' : `Browse MP4 Video`}</span>
                       <input
                         type="file"
                         accept="video/mp4,video/*"
@@ -871,7 +960,6 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     </label>
                   </div>
                 </div>
-              </div>
 
               {/* ADD CUSTOM BHK CONFIGURATION FORM */}
               <div className="mt-8 pt-6 border-t border-slate-100">

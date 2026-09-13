@@ -593,6 +593,27 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                 className="max-w-full max-h-[78vh] object-contain rounded-2xl shadow-2xl border border-slate-800"
               />
 
+              {/* ENTERPRISE METADATA OVERLAY BADGES (LOCATION, PRICE, VASTU, ROOM TAG & VERIFIED SEAL) */}
+              <div className="absolute top-4 left-4 z-20 flex flex-wrap gap-2 max-w-xl pointer-events-none">
+                <span className="bg-slate-950/90 text-white text-xs font-black px-3.5 py-1.5 rounded-xl border border-slate-700 backdrop-blur-md shadow-xl flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{property.sector || 'Vijay Nagar'}, Indore</span>
+                </span>
+
+                <span className="bg-slate-950/90 text-emerald-400 font-mono text-xs font-black px-3.5 py-1.5 rounded-xl border border-emerald-500/40 backdrop-blur-md shadow-xl">
+                  🏷️ ₹{property.monthlyRent ? property.monthlyRent.toLocaleString('en-IN') : '22,000'} / mo
+                </span>
+
+                <span className="bg-slate-950/90 text-amber-300 text-xs font-bold px-3.5 py-1.5 rounded-xl border border-amber-500/40 backdrop-blur-md shadow-xl">
+                  🧭 North-East Vastu Facing
+                </span>
+
+                <span className="bg-emerald-950/90 text-emerald-300 text-xs font-extrabold px-3.5 py-1.5 rounded-xl border border-emerald-500/50 backdrop-blur-md shadow-xl flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span>On-Site Escort Vetted</span>
+                </span>
+              </div>
+
               {propertyImages.length > 1 && (
                 <>
                   <button

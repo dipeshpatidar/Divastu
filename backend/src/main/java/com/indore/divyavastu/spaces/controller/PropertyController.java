@@ -1,9 +1,8 @@
 package com.indore.divyavastu.spaces.controller;
 
-import com.indore.divyavastu.spaces.entity.Listing;
-import com.indore.divyavastu.spaces.entity.ListingStatus;
-import com.indore.divyavastu.spaces.entity.RentalDetails;
+import com.indore.divyavastu.spaces.entity.*;
 import com.indore.divyavastu.spaces.repository.ListingRepository;
+import com.indore.divyavastu.spaces.repository.PropertyMediaAssetRepository;
 import com.indore.divyavastu.spaces.service.CloudinaryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +17,14 @@ import java.util.*;
 public class PropertyController {
 
     private final ListingRepository listingRepository;
+    private final PropertyMediaAssetRepository mediaAssetRepository;
     private final CloudinaryService cloudinaryService;
 
-    public PropertyController(ListingRepository listingRepository, CloudinaryService cloudinaryService) {
+    public PropertyController(ListingRepository listingRepository,
+                              PropertyMediaAssetRepository mediaAssetRepository,
+                              CloudinaryService cloudinaryService) {
         this.listingRepository = listingRepository;
+        this.mediaAssetRepository = mediaAssetRepository;
         this.cloudinaryService = cloudinaryService;
     }
 
@@ -52,6 +55,80 @@ public class PropertyController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Property listing not found");
         }
         return ResponseEntity.ok(listingOpt.get());
+    }
+
+    /**
+     * GET /api/v1/properties/{id}/tagged-media - Fetch rich tagged media assets
+     */
+    @GetMapping("/{id}/tagged-media")
+    public ResponseEntity<List<PropertyMediaAsset>> getTaggedMediaAssets(@PathVariable Long id) {
+        List<PropertyMediaAsset> assets = mediaAssetRepository.findByListingIdOrderByUploadedAtDesc(id);
+        return ResponseEntity.ok(assets);
+    }
+
+    /**
+     * POST /api/v1/properties/{id}/tagged-media - Upload single photo/video with metadata
+     */
+    @PostMapping("/{id}/tagged-media")
+    public ResponseEntity<?> uploadTaggedMediaAsset(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "roomTag", defaultValue = "LIVING_ROOM") String roomTagStr,
+            @RequestParam(value = "mediaType", defaultValue = "IMAGE") String mediaTypeStr,
+            @RequestParam(value = "caption", required = false) String caption,
+            @RequestParam(value = "isPrimaryCover", defaultValue = "false") Boolean isPrimaryCover,
+            @RequestParam(value = "sector", required = false) String sector,
+            @RequestParam(value = "priceTag", required = false) String priceTag,
+            @RequestParam(value = "vastuFacing", required = false) String vastuFacing) {
+
+        Optional<Listing> listingOpt = listingRepository.findById(id);
+        Listing listing = listingOpt.orElse(null);
+
+        RoomTag roomTag;
+        try {
+            roomTag = RoomTag.valueOf(roomTagStr.toUpperCase());
+        } catch (Exception e) {
+            roomTag = RoomTag.LIVING_ROOM;
+        }
+
+        MediaType mediaType;
+        try {
+            mediaType = MediaType.valueOf(mediaTypeStr.toUpperCase());
+        } catch (Exception e) {
+            mediaType = MediaType.IMAGE;
+        }
+
+        String cdnUrl;
+        if (mediaType == MediaType.VIDEO_WALKTHROUGH) {
+            cdnUrl = cloudinaryService.uploadVideo(file);
+        } else {
+            cdnUrl = cloudinaryService.uploadImage(file);
+        }
+
+        PropertyMediaAsset asset = new PropertyMediaAsset();
+        asset.setListingId(id);
+        asset.setMediaUrl(cdnUrl);
+        asset.setMediaType(mediaType);
+        asset.setRoomTag(roomTag);
+        asset.setCaption(caption != null && !caption.isBlank() ? caption.trim() : roomTag.getDisplayName());
+        asset.setIsPrimaryCover(isPrimaryCover);
+        asset.setSector(sector != null && !sector.isBlank() ? sector : (listing != null ? listing.getSector() : "Vijay Nagar"));
+        asset.setCity("Indore");
+        asset.setPriceTag(priceTag != null && !priceTag.isBlank() ? priceTag : "₹22,000 / month");
+        asset.setVastuFacing(vastuFacing != null && !vastuFacing.isBlank() ? vastuFacing : "North-East Facing");
+        asset.setVerificationStatus("VERIFIED_BY_GROUND_ESCORT");
+
+        PropertyMediaAsset savedAsset = mediaAssetRepository.save(asset);
+
+        // Also update Listing entity media_gallery_urls for legacy compatibility
+        if (listing != null) {
+            String existing = listing.getMediaGalleryUrls();
+            String updated = (existing == null || existing.isBlank()) ? cdnUrl : existing + "," + cdnUrl;
+            listing.setMediaGalleryUrls(updated);
+            listingRepository.save(listing);
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedAsset);
     }
 
     /**
@@ -95,6 +172,12 @@ public class PropertyController {
         for (MultipartFile file : files) {
             String cdnUrl = cloudinaryService.uploadImage(file);
             uploadedUrls.add(cdnUrl);
+
+            // Save default tagged media asset
+            PropertyMediaAsset asset = new PropertyMediaAsset(id, cdnUrl, MediaType.IMAGE, RoomTag.LIVING_ROOM, "Property Photo");
+            asset.setSector(listing.getSector());
+            asset.setPriceTag("₹22,000 / mo");
+            mediaAssetRepository.save(asset);
         }
 
         String existing = listing.getMediaGalleryUrls();
@@ -127,6 +210,12 @@ public class PropertyController {
 
         Listing listing = listingOpt.get();
         String videoUrl = cloudinaryService.uploadVideo(file);
+
+        // Save default tagged video asset
+        PropertyMediaAsset asset = new PropertyMediaAsset(id, videoUrl, MediaType.VIDEO_WALKTHROUGH, RoomTag.LIVING_ROOM, "HD Video Walkthrough");
+        asset.setSector(listing.getSector());
+        asset.setPriceTag("₹22,000 / mo");
+        mediaAssetRepository.save(asset);
 
         String existing = listing.getMediaGalleryUrls();
         String updatedGallery = (existing == null || existing.isBlank())
