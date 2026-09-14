@@ -38,6 +38,8 @@ public class MetaLeadIngestionService {
         this.leadRoutingQueueRepository = leadRoutingQueueRepository;
     }
 
+    private static final Pattern CLEAN_NUMERIC_PATTERN = Pattern.compile("[^0-9.]");
+
     @Async
     public void processMetaLeadAsync(String leadId) {
         logger.info("Starting asynchronous processing for Meta Lead ID: {}", leadId);
@@ -64,7 +66,7 @@ public class MetaLeadIngestionService {
                                 if ("full_name".equalsIgnoreCase(name)) tenantName = val;
                                 else if ("phone_number".equalsIgnoreCase(name)) phoneNumber = val;
                                 else if ("sector".equalsIgnoreCase(name) || "neighborhood".equalsIgnoreCase(name)) targetSector = val;
-                                else if ("budget".equalsIgnoreCase(name)) budget = new BigDecimal(val.replaceAll("[^0-9.]", ""));
+                                else if ("budget".equalsIgnoreCase(name)) budget = new BigDecimal(CLEAN_NUMERIC_PATTERN.matcher(val).replaceAll(""));
                             }
                         }
                     }
