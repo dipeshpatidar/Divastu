@@ -195,8 +195,10 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       rentVal = `₹${(parseInt(kMatch[1]) * 1000).toLocaleString('en-IN')}`;
     }
 
-    // 4. Noise-Tolerant Indore Sector Gazetteer & Landmark Token Matching
+    // 4. Zero-Maintenance Dynamic Locality & Sector Extraction
     let sector = '';
+
+    // Step 4A: Check Known Gazetteer Micro-Markets
     const SECTOR_GAZETTEER = [
       { canonical: 'Rau Circle', keywords: ['rau circle', 'rau'] },
       { canonical: 'Chhoti Gwaltoli', keywords: ['choti', 'gwaltoli', 'chhoti'] },
@@ -221,15 +223,33 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     ];
 
     for (const secObj of SECTOR_GAZETTEER) {
-      const matched = secObj.keywords.some(kw => cleanLower.includes(kw));
-      if (matched) {
+      if (secObj.keywords.some(kw => cleanLower.includes(kw))) {
         sector = secObj.canonical;
         break;
       }
     }
 
+    // Step 4B: Dynamic Named Entity Recognition (NER) Heuristic for BRAND NEW / Un-fed Localities!
     if (!sector) {
-      sector = 'Rau Circle';
+      // Look for prepositions: "in <Locality>", "near <Locality>", "at <Locality>"
+      let prepMatch = input.match(/\b(?:in|at|near|around|sector)\s+([A-Za-z0-9\s]{2,30}?)(?=\s+(?:with|having|facing|for|rent|per|\d|rs|rupees|\$|$))/i);
+      if (prepMatch && prepMatch[1].trim()) {
+        const extracted = prepMatch[1].trim();
+        // Capitalize words
+        sector = extracted.replace(/\b\w/g, l => l.toUpperCase());
+      }
+    }
+
+    // Step 4C: Suffix-based Locality Pattern Recognizer (matches Nagar, Colony, City, Square, Heights, Enclave, etc.)
+    if (!sector) {
+      let suffixMatch = input.match(/\b([A-Za-z0-9\s]{2,20}\s+(?:nagar|colony|city|township|road|circle|sector|bazar|vihar|enclave|pur|ganj|heights|residency|villa|society|square|chowk|puri|dham|bagh|marg))\b/i);
+      if (suffixMatch && suffixMatch[1].trim()) {
+        sector = suffixMatch[1].trim().replace(/\b\w/g, l => l.toUpperCase());
+      }
+    }
+
+    if (!sector) {
+      sector = 'Indore Sector';
     }
 
     // 4.5. Society / Colony Landmark Detection (e.g. Shiva Vatika, Singapore City, Apollo DB City)
