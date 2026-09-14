@@ -147,4 +147,15 @@ public class PropertyParserServiceTest {
         assertTrue(partialDto.getMissingFields().contains("Bathrooms Count"));
         assertTrue(partialDto.getMissingFields().contains("Monthly Rent"));
     }
+
+    @Test
+    public void testInterveningWordsBhkAndNoFakeDefaults() {
+        String prompt = "sdfjsdfjerijejfdsf 2 kldsjflkdjsf bhk";
+        ParsedPropertyDTO dto = propertyParserService.parseAndSave(prompt);
+
+        assertNotNull(dto);
+        assertEquals("2 BHK", dto.getBhk());
+        assertEquals("Not Specified", dto.getType());
+        assertEquals("Not Specified", dto.getBathrooms());
+    }
 }

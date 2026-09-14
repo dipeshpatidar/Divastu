@@ -349,8 +349,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     // 1. Universal BHK / Layout Extractor
     let bhk = 'Unspecified';
     let bhkFound = false;
-    const numBhkMatch = input.match(/\b(\d+(?:\.\d+)?)\s*(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\b/i);
-    const wordBhkMatch = input.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\b/i);
+    const numBhkMatch = input.match(/\b(\d+(?:\.\d+)?)\s*(?:[a-zA-Z0-9\-\_]{1,20}\s+)?(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\b/i);
+    const wordBhkMatch = input.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:[a-zA-Z0-9\-\_]{1,20}\s+)?(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\b/i);
 
     if (numBhkMatch) {
       const val = numBhkMatch[1];
@@ -374,8 +374,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       bhkFound = true;
     }
 
-    // 2. Extract Property Type
-    let type = 'FLAT';
+    // 2. Extract Property Type (No fake default - only if mentioned in prompt)
+    let type = '';
     let typeFound = false;
     if (/house|villa|bungalow|independent/i.test(input)) { type = 'HOUSE'; typeFound = true; }
     else if (/plot|land|commercial plot/i.test(input)) { type = 'PLOT'; typeFound = true; }
@@ -404,8 +404,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       brokerageFound = true;
     }
 
-    // 3B. Bathrooms Extractor
-    let bathrooms = 2;
+    // 3B. Bathrooms Extractor (No fake default - undefined if unmentioned)
+    let bathrooms: number | undefined = undefined;
     const bathMatch = input.match(/\b(\d+)\s*(?:bath|baths|bathroom|bathrooms|washroom|toilet)\b/i);
     if (bathMatch) {
       bathrooms = parseInt(bathMatch[1]);
@@ -606,10 +606,11 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     const landmarkMatch = input.match(/\b(?:landmark|near|opposite|behind|adj|adjacent\s+to)\s+([A-Za-z0-9\s]{2,25}?)(?=\s+in|\s+at|\s+with|\s+facing|\s+rent|\s+status|\d|$)/i);
     if (landmarkMatch) landmark = landmarkMatch[1].trim();
 
-    // 9. Status
-    let status = 'LIVE';
-    if (/status\s*[:\-]?\s*(pending|sold|expired|rented|removed|live)/i.test(input)) {
-      status = input.match(/status\s*[:\-]?\s*(pending|sold|expired|rented|removed|live)/i)![1].toUpperCase();
+    // 9. Listing Status (No fake default - empty string if unmentioned in prompt)
+    let status = '';
+    const explicitStatusMatch = input.match(/\bstatus\s*[:\-]?\s*(pending|sold|expired|rented|removed|live)\b/i);
+    if (explicitStatusMatch) {
+      status = explicitStatusMatch[1].toUpperCase();
     }
 
     // 10. Extract Amenities

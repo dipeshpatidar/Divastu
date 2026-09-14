@@ -27,9 +27,9 @@ public class PropertyParserService {
     // Pre-compiled Thread-Safe Static RegEx Patterns (Zero runtime recompilation
     // overhead)
     private static final Pattern NUM_BHK_PATTERN = Pattern.compile(
-            "\\b(\\d+(?:\\.\\d+)?)\\s*(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\\b", Pattern.CASE_INSENSITIVE);
+            "\\b(\\d+(?:\\.\\d+)?)\\s*(?:[a-zA-Z0-9\\-\\_]{1,20}\\s+)?(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern WORD_BHK_PATTERN = Pattern.compile(
-            "\\b(one|two|three|four|five|six|seven|eight|nine|ten)\\s*(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\\b",
+            "\\b(one|two|three|four|five|six|seven|eight|nine|ten)\\s*(?:[a-zA-Z0-9\\-\\_]{1,20}\\s+)?(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern BATHROOMS_PATTERN = Pattern
             .compile("\\b(\\d{1,2})\\s*(?:bath|baths|bathroom|bathrooms|toilet|washroom)\\b", Pattern.CASE_INSENSITIVE);
@@ -188,11 +188,11 @@ public class PropertyParserService {
 
         // 2. Property Type Extractor (Flat, House, Villa, Apartment, Airbnb, Plot,
         // Studio, Penthouse, Duplex)
-        String type = "Flat";
+        String type = null;
         if (cleanLower.contains("airbnb") || cleanLower.contains("serviced stay")) {
             type = "Airbnb";
-        } else if (cleanLower.contains("apartment")) {
-            type = "Apartment";
+        } else if (cleanLower.contains("apartment") || cleanLower.contains("flat")) {
+            type = "Flat";
         } else if (cleanLower.contains("house") || cleanLower.contains("bungalow") || cleanLower.contains("independent")
                 || cleanLower.contains("villa") || cleanLower.contains("duplex")) {
             type = "House";
@@ -205,7 +205,7 @@ public class PropertyParserService {
         }
 
         // 2.5. Listing Status Extractor
-        String status = "LIVE";
+        String status = null;
         Matcher statusMatcher = STATUS_PATTERN.matcher(input);
         if (statusMatcher.find()) {
             status = statusMatcher.group(1).toUpperCase();
@@ -557,8 +557,8 @@ public class PropertyParserService {
 
         ParsedPropertyDTO dto = new ParsedPropertyDTO();
         dto.setBhk(bhk);
-        dto.setType(type);
-        dto.setStatus(status);
+        dto.setType(type != null ? type : "Not Specified");
+        dto.setStatus(status != null ? status : "Unspecified");
         dto.setCity(city);
         dto.setSector(sector);
         dto.setColony(colony);
