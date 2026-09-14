@@ -26,9 +26,7 @@ export const Footer: React.FC = () => {
               <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-600/20">
                 <Building2 className="w-5 h-5" />
               </div>
-              <span className="font-['Outfit',sans-serif] text-xl font-bold text-white tracking-tight">
-                Path<span className="text-emerald-500">ome</span>
-              </span>
+              <span className="font-['Outfit',sans-serif] text-xl font-bold text-white tracking-tight">Path<span className="text-emerald-500">ome</span></span>
             </div>
 
             <p className="text-xs leading-relaxed text-slate-400 max-w-sm">

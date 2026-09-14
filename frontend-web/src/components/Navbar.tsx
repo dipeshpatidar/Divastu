@@ -69,11 +69,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Building2 className="w-5 h-5" />
             </motion.div>
             <div>
-              <a href="#" className={`font-['Outfit',sans-serif] text-base sm:text-xl font-black tracking-tight flex items-center gap-1.5 ${
+              <a href="#" className={`font-['Outfit',sans-serif] text-base sm:text-xl font-black tracking-tight inline-flex items-center ${
                 isAdminRole ? 'text-white' : 'text-slate-900'
-              }`}>
-                Path<span className="text-emerald-500">ome</span>
-              </a>
+              }`}>Path<span className="text-emerald-500">ome</span></a>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className={`text-[9px] sm:text-[10px] font-extrabold px-2 py-0.5 rounded-full border flex items-center gap-1.5 ${
                   isAdminRole 
