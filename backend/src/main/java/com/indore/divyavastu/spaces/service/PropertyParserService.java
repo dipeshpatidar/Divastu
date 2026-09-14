@@ -31,6 +31,8 @@ public class PropertyParserService {
     private static final Pattern SUFFIX_LOCALITY_PATTERN = Pattern.compile("\\b([A-Za-z0-9\\s]{2,25}\\s+(?:nagar|colony|city|township|road|street|lane|circle|sector|bazar|vihar|enclave|pur|ganj|heights|residency|villa|society|square|chowk|puri|dham|bagh|marg|block|phase|layout|extension|ext|estate|avenue|gali|path|bypass|highway|scheme|drive|park|hills|hill|valley|green|greens|campus))\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern PREP_LOCALITY_PATTERN = Pattern.compile("\\b(?:in|at|near|around|sector|road|street|block|phase)\\s+([A-Za-z0-9\\s]{2,30}?)(?=\\s+(?:with|having|facing|for|rent|per|month|\\d|rs|rupees|\\$|$))", Pattern.CASE_INSENSITIVE);
     private static final Pattern COLONY_SOCIETY_PATTERN = Pattern.compile("\\b([A-Za-z0-9\\s]{2,25}\\s+(?:vatika|apartment|apartments|society|township|gardens|towers|residency|heights|retreat|villas|complex|enclave|palms|greens|vista|view|court|cliffs|paradise|homes|floors|nest|spire))\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern NOISE_PREFIX_PATTERN = Pattern.compile("^.*?\\b(?:in|at|near|around)\\s+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
     private final LocalityRepository localityRepository;
 
@@ -201,7 +203,7 @@ public class PropertyParserService {
 
         // Clean noise prefixes (e.g., '4bhk flat in', 'in', 'at', 'near') and trailing city names from sector
         if (!sector.isBlank()) {
-            sector = sector.replaceAll("(?i)^.*?\\b(?:in|at|near|around)\\s+", "").trim();
+            sector = NOISE_PREFIX_PATTERN.matcher(sector).replaceAll("").trim();
             if (sector.toLowerCase().endsWith(" " + city.toLowerCase())) {
                 sector = sector.substring(0, sector.length() - city.length()).trim();
             }
@@ -282,7 +284,7 @@ public class PropertyParserService {
 
     private String capitalizeWords(String str) {
         if (str == null || str.isEmpty()) return str;
-        String[] words = str.split("\\s+");
+        String[] words = WHITESPACE_PATTERN.split(str);
         StringBuilder sb = new StringBuilder();
         for (String w : words) {
             if (!w.isEmpty()) {
