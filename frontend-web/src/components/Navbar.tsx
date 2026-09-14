@@ -39,10 +39,10 @@ export const Navbar: React.FC<NavbarProps> = ({
       initial={{ opacity: 0, y: -12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-      className={`sticky top-0 z-50 transition-all duration-300 ${
+      className={`sticky top-0 z-[100] w-full transition-all duration-300 ${
         isAdminRole
-          ? 'bg-slate-950/90 backdrop-blur-xl border-b border-emerald-500/20 shadow-2xl'
-          : 'bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-sm/50'
+          ? 'bg-slate-950/95 backdrop-blur-2xl border-b border-emerald-500/30 shadow-2xl'
+          : 'bg-white/95 backdrop-blur-2xl border-b border-slate-200/90 shadow-md'
       }`}
     >
       {/* GLOWING TOP ACCENT BEAM LINE WITH FLOWING GRADIENT */}
