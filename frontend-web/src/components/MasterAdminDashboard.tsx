@@ -147,25 +147,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   const [employees, setEmployees] = useState(mockEmployeeRoster);
   const [leaves, setLeaves] = useState(mockLeaveRequests);
 
-  const [bhkConfigs, setBhkConfigs] = useState(() => {
-    try {
-      const saved = localStorage.getItem('divyavastu_bhk_configs');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          const seen = new Set();
-          return parsed.filter(item => {
-            if (!item || !item.id || seen.has(item.id)) return false;
-            seen.add(item.id);
-            return true;
-          });
-        }
-      }
-    } catch (e) {
-      console.error('Error loading BHK configs from storage', e);
-    }
-    return initialBhkConfigs;
-  });
+  const [bhkConfigs, setBhkConfigs] = useState<any[]>(initialBhkConfigs);
   const [newBhkLabel, setNewBhkLabel] = useState('');
   const [attachedMediaFiles, setAttachedMediaFiles] = useState<File[]>([]);
   const [isDragOverMedia, setIsDragOverMedia] = useState<boolean>(false);
@@ -404,8 +386,11 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   };
 
   React.useEffect(() => {
-    localStorage.setItem('divyavastu_bhk_configs', JSON.stringify(bhkConfigs));
-  }, [bhkConfigs]);
+    // Clean up any old stale local storage property/filter keys
+    localStorage.removeItem('divyavastu_bhk_configs');
+    localStorage.removeItem('divyavastu_custom_properties');
+    localStorage.removeItem('divyavastu_tenant_filters');
+  }, []);
 
   const handleToggleBhk = (id: string) => {
     setBhkConfigs(bhkConfigs.map((c: any) => c.id === id ? { ...c, enabled: !c.enabled } : c));

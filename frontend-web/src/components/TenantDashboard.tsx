@@ -268,14 +268,15 @@ export const TenantDashboard: React.FC<TenantDashboardProps> = ({
 
 
     // 6. TARGET METRO CITY FILTERING
-    if (prop.city) {
-      if (prop.city.toUpperCase() !== selectedCity.name.toUpperCase()) return false;
-    } else {
-      // Fallback matching sector against selected city's sectors list
-      const isSectorInCity = selectedCity.sectors.some(
-        s => s.toLowerCase() === prop.sector.toLowerCase()
+    if (selectedCityId === 'INDORE') {
+      const propCityClean = (prop.city || '').trim().toUpperCase();
+      const isIndoreCity = propCityClean === '' || propCityClean === 'INDORE' || propCityClean === 'VIJAY';
+      const isIndoreSector = selectedCity.sectors.some(
+        s => s.toLowerCase() === prop.sector.toLowerCase() || prop.sector.toLowerCase().includes(s.toLowerCase())
       );
-      if (!isSectorInCity && selectedCityId !== 'INDORE') return false;
+      if (!isIndoreCity && !isIndoreSector) return false;
+    } else {
+      if (prop.city && prop.city.toUpperCase() !== selectedCity.name.toUpperCase()) return false;
     }
 
     // 7. MICRO-MARKET SECTOR FILTERING (if specific sectors are toggled)

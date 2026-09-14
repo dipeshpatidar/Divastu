@@ -515,7 +515,7 @@ public class PropertyParserService {
         if (sector.isBlank()) {
             sector = "Not Specified";
         }
-        if (city.isBlank()) {
+        if (city.isBlank() || city.equalsIgnoreCase("Vijay") || city.equalsIgnoreCase("Nagar") || city.equalsIgnoreCase("Palasia")) {
             city = "Indore"; // Baseline fallback
         }
 
