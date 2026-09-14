@@ -1314,7 +1314,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                             <Zap className={`w-3.5 h-3.5 fill-current ${liveExtractedPreview.isGarbageInput ? 'text-amber-400' : 'text-emerald-400 animate-pulse'}`} />
                             {liveExtractedPreview.isGarbageInput
                               ? '⚠️ Unrecognized Prompt Input - No valid property parameters detected in text'
-                              : 'Live Real-Time AI Extracted Values (Updating Live as You Type):'}
+                              : 'Live Real-Time AI Extracted Values (12 Parameters Auto-Parsed as You Type):'}
                           </span>
                           <span className={`text-[9px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
                             liveExtractedPreview.isGarbageInput
@@ -1325,18 +1325,36 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                           </span>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                          {/* 1. BHK */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">BHK Layout</span>
+                        {/* 12-Card Dynamic Real-Time Parameter Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
+                          {/* 1. BHK Layout */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🏠 BHK Layout</span>
                             <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                               liveExtractedPreview.bhk === 'Unspecified' ? 'text-slate-500 italic' : 'text-white'
                             }`}>{liveExtractedPreview.bhk}</span>
                           </div>
 
-                          {/* 2. Sector / Locality */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">Locality / Sector</span>
+                          {/* 2. Property Type */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🏷️ Property Type</span>
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              !liveExtractedPreview.type ? 'text-slate-500 italic' : 'text-indigo-300'
+                            }`}>
+                              {liveExtractedPreview.type === 'FLAT' ? 'Flat / Apartment' :
+                               liveExtractedPreview.type === 'HOUSE' ? 'Independent House' :
+                               liveExtractedPreview.type === 'VILLA' ? 'Villa' :
+                               liveExtractedPreview.type === 'PLOT' ? 'Plot / Land' :
+                               liveExtractedPreview.type === 'PENTHOUSE' ? 'Penthouse' :
+                               liveExtractedPreview.type === 'STUDIO' ? 'Studio Apartment' :
+                               liveExtractedPreview.type === 'AIRBNB' ? 'Airbnb' :
+                               (liveExtractedPreview.type || 'Unspecified')}
+                            </span>
+                          </div>
+
+                          {/* 3. Locality / Sector */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📍 Locality / Sector</span>
                             <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                               liveExtractedPreview.sector === 'Not Specified' ? 'text-slate-500 italic' : 'text-emerald-300'
                             }`} title={liveExtractedPreview.sector}>
@@ -1344,44 +1362,103 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                             </span>
                           </div>
 
-                          {/* 3. Monthly Rent */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">Monthly Rent</span>
+                          {/* 4. Monthly Rent */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">💰 Monthly Rent</span>
                             <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                               liveExtractedPreview.rentVal === 'Unspecified' ? 'text-slate-500 italic' : 'text-amber-300'
                             }`}>{liveExtractedPreview.rentVal}</span>
                           </div>
 
-                          {/* 4. Brokerage Fee */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">Brokerage Fee</span>
+                          {/* 5. Brokerage Fee */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">💼 Brokerage Fee</span>
                             <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                               liveExtractedPreview.brokerageVal === 'Unmentioned' ? 'text-slate-500 italic' : 'text-purple-300'
                             }`}>{liveExtractedPreview.brokerageVal}</span>
                           </div>
 
-                          {/* 5. Owner Details */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">Owner Details</span>
+                          {/* 6. Security Deposit */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🛡️ Security Deposit</span>
                             <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              liveExtractedPreview.ownerName === 'Not Specified' && liveExtractedPreview.ownerPhone === 'Not Specified'
-                                ? 'text-slate-500 italic'
-                                : 'text-cyan-300'
-                            }`} title={`${liveExtractedPreview.ownerName} (${liveExtractedPreview.ownerPhone})`}>
-                              {liveExtractedPreview.ownerName !== 'Not Specified'
-                                ? liveExtractedPreview.ownerName
-                                : (liveExtractedPreview.ownerPhone !== 'Not Specified' ? liveExtractedPreview.ownerPhone : 'Not Specified')}
+                              !liveExtractedPreview.depositVal || liveExtractedPreview.depositVal === 'Unspecified' ? 'text-slate-500 italic' : 'text-rose-300'
+                            }`}>{liveExtractedPreview.depositVal || 'Unspecified'}</span>
+                          </div>
+
+                          {/* 7. Owner Name */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">👤 Owner Name</span>
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              liveExtractedPreview.ownerName === 'Not Specified' ? 'text-slate-500 italic' : 'text-cyan-300'
+                            }`} title={liveExtractedPreview.ownerName}>
+                              {liveExtractedPreview.ownerName}
                             </span>
                           </div>
 
-                          {/* 6. Vastu Facing */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">Vastu Facing</span>
+                          {/* 8. Owner Phone */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📞 Owner Contact</span>
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              liveExtractedPreview.ownerPhone === 'Not Specified' ? 'text-slate-500 italic' : 'text-sky-300'
+                            }`} title={liveExtractedPreview.ownerPhone}>
+                              {liveExtractedPreview.ownerPhone}
+                            </span>
+                          </div>
+
+                          {/* 9. Vastu Facing */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🧭 Vastu Facing</span>
                             <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                               liveExtractedPreview.vastuFacing === 'Not Specified' ? 'text-slate-500 italic' : 'text-teal-300'
                             }`}>{liveExtractedPreview.vastuFacing}</span>
                           </div>
+
+                          {/* 10. Furnishing Status */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🛋️ Furnishing</span>
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              liveExtractedPreview.furnishingStatus === 'UNSPECIFIED' ? 'text-slate-500 italic' : 'text-fuchsia-300'
+                            }`}>
+                              {liveExtractedPreview.furnishingStatus === 'FULLY_FURNISHED' ? 'Fully Furnished' :
+                               liveExtractedPreview.furnishingStatus === 'SEMI_FURNISHED' ? 'Semi Furnished' :
+                               liveExtractedPreview.furnishingStatus === 'UNFURNISHED' ? 'Unfurnished' :
+                               'Unspecified'}
+                            </span>
+                          </div>
+
+                          {/* 11. Listing Status */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">⚡ Listing Status</span>
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              !liveExtractedPreview.status ? 'text-slate-500 italic' : 'text-lime-300'
+                            }`}>
+                              {liveExtractedPreview.status || 'LIVE'}
+                            </span>
+                          </div>
+
+                          {/* 12. Area / Bathrooms */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📐 Area / Bathrooms</span>
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              (!liveExtractedPreview.areaSqFt || liveExtractedPreview.areaSqFt === 'Unspecified') && !liveExtractedPreview.bathrooms
+                                ? 'text-slate-500 italic'
+                                : 'text-orange-300'
+                            }`}>
+                              {liveExtractedPreview.areaSqFt && liveExtractedPreview.areaSqFt !== 'Unspecified'
+                                ? liveExtractedPreview.areaSqFt
+                                : (liveExtractedPreview.bathrooms ? `${liveExtractedPreview.bathrooms} Baths` : 'Unspecified')}
+                            </span>
+                          </div>
                         </div>
+
+                        {/* Optional Missing Fields Indicator */}
+                        {liveExtractedPreview.missingFields && liveExtractedPreview.missingFields.length > 0 && !liveExtractedPreview.isGarbageInput && (
+                          <div className="text-[10px] font-mono text-slate-500 pt-1 flex items-center gap-1.5 border-t border-slate-800/60">
+                            <span className="text-slate-400 font-bold">💡 Unmentioned Attributes:</span>
+                            <span className="italic truncate">{liveExtractedPreview.missingFields.join(' • ')}</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
