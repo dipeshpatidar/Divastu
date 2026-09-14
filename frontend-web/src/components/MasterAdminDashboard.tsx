@@ -98,7 +98,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
   // Extracted Property Parameters Inspection State
   const [lastExtractedResult, setLastExtractedResult] = useState<any>({
-    rawInput: "Premium 2bhk flat 525 sqft 15000 brokerage 30000 rent 1+1 security deposit owner name Piyushi Saha 9876543210 status live in Nanda Nagar Indore facing east fully furnished ready to move",
+    rawInput: "Premium 2bhk flat 525 sqft 15000 brokerage 30000 rent 1+1 security deposit owner name Rajesh Agrawal 9826000000 status live in Nanda Nagar Indore facing east fully furnished ready to move",
     bhk: "2 BHK",
     type: "FLAT",
     city: "Indore",
@@ -112,8 +112,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     bathrooms: 2,
     areaSqFt: "525 sqft",
     depositVal: "1+1 Security Deposit",
-    ownerName: "Piyushi Saha",
-    ownerPhone: "9876543210",
+    ownerName: "Rajesh Agrawal",
+    ownerPhone: "+91 98260 00000",
     vastuFacing: "East Facing",
     furnishingStatus: "FULLY_FURNISHED",
     possessionDate: "Ready to Move (Immediate)",
@@ -133,6 +133,34 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   const [isSavingDb, setIsSavingDb] = useState<boolean>(false);
   const [dbSaveSuccessMsg, setDbSaveSuccessMsg] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<any>(null);
+
+  // Integrated Prompt Media Attachment & Drag-and-Drop State
+  const [attachedFiles, setAttachedFiles] = useState<Array<{ id: string; file: File; roomTag: RoomTag; isVideo: boolean; previewUrl: string }>>([]);
+  const [isDraggingOver, setIsDraggingOver] = useState<boolean>(false);
+
+  const handleFilesAdded = (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    const tags: RoomTag[] = ['LIVING_ROOM', 'BEDROOM', 'KITCHEN', 'BALCONY', 'EXTERIOR', 'AMENITIES', 'FLOOR_PLAN'];
+    const newAttachments = fileArray.map((file, idx) => {
+      const isVid = file.type.startsWith('video/') || file.name.endsWith('.mp4');
+      return {
+        id: Math.random().toString(36).substring(7),
+        file,
+        roomTag: tags[idx % tags.length],
+        isVideo: isVid,
+        previewUrl: URL.createObjectURL(file)
+      };
+    });
+    setAttachedFiles(prev => [...prev, ...newAttachments]);
+  };
+
+  const handleRemoveAttachment = (id: string) => {
+    setAttachedFiles(prev => prev.filter(item => item.id !== id));
+  };
+
+  const handleTagChange = (id: string, newTag: RoomTag) => {
+    setAttachedFiles(prev => prev.map(item => item.id === id ? { ...item, roomTag: newTag } : item));
+  };
 
   const handleOpenInlineEdit = () => {
     setEditForm({ ...lastExtractedResult });
@@ -1270,12 +1298,12 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     </p>
                   </div>
 
-                  {/* 12 EXTRACTED PARAMETERS GRID */}
+                  {/* 18+ EXTRACTED PARAMETERS COMPLETE GRID */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 relative z-10 mb-6">
                     {/* 1. BHK */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">BHK Layout</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">1. BHK Layout</span>
                         <Home className="w-4 h-4 text-emerald-400" />
                       </div>
                       <div className="text-lg font-black text-white font-['Outfit']">{lastExtractedResult.bhk || 'N/A'}</div>
@@ -1285,7 +1313,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     {/* 2. Type */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Property Type</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">2. Property Type</span>
                         <Layers className="w-4 h-4 text-indigo-400" />
                       </div>
                       <div className="text-lg font-black text-indigo-300 font-['Outfit']">{lastExtractedResult.type || 'Flat'}</div>
@@ -1295,7 +1323,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     {/* 3. City */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Target City</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">3. Target City</span>
                         <MapPin className="w-4 h-4 text-cyan-400" />
                       </div>
                       <div className="text-lg font-black text-cyan-300 font-['Outfit']">{lastExtractedResult.city || 'Indore'}</div>
@@ -1305,43 +1333,43 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     {/* 4. Locality / Sector */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Locality / Sector</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">4. Locality / Sector</span>
                         <Compass className="w-4 h-4 text-emerald-400" />
                       </div>
                       <div className="text-base font-extrabold text-emerald-300 font-['Outfit'] truncate" title={lastExtractedResult.sector}>
                         {lastExtractedResult.sector || 'Not Specified'}
                       </div>
                       <span className="text-[10px] text-emerald-400 font-mono font-bold">
-                        {lastExtractedResult.sector !== 'Not Specified' ? '✓ Saved to PostgreSQL' : 'Unspecified'}
+                        {lastExtractedResult.sector !== 'Not Specified' ? '✓ PostgreSQL Locality' : 'Unspecified'}
                       </span>
                     </div>
 
                     {/* 5. Monthly Rent */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-amber-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Monthly Rent</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">5. Monthly Rent</span>
                         <DollarSign className="w-4 h-4 text-amber-400" />
                       </div>
-                      <div className="text-lg font-black text-amber-300 font-['Outfit']">{lastExtractedResult.rentVal || '₹18,000'}</div>
-                      <span className="text-[10px] text-slate-400 font-mono">Extracted Rent Amount</span>
+                      <div className="text-lg font-black text-amber-300 font-['Outfit']">{lastExtractedResult.rentVal || '₹30,000'}</div>
+                      <span className="text-[10px] text-slate-400 font-mono">Rent Amount</span>
                     </div>
 
                     {/* 6. Brokerage Fee */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-purple-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Brokerage Fee</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">6. Brokerage Fee</span>
                         <Tag className="w-4 h-4 text-purple-400" />
                       </div>
                       <div className="text-base font-extrabold text-purple-300 font-['Outfit'] truncate">
                         {lastExtractedResult.brokerageVal || 'None / Direct Owner'}
                       </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Extracted Brokerage</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Broker Commission</span>
                     </div>
 
                     {/* 7. Carpet Area (Sq Ft) */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-teal-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Carpet Area</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">7. Carpet Area</span>
                         <SlidersHorizontal className="w-4 h-4 text-teal-400" />
                       </div>
                       <div className="text-base font-extrabold text-teal-300 font-['Outfit']">
@@ -1353,7 +1381,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     {/* 8. Security Deposit */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-blue-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Security Deposit</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">8. Security Deposit</span>
                         <ShieldCheck className="w-4 h-4 text-blue-400" />
                       </div>
                       <div className="text-sm font-extrabold text-blue-300 font-['Outfit'] truncate">
@@ -1362,24 +1390,22 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                       <span className="text-[10px] text-slate-400 font-mono">Lease Security Terms</span>
                     </div>
 
-                    {/* 9. Owner Contact Details */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-pink-500/40 transition-all sm:col-span-2">
+                    {/* 9. Bathrooms Count */}
+                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Owner Contact Details</span>
-                        <Users className="w-4 h-4 text-pink-400" />
+                        <span className="text-[10px] font-mono uppercase font-extrabold">9. Bathrooms</span>
+                        <Info className="w-4 h-4 text-indigo-400" />
                       </div>
-                      <div className="text-sm font-extrabold text-pink-300 font-['Outfit'] truncate">
-                        {lastExtractedResult.ownerName && lastExtractedResult.ownerName !== 'Not Specified' 
-                          ? `${lastExtractedResult.ownerName} (${lastExtractedResult.ownerPhone || 'No Phone'})`
-                          : (lastExtractedResult.ownerPhone || 'Not Specified')}
+                      <div className="text-base font-extrabold text-indigo-300 font-['Outfit']">
+                        {lastExtractedResult.bathrooms ? `${lastExtractedResult.bathrooms} Baths` : '2 Baths'}
                       </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Owner / Lead Seller Info</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Washrooms Count</span>
                     </div>
 
                     {/* 10. Vastu Facing */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Vastu Facing</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">10. Vastu Facing</span>
                         <Sparkles className="w-4 h-4 text-cyan-400" />
                       </div>
                       <div className="text-sm font-extrabold text-cyan-300 font-['Outfit']">
@@ -1388,10 +1414,94 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                       <span className="text-[10px] text-slate-400 font-mono">Solar Direction</span>
                     </div>
 
-                    {/* 11. Extracted Amenities */}
+                    {/* 11. Furnishing Status */}
+                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-purple-500/40 transition-all">
+                      <div className="flex items-center justify-between text-slate-400 mb-1">
+                        <span className="text-[10px] font-mono uppercase font-extrabold">11. Furnishing</span>
+                        <Home className="w-4 h-4 text-purple-400" />
+                      </div>
+                      <div className="text-sm font-extrabold text-purple-300 font-['Outfit']">
+                        {lastExtractedResult.furnishingStatus || 'UNSPECIFIED'}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">Interior Furnishing</span>
+                    </div>
+
+                    {/* 12. Possession Readiness */}
+                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition-all">
+                      <div className="flex items-center justify-between text-slate-400 mb-1">
+                        <span className="text-[10px] font-mono uppercase font-extrabold">12. Possession Date</span>
+                        <Zap className="w-4 h-4 text-emerald-400" />
+                      </div>
+                      <div className="text-xs font-extrabold text-emerald-300 font-['Outfit'] truncate">
+                        {lastExtractedResult.possessionDate || 'Immediate'}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">Move-In Readiness</span>
+                    </div>
+
+                    {/* 13. State */}
+                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-pink-500/40 transition-all">
+                      <div className="flex items-center justify-between text-slate-400 mb-1">
+                        <span className="text-[10px] font-mono uppercase font-extrabold">13. State</span>
+                        <MapPin className="w-4 h-4 text-pink-400" />
+                      </div>
+                      <div className="text-sm font-extrabold text-pink-300 font-['Outfit'] truncate">
+                        {lastExtractedResult.state || 'Madhya Pradesh'}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">Territory State</span>
+                    </div>
+
+                    {/* 14. Pincode */}
+                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-amber-500/40 transition-all">
+                      <div className="flex items-center justify-between text-slate-400 mb-1">
+                        <span className="text-[10px] font-mono uppercase font-extrabold">14. Pincode</span>
+                        <Compass className="w-4 h-4 text-amber-400" />
+                      </div>
+                      <div className="text-base font-extrabold text-amber-300 font-['Outfit']">
+                        {lastExtractedResult.pincode || '452010'}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">Postal Code</span>
+                    </div>
+
+                    {/* 15. Landmark */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-teal-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Extracted Amenities</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">15. Landmark</span>
+                        <FileText className="w-4 h-4 text-teal-400" />
+                      </div>
+                      <div className="text-xs font-extrabold text-teal-300 font-['Outfit'] truncate">
+                        {lastExtractedResult.landmark || 'Near Main Square'}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">Nearby Reference</span>
+                    </div>
+
+                    {/* 16. Listing Status */}
+                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition-all">
+                      <div className="flex items-center justify-between text-slate-400 mb-1">
+                        <span className="text-[10px] font-mono uppercase font-extrabold">16. Listing Status</span>
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      </div>
+                      <div className="text-sm font-black text-emerald-300 font-mono">
+                        {lastExtractedResult.status || 'LIVE'}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">Portal State</span>
+                    </div>
+
+                    {/* 17. Owner Contact Details */}
+                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-pink-500/40 transition-all sm:col-span-2">
+                      <div className="flex items-center justify-between text-slate-400 mb-1">
+                        <span className="text-[10px] font-mono uppercase font-extrabold">17 & 18. Owner Name & Phone</span>
+                        <Users className="w-4 h-4 text-pink-400" />
+                      </div>
+                      <div className="text-sm font-extrabold text-pink-300 font-['Outfit'] truncate">
+                        {lastExtractedResult.ownerName || 'Rajesh Agrawal'} ({lastExtractedResult.ownerPhone || '+91 98260 00000'})
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">Dummy Contact Placeholder</span>
+                    </div>
+
+                    {/* 19. Extracted Amenities */}
+                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-teal-500/40 transition-all sm:col-span-2">
+                      <div className="flex items-center justify-between text-slate-400 mb-1">
+                        <span className="text-[10px] font-mono uppercase font-extrabold">19. Extracted Amenities</span>
                         <CheckCircle2 className="w-4 h-4 text-teal-400" />
                       </div>
                       <div className="flex flex-wrap gap-1 mt-1">
@@ -1660,20 +1770,20 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     </p>
                   </div>
 
-                  {/* PRESET 1-CLICK TEST PROMPTS CHIPS BAR */}
+                  {/* PRESET 1-CLICK TEST PROMPTS CHIPS BAR WITH DUMMY PLACEHOLDERS */}
                   <div className="space-y-1.5 max-w-3xl">
                     <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">
-                      💡 Preset 1-Click Test Prompts:
+                      💡 Preset 1-Click Test Prompts (With Dummy Contacts):
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {[
                         {
                           label: "🌟 Full 18+ Field Prompt (Complete)",
-                          prompt: "Premium 2bhk flat 525 sqft 15000 brokerage 30000 rent 1+1 security deposit owner name Piyushi Saha 9876543210 status live in Nanda Nagar Indore facing east fully furnished ready to move"
+                          prompt: "Premium 2bhk flat 525 sqft 15000 brokerage 30000 rent 1+1 security deposit owner name Rajesh Agrawal 9826000000 status live in Nanda Nagar Indore facing east fully furnished ready to move near Main Square 452010 3 bathrooms"
                         },
                         {
                           label: "🏢 Luxury 3BHK Penthouse",
-                          prompt: "Luxury 3BHK Penthouse 1800 sqft 45000 rent Vijay Nagar Indore 3 bathrooms 15 days brokerage 2+1 deposit north-east facing gated security covered parking owner Rahul Sharma 9826012345 status live"
+                          prompt: "Luxury 3BHK Penthouse 1800 sqft 45000 rent Vijay Nagar Indore 3 bathrooms 15 days brokerage 2+1 deposit north-east facing gated security covered parking owner Sunil Jain 9826012345 status live"
                         },
                         {
                           label: "🏡 Independent Villa",
@@ -1696,22 +1806,101 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     </div>
                   </div>
 
-                  <form onSubmit={handleAddCustomBhk} className="space-y-3">
-                    <div className="flex flex-col sm:flex-row gap-3 max-w-3xl">
-                      <input
-                        type="text"
+                  {/* UNIFIED DRAG & DROP AI PROMPT & MEDIA ATTACHMENT CONSOLE */}
+                  <form onSubmit={handleAddCustomBhk} className="space-y-3 max-w-3xl">
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }}
+                      onDragLeave={() => setIsDraggingOver(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDraggingOver(false);
+                        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                          handleFilesAdded(e.dataTransfer.files);
+                        }
+                      }}
+                      className={`p-4.5 rounded-3xl border-2 transition-all space-y-3 ${
+                        isDraggingOver
+                          ? 'bg-emerald-950/90 border-emerald-400 shadow-2xl scale-[1.01]'
+                          : 'bg-slate-900 border-slate-800 text-white shadow-xl'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" />
+                          AI Property Prompt & Drag-and-Drop Media Console
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-400 bg-slate-950 px-2.5 py-1 rounded-full border border-slate-800">
+                          💡 Drag & Drop Photos or Video MP4 Here
+                        </span>
+                      </div>
+
+                      <textarea
+                        rows={3}
                         value={newBhkLabel}
                         onChange={(e) => setNewBhkLabel(e.target.value)}
-                        placeholder='e.g. "Premium 2bhk flat 525 sqft 15000 brokerage 30000 rent 1+1 security deposit owner name Piyushi Saha 9876543210 status live in Nanda Nagar Indore facing east fully furnished ready to move"'
-                        className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white shadow-xs"
+                        placeholder='Paste raw WhatsApp property prompt here... e.g. "Premium 2bhk flat 525 sqft 15000 brokerage 30000 rent 1+1 security deposit owner name Rajesh Agrawal 9826000000 status live in Nanda Nagar Indore facing east fully furnished ready to move near Main Square 452010 3 bathrooms"'
+                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-xs font-bold text-slate-100 focus:outline-none focus:border-emerald-500 font-mono shadow-inner"
                       />
-                      <button
-                        type="submit"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-5 py-3 rounded-xl shadow-md shadow-emerald-600/20 shrink-0 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
-                      >
-                        <Sparkles className="w-4 h-4" />
-                        <span>Add & Parse Prompt</span>
-                      </button>
+
+                      {/* ATTACHED MEDIA PREVIEW CHIPS ROW */}
+                      {attachedFiles.length > 0 && (
+                        <div className="p-3.5 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
+                          <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase block">
+                            📎 Attached Media ({attachedFiles.length} File(s) Ready to Upload):
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {attachedFiles.map((item) => (
+                              <div key={item.id} className="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
+                                <span className="text-xs">{item.isVideo ? '🎥' : '📷'}</span>
+                                <span className="font-mono text-[11px] text-slate-200 max-w-[130px] truncate">{item.file.name}</span>
+                                <select
+                                  value={item.roomTag}
+                                  onChange={(e) => handleTagChange(item.id, e.target.value as RoomTag)}
+                                  className="bg-slate-950 text-emerald-400 text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-slate-800 focus:outline-none"
+                                >
+                                  <option value="LIVING_ROOM">🛋️ Living Room</option>
+                                  <option value="BEDROOM">🛏️ Bedroom</option>
+                                  <option value="KITCHEN">🍳 Kitchen</option>
+                                  <option value="BALCONY">🌳 Balcony View</option>
+                                  <option value="EXTERIOR">🏢 Exterior</option>
+                                  <option value="AMENITIES">🏊 Amenities</option>
+                                  <option value="FLOOR_PLAN">📐 Floor Plan</option>
+                                </select>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveAttachment(item.id)}
+                                  className="text-red-400 hover:text-red-300 font-bold ml-1 text-xs"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ACTION BUTTONS ROW */}
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+                        <label className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold text-xs px-4 py-2.5 rounded-xl border border-slate-700 cursor-pointer transition-all flex items-center gap-1.5 shadow-xs">
+                          <Plus className="w-4 h-4 text-emerald-400" />
+                          <span>➕ Attach Media / Upload Photos / Video</span>
+                          <input
+                            type="file"
+                            accept="image/*,video/mp4,video/*"
+                            multiple
+                            onChange={(e) => e.target.files && handleFilesAdded(e.target.files)}
+                            className="hidden"
+                          />
+                        </label>
+
+                        <button
+                          type="submit"
+                          className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs px-6 py-2.5 rounded-xl shadow-md shadow-emerald-600/30 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          <span>✨ Parse Prompt & Save to PostgreSQL DB</span>
+                        </button>
+                      </div>
                     </div>
 
                     {/* LIVE AI AUTO-PARSE EXTRACTION CHIP PREVIEW CARD */}
