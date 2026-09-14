@@ -158,4 +158,25 @@ public class PropertyParserServiceTest {
         assertEquals("Not Specified", dto.getType());
         assertEquals("Not Specified", dto.getBathrooms());
     }
+
+    @Test
+    public void testUserNoisyPromptAndTypoAutoCorrection() {
+        String userNoisyPrompt = "sfjsf dsfjl2 jsfldsjfas fij dfbhk 2 jskljfkldsjf sdfbhk bhk";
+        ParsedPropertyDTO dto1 = propertyParserService.parseAndSave(userNoisyPrompt);
+        assertNotNull(dto1);
+        assertEquals("2 BHK", dto1.getBhk());
+
+        String typoPrompt = "3.5 flt in saket nagr 25000 rnt owner jhon doe +91 9876543210 est facing semifurnishd";
+        ParsedPropertyDTO dto2 = propertyParserService.parseAndSave(typoPrompt);
+        assertNotNull(dto2);
+        assertEquals("3.5 BHK", dto2.getBhk());
+        assertEquals("Flat", dto2.getType());
+        assertEquals("Saket Nagar", dto2.getSector());
+        assertEquals(25000.0, dto2.getRentAmount());
+        assertEquals("₹25,000", dto2.getRentVal());
+        assertEquals("Jhon Doe", dto2.getOwnerName());
+        assertEquals("9876543210", dto2.getOwnerPhone());
+        assertEquals("East Facing", dto2.getVastuFacing());
+        assertEquals("Semi Furnished", dto2.getFurnishingStatus());
+    }
 }

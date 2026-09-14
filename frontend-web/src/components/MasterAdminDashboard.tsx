@@ -346,51 +346,85 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     const input = text.trim();
     const cleanLower = input.toLowerCase();
 
-    // 1. Universal BHK / Layout Extractor
+    // 0. Pre-Pass: Typo Auto-Correction & Normalization
+    let normalized = cleanLower;
+    normalized = normalized.replace(/\b(flt|flts|flatt|appartment|appatment|apartmnt|apt|apts)\b/g, 'flat');
+    normalized = normalized.replace(/\b(viila|vlla|vlia|bunglow|bunglows|independant|indepent)\b/g, 'house');
+    normalized = normalized.replace(/\b(plott|pott|lnd)\b/g, 'plot');
+    normalized = normalized.replace(/\b(semi\s*furnishd|semifurnished|semi\-furnished|semifurnish)\b/g, 'semi furnished');
+    normalized = normalized.replace(/\b(fully\s*furnishd|full\s*furnished|fully\-furnished|fullfurnish)\b/g, 'fully furnished');
+    normalized = normalized.replace(/\b(unfurnishd|un\-furnished|bare)\b/g, 'unfurnished');
+    normalized = normalized.replace(/\b(est\s*facing|east\s*faceing)\b/g, 'east facing');
+    normalized = normalized.replace(/\b(wst\s*facing|west\s*faceing)\b/g, 'west facing');
+    normalized = normalized.replace(/\b(noth\s*facing|north\s*faceing)\b/g, 'north facing');
+    normalized = normalized.replace(/\b(suth\s*facing|south\s*faceing)\b/g, 'south facing');
+    normalized = normalized.replace(/\b(rnt|ren|mothly\s*rent|pm|p\.m\.)\b/g, 'rent');
+    normalized = normalized.replace(/\b(depost|deposite|scurity\s*deposit|scurity\s*dep)\b/g, 'deposit');
+
+    // 1. Universal Fault-Tolerant BHK / Layout Extractor
     let bhk = 'Unspecified';
     let bhkFound = false;
-    const numBhkMatch = input.match(/\b(\d+(?:\.\d+)?)\s*(?:[a-zA-Z0-9\-\_]{1,20}\s+)?(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\b/i);
-    const wordBhkMatch = input.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:[a-zA-Z0-9\-\_]{1,20}\s+)?(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\b/i);
+
+    // 1A. Direct & Multi-Word Distance-Independent BHK Matching
+    const numBhkMatch = input.match(/\b([1-9](?:\.5)?|10)\s*(?:[a-zA-Z0-9\-\_]{1,30}\s+){0,10}?(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk|flat|flt|flats|flatt|apartment|house|villa)\b/i) ||
+                        normalized.match(/\b([1-9](?:\.5)?|10)\s*(?:[a-zA-Z0-9\-\_]{1,30}\s+){0,10}?(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk|flat|flt|flats|flatt|apartment|house|villa)\b/i);
+
+    // 1B. Reverse Matching (e.g. 'bhk 2' or 'bedrooms 3')
+    const revBhkMatch = input.match(/\b(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk|flat|flt|flats|flatt|apartment|house|villa)\b\s*(?:[a-zA-Z0-9\-\_]{1,30}\s+){0,10}?([1-9](?:\.5)?|10)\b/i) ||
+                        normalized.match(/\b(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk|flat|flt|flats|flatt|apartment|house|villa)\b\s*(?:[a-zA-Z0-9\-\_]{1,30}\s+){0,10}?([1-9](?:\.5)?|10)\b/i);
+
+    const wordBhkMatch = input.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:[a-zA-Z0-9\-\_]{1,30}\s+){0,10}?(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk)\b/i);
 
     if (numBhkMatch) {
       const val = numBhkMatch[1];
+      bhk = val.endsWith('.0') ? `${val.substring(0, val.length - 2)} BHK` : `${val} BHK`;
+      bhkFound = true;
+    } else if (revBhkMatch) {
+      const val = revBhkMatch[1];
       bhk = val.endsWith('.0') ? `${val.substring(0, val.length - 2)} BHK` : `${val} BHK`;
       bhkFound = true;
     } else if (wordBhkMatch) {
       const wordMap: Record<string, string> = { one: '1', two: '2', three: '3', four: '4', five: '5', six: '6', seven: '7', eight: '8', nine: '9', ten: '10' };
       bhk = `${wordMap[wordBhkMatch[1].toLowerCase()] || '2'} BHK`;
       bhkFound = true;
-    } else if (/studio|1rk|\brk\b/i.test(input)) {
+    } else if (/studio|1rk|\brk\b/i.test(normalized)) {
       bhk = '1 RK Studio';
       bhkFound = true;
-    } else if (/triplex/i.test(input)) {
+    } else if (/triplex/i.test(normalized)) {
       bhk = 'Triplex Villa';
       bhkFound = true;
-    } else if (/duplex|villa/i.test(input)) {
+    } else if (/duplex|villa/i.test(normalized)) {
       bhk = 'Duplex Villa';
       bhkFound = true;
-    } else if (/penthouse/i.test(input)) {
+    } else if (/penthouse/i.test(normalized)) {
       bhk = 'Luxury Penthouse';
       bhkFound = true;
+    } else {
+      // 1C. Global Fallback Extractor: If any single number exists and prompt contains BHK/RK/Bed tokens or typos anywhere
+      const anyNumMatch = input.match(/\b([1-9]\d?(?:\.5)?)\b/);
+      if (anyNumMatch && /(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk)/i.test(input)) {
+        bhk = `${anyNumMatch[1]} BHK`;
+        bhkFound = true;
+      }
     }
 
-    // 2. Extract Property Type (No fake default - only if mentioned in prompt)
+    // 2. Extract Property Type (Auto-Corrects typos like flt, appartment, viila)
     let type = '';
     let typeFound = false;
-    if (/house|villa|bungalow|independent/i.test(input)) { type = 'HOUSE'; typeFound = true; }
-    else if (/plot|land|commercial plot/i.test(input)) { type = 'PLOT'; typeFound = true; }
-    else if (/penthouse/i.test(input)) { type = 'PENTHOUSE'; typeFound = true; }
-    else if (/studio/i.test(input)) { type = 'STUDIO'; typeFound = true; }
-    else if (/air\s*bnb|airbnb/i.test(input)) { type = 'AIRBNB'; typeFound = true; }
-    else if (/flat|apartment/i.test(input)) { type = 'FLAT'; typeFound = true; }
+    if (/house|villa|bungalow|independent|bunglow|viila|vlla/i.test(normalized)) { type = 'HOUSE'; typeFound = true; }
+    else if (/plot|land|commercial plot|plott|pott/i.test(normalized)) { type = 'PLOT'; typeFound = true; }
+    else if (/penthouse|penthous/i.test(normalized)) { type = 'PENTHOUSE'; typeFound = true; }
+    else if (/studio/i.test(normalized)) { type = 'STUDIO'; typeFound = true; }
+    else if (/air\s*bnb|airbnb/i.test(normalized)) { type = 'AIRBNB'; typeFound = true; }
+    else if (/flat|apartment|flt|flts|flatt|appartment|apartmnt|apt/i.test(normalized)) { type = 'FLAT'; typeFound = true; }
 
     // 3A. Brokerage Extractor (Days or Amount)
     let brokerageDays: number | undefined = undefined;
     let brokerageVal = 'Unmentioned';
     let brokerageAmount: number | undefined = undefined;
     let brokerageFound = false;
-    const brokerageDaysMatch = input.match(/\b(\d{1,2})\s*(?:days|day)\s*(?:brokerage|broker\s*fee|commission)?\b/i);
-    const brokerageMatch = input.match(/(\d{4,6}|\d{1,2}k)\s*(?:brokerage|broker\s*fee|commission)\b|\b(?:brokerage|broker\s*fee|commission)\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{4,6}|\d{1,2}k)\b/i);
+    const brokerageDaysMatch = normalized.match(/\b(\d{1,2})\s*(?:days|day)\s*(?:brokerage|broker\s*fee|commission)?\b/i);
+    const brokerageMatch = normalized.match(/(\d{4,6}|\d{1,2}k)\s*(?:brokerage|broker\s*fee|commission)\b|\b(?:brokerage|broker\s*fee|commission)\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{4,6}|\d{1,2}k)\b/i);
     if (brokerageMatch) {
       const rawB = brokerageMatch[1] || brokerageMatch[2];
       if (rawB) {
@@ -406,21 +440,21 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
     // 3B. Bathrooms Extractor (No fake default - undefined if unmentioned)
     let bathrooms: number | undefined = undefined;
-    const bathMatch = input.match(/\b(\d+)\s*(?:bath|baths|bathroom|bathrooms|washroom|toilet)\b/i);
+    const bathMatch = normalized.match(/\b(\d+)\s*(?:bath|baths|bathroom|bathrooms|washroom|toilet)\b/i);
     if (bathMatch) {
       bathrooms = parseInt(bathMatch[1]);
     }
 
     // 3C. Area Sqft Extractor
     let areaSqFt = '';
-    const sqftMatch = input.match(/\b(\d{3,5})\s*(?:sqft|sq\.ft|sq\s*ft|sqfeet|square\s*feet|sq\s*meters|sqm)\b/i);
+    const sqftMatch = normalized.match(/\b(\d{3,5})\s*(?:sqft|sq\.ft|sq\s*ft|sqfeet|square\s*feet|sq\s*meters|sqm)\b/i);
     if (sqftMatch) {
       areaSqFt = `${sqftMatch[1]} sqft`;
     }
 
     // 3D. Security Deposit Extractor
     let depositVal = '';
-    const depositMatch = input.match(/(\d+(?:\+\d+)?)\s*(?:security\s*deposit|deposit|dep)\b|\b(?:security\s*deposit|deposit)\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{4,6}|\d{1,2}k|\d\+\d)\b/i);
+    const depositMatch = normalized.match(/(\d+(?:\+\d+)?)\s*(?:security\s*deposit|deposit|dep|depost|deposite|scurity)\b|\b(?:security\s*deposit|deposit|depost)\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{4,6}|\d{1,2}k|\d\+\d)\b/i);
     if (depositMatch) {
       const depRaw = depositMatch[1] || depositMatch[2];
       depositVal = `${depRaw} Security Deposit`;
@@ -430,7 +464,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     let ownerName = 'Not Specified';
     let ownerPhone = 'Not Specified';
     let ownerFound = false;
-    const ownerNameMatch = input.match(/\b(?:owner\s*name|owner)\s*[:\-]?\s*([A-Za-z\s]{2,30}?)(?=\s+\d|\s+\+?91|\s+phone|\s+mobile|\s+rent|\s+brokerage|$)/i);
+    const ownerNameMatch = input.match(/\b(?:owner\s*name|owner|contact)\s*[:\-]?\s*([A-Za-z\s]{2,30}?)(?=\s+\d|\s+\+?91|\s+phone|\s+mobile|\s+rent|\s+brokerage|$)/i);
     if (ownerNameMatch && ownerNameMatch[1].trim()) {
       const candidate = ownerNameMatch[1].trim();
       if (!/^(is|live|facing|flat|house|villa|apartment|plot)$/i.test(candidate)) {
@@ -452,7 +486,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     let rentVal = 'Unspecified';
     let rentAmount = 0;
     let rentFound = false;
-    const explicitRentMatch = input.match(/(\d{4,6}|\d{1,2}k)\s*(?:rent|per\s*month|\/month|pm)\b|\brent\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{4,6}|\d{1,2}k)\b/i);
+    const explicitRentMatch = normalized.match(/(\d{4,6}|\d{1,2}k)\s*(?:rent|per\s*month|\/month|pm)\b|\brent\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{4,6}|\d{1,2}k)\b/i);
     if (explicitRentMatch) {
       const rawR = explicitRentMatch[1] || explicitRentMatch[2];
       if (rawR) {
@@ -461,8 +495,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         rentFound = true;
       }
     } else {
-      let numberMatch = input.match(/\b(\d{4,6})\b/);
-      let kMatch = input.match(/\b(\d{1,2})k\b/i);
+      let numberMatch = normalized.match(/\b(\d{4,6})\b/);
+      let kMatch = normalized.match(/\b(\d{1,2})k\b/i);
       if (numberMatch && (!areaSqFt || !areaSqFt.startsWith(numberMatch[1])) && (!brokerageVal || !brokerageVal.includes(numberMatch[1]))) {
         rentAmount = parseInt(numberMatch[1]);
         rentVal = `₹${rentAmount.toLocaleString('en-IN')}`;
@@ -483,23 +517,23 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     ];
 
     for (const c of PAN_INDIA_CITIES) {
-      if (new RegExp(`\\b${c}\\b`, 'i').test(input)) {
+      if (new RegExp(`\\b${c}\\b`, 'i').test(normalized)) {
         city = c;
         break;
       }
     }
 
-    // 4. Locality & Sector Extraction
+    // 4. Locality & Sector Extraction with Fuzzy Gazetteer Auto-Correction
     let sector = '';
     const SECTOR_GAZETTEER = [
-      { canonical: 'Rau Circle', keywords: ['rau circle', 'rau'] },
+      { canonical: 'Rau Circle', keywords: ['rau circle', 'rau', 'rau square'] },
       { canonical: 'Chhoti Gwaltoli', keywords: ['choti', 'gwaltoli', 'chhoti'] },
-      { canonical: 'Nanda Nagar', keywords: ['nanda', 'nandanagar'] },
-      { canonical: 'Vijay Nagar', keywords: ['vijay', 'vijaynagar'] },
-      { canonical: 'Bhawarkua', keywords: ['bhawarkua', 'bhawarkwa', 'bhawar'] },
-      { canonical: 'Palasia', keywords: ['palasia'] },
+      { canonical: 'Nanda Nagar', keywords: ['nanda', 'nandanagar', 'nanda nagr'] },
+      { canonical: 'Vijay Nagar', keywords: ['vijay', 'vijaynagar', 'vijay nagr', 'vijayngr'] },
+      { canonical: 'Bhawarkua', keywords: ['bhawarkua', 'bhawarkwa', 'bhawar', 'bhawar kua'] },
+      { canonical: 'Palasia', keywords: ['palasia', 'palasiaa'] },
       { canonical: 'Super Corridor', keywords: ['super', 'corridor'] },
-      { canonical: 'Nipania', keywords: ['nipania'] },
+      { canonical: 'Nipania', keywords: ['nipania', 'nipaniya'] },
       { canonical: 'AB Road', keywords: ['ab road', 'abroad'] },
       { canonical: 'LIG Circle', keywords: ['lig'] },
       { canonical: 'South Tukoganj', keywords: ['tukoganj'] },
@@ -514,14 +548,14 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     ];
 
     for (const secObj of SECTOR_GAZETTEER) {
-      if (secObj.keywords.some(kw => cleanLower.includes(kw))) {
+      if (secObj.keywords.some(kw => normalized.includes(kw))) {
         sector = secObj.canonical;
         break;
       }
     }
 
     if (!sector) {
-      let prepMatch = input.match(/\b(?:in|at|near|around|sector)\s+([A-Za-z0-9\s]{2,30}?)(?=\s+(?:with|having|facing|for|rent|per|\d|rs|rupees|\$|$))/i);
+      let prepMatch = normalized.match(/\b(?:in|at|near|around|sector)\s+([A-Za-z0-9\s]{2,30}?)(?=\s+(?:with|having|facing|for|rent|per|\d|rs|rupees|\$|$))/i);
       if (prepMatch && prepMatch[1].trim()) {
         const extracted = prepMatch[1].trim();
         if (!PAN_INDIA_CITIES.some(c => c.toLowerCase() === extracted.toLowerCase())) {
@@ -531,7 +565,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     }
 
     if (!sector) {
-      let suffixMatch = input.match(/\b([A-Za-z0-9\s]{2,20}\s+(?:nagar|colony|city|township|road|circle|sector|bazar|vihar|enclave|pur|ganj|heights|residency|villa|society|square|chowk|puri|dham|bagh|marg))\b/i);
+      let suffixMatch = normalized.match(/\b([A-Za-z0-9\s]{2,20}\s+(?:nagar|colony|city|township|road|circle|sector|bazar|vihar|enclave|pur|ganj|heights|residency|villa|society|square|chowk|puri|dham|bagh|marg))\b/i);
       if (suffixMatch && suffixMatch[1].trim()) {
         sector = suffixMatch[1].trim().replace(/\b\w/g, l => l.toUpperCase());
       }
@@ -553,7 +587,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     ];
 
     for (const colObj of KNOWN_COLONIES) {
-      if (colObj.keywords.some(kw => cleanLower.includes(kw))) {
+      if (colObj.keywords.some(kw => normalized.includes(kw))) {
         colony = colObj.canonical;
         break;
       }

@@ -27,9 +27,11 @@ public class PropertyParserService {
     // Pre-compiled Thread-Safe Static RegEx Patterns (Zero runtime recompilation
     // overhead)
     private static final Pattern NUM_BHK_PATTERN = Pattern.compile(
-            "\\b(\\d+(?:\\.\\d+)?)\\s*(?:[a-zA-Z0-9\\-\\_]{1,20}\\s+)?(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\\b", Pattern.CASE_INSENSITIVE);
+            "\\b([1-9](?:\\.5)?|10)\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk|flat|flt|flats|flatt|apartment|house|villa)\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern REV_BHK_PATTERN = Pattern.compile(
+            "\\b(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk|flat|flt|flats|flatt|apartment|house|villa)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?([1-9](?:\\.5)?|10)\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern WORD_BHK_PATTERN = Pattern.compile(
-            "\\b(one|two|three|four|five|six|seven|eight|nine|ten)\\s*(?:[a-zA-Z0-9\\-\\_]{1,20}\\s+)?(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\\b",
+            "\\b(one|two|three|four|five|six|seven|eight|nine|ten)\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern BATHROOMS_PATTERN = Pattern
             .compile("\\b(\\d{1,2})\\s*(?:bath|baths|bathroom|bathrooms|toilet|washroom)\\b", Pattern.CASE_INSENSITIVE);
@@ -141,24 +143,48 @@ public class PropertyParserService {
         String input = prompt.trim();
         String cleanLower = input.toLowerCase();
 
-        // 1. Universal BHK Extractor (Studio/RK checked prior to generic numeric)
+        // 0. Pre-Pass: Typo Auto-Correction & Normalization
+        String normalized = cleanLower;
+        normalized = normalized.replaceAll("\\b(flt|flts|flatt|appartment|appatment|apartmnt|apt|apts)\\b", "flat");
+        normalized = normalized.replaceAll("\\b(viila|vlla|vlia|bunglow|bunglows|independant|indepent)\\b", "house");
+        normalized = normalized.replaceAll("\\b(plott|pott|lnd)\\b", "plot");
+        normalized = normalized.replaceAll("\\b(semi\\s*furnishd|semifurnished|semi\\-furnished|semifurnish)\\b", "semi furnished");
+        normalized = normalized.replaceAll("\\b(fully\\s*furnishd|full\\s*furnished|fully\\-furnished|fullfurnish)\\b", "fully furnished");
+        normalized = normalized.replaceAll("\\b(unfurnishd|un\\-furnished|bare)\\b", "unfurnished");
+        normalized = normalized.replaceAll("\\b(est\\s*facing|east\\s*faceing)\\b", "east facing");
+        normalized = normalized.replaceAll("\\b(wst\\s*facing|west\\s*faceing)\\b", "west facing");
+        normalized = normalized.replaceAll("\\b(noth\\s*facing|north\\s*faceing)\\b", "north facing");
+        normalized = normalized.replaceAll("\\b(suth\\s*facing|south\\s*faceing)\\b", "south facing");
+        normalized = normalized.replaceAll("\\b(rnt|ren|mothly\\s*rent|pm|p\\.m\\.)\\b", "rent");
+        normalized = normalized.replaceAll("\\b(depost|deposite|scurity\\s*deposit|scurity\\s*dep)\\b", "deposit");
+        normalized = normalized.replaceAll("\\b(saket\\s*nagr|saketnagar)\\b", "saket nagar");
+        normalized = normalized.replaceAll("\\b(vijay\\s*nagr|vijayngr|vijaynagar)\\b", "vijay nagar");
+        normalized = normalized.replaceAll("\\b(nanda\\s*nagr|nandanagar)\\b", "nanda nagar");
+        normalized = normalized.replaceAll("\\b(bhawarkwa|bhawar\\s*kua)\\b", "bhawarkua");
+        normalized = normalized.replaceAll("\\b(palasiaa)\\b", "palasia");
+        normalized = normalized.replaceAll("\\b(nipaniya|nipaniyaa)\\b", "nipania");
+
         // 1. Universal BHK Extractor (Studio/RK checked prior to generic numeric)
         String bhk = "Unspecified";
-        if (cleanLower.contains("studio") || cleanLower.contains("1rk") || cleanLower.contains(" rk ")
-                || cleanLower.endsWith(" rk")) {
+        if (normalized.contains("studio") || normalized.contains("1rk") || normalized.contains(" rk ")
+                || normalized.endsWith(" rk")) {
             bhk = "1 RK Studio";
-        } else if (cleanLower.contains("triplex")) {
+        } else if (normalized.contains("triplex")) {
             bhk = "Triplex Villa";
-        } else if (cleanLower.contains("duplex") || cleanLower.contains("villa")) {
+        } else if (normalized.contains("duplex") || normalized.contains("villa")) {
             bhk = "Duplex Villa";
-        } else if (cleanLower.contains("penthouse")) {
+        } else if (normalized.contains("penthouse")) {
             bhk = "Luxury Penthouse";
         } else {
             Matcher numBhkMatcher = NUM_BHK_PATTERN.matcher(input);
+            Matcher revBhkMatcher = REV_BHK_PATTERN.matcher(input);
             Matcher wordBhkMatcher = WORD_BHK_PATTERN.matcher(input);
 
             if (numBhkMatcher.find()) {
                 String val = numBhkMatcher.group(1);
+                bhk = val.endsWith(".0") ? val.substring(0, val.length() - 2) + " BHK" : val + " BHK";
+            } else if (revBhkMatcher.find()) {
+                String val = revBhkMatcher.group(1);
                 bhk = val.endsWith(".0") ? val.substring(0, val.length() - 2) + " BHK" : val + " BHK";
             } else if (wordBhkMatcher.find()) {
                 String w = wordBhkMatcher.group(1).toLowerCase();
@@ -176,6 +202,12 @@ public class PropertyParserService {
                     default -> "2";
                 };
                 bhk = num + " BHK";
+            } else {
+                // Global Fallback Extractor: If any single number exists and prompt contains BHK/RK/Bed tokens or typos anywhere
+                Matcher anyDigit = Pattern.compile("\\b([1-9]\\d?(?:\\.5)?)\\b").matcher(input);
+                if (anyDigit.find() && Pattern.compile("(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk)", Pattern.CASE_INSENSITIVE).matcher(input).find()) {
+                    bhk = anyDigit.group(1) + " BHK";
+                }
             }
         }
 
@@ -189,18 +221,18 @@ public class PropertyParserService {
         // 2. Property Type Extractor (Flat, House, Villa, Apartment, Airbnb, Plot,
         // Studio, Penthouse, Duplex)
         String type = null;
-        if (cleanLower.contains("airbnb") || cleanLower.contains("serviced stay")) {
+        if (normalized.contains("airbnb") || normalized.contains("serviced stay")) {
             type = "Airbnb";
-        } else if (cleanLower.contains("apartment") || cleanLower.contains("flat")) {
+        } else if (normalized.contains("apartment") || normalized.contains("flat") || normalized.contains("flt")) {
             type = "Flat";
-        } else if (cleanLower.contains("house") || cleanLower.contains("bungalow") || cleanLower.contains("independent")
-                || cleanLower.contains("villa") || cleanLower.contains("duplex")) {
+        } else if (normalized.contains("house") || normalized.contains("bungalow") || normalized.contains("independent")
+                || normalized.contains("villa") || normalized.contains("duplex")) {
             type = "House";
-        } else if (cleanLower.contains("plot") || cleanLower.contains("land")) {
+        } else if (normalized.contains("plot") || normalized.contains("land")) {
             type = "Plot";
-        } else if (cleanLower.contains("penthouse")) {
+        } else if (normalized.contains("penthouse")) {
             type = "Penthouse";
-        } else if (cleanLower.contains("studio")) {
+        } else if (normalized.contains("studio")) {
             type = "Studio";
         }
 
@@ -249,7 +281,7 @@ public class PropertyParserService {
 
         // 3D. Furnishing & Possession Date Extractor
         String furnishingStatus = null;
-        Matcher furnMatcher = FURNISHING_PATTERN.matcher(input);
+        Matcher furnMatcher = FURNISHING_PATTERN.matcher(normalized);
         if (furnMatcher.find()) {
             furnishingStatus = capitalizeWords(furnMatcher.group(1));
         }
@@ -388,7 +420,7 @@ public class PropertyParserService {
 
         // Dynamic Sector / Street / Road / Suffix Scanner
         if (sector.isBlank()) {
-            Matcher suffixMatcher = SUFFIX_LOCALITY_PATTERN.matcher(input);
+            Matcher suffixMatcher = SUFFIX_LOCALITY_PATTERN.matcher(normalized);
             if (suffixMatcher.find()) {
                 String matchedStr = capitalizeWords(suffixMatcher.group(1).trim());
                 sector = matchedStr;
@@ -397,7 +429,7 @@ public class PropertyParserService {
 
         // Dynamic Preposition NER Scanner
         if (sector.isBlank()) {
-            Matcher prepMatcher = PREP_LOCALITY_PATTERN.matcher(input);
+            Matcher prepMatcher = PREP_LOCALITY_PATTERN.matcher(normalized);
             if (prepMatcher.find()) {
                 String candidate = prepMatcher.group(1).trim();
                 if (!candidate.equalsIgnoreCase(city)) {
@@ -432,25 +464,25 @@ public class PropertyParserService {
         // 6. Vastu Facing Direction (Defaults to 'Not Specified' unless direction
         // keyword is present)
         String vastuFacing = "Not Specified";
-        if (cleanLower.contains("north-east") || cleanLower.contains("northeast"))
+        if (normalized.contains("north-east") || normalized.contains("northeast"))
             vastuFacing = "North-East Facing";
-        else if (cleanLower.contains("north-west") || cleanLower.contains("northwest"))
+        else if (normalized.contains("north-west") || normalized.contains("northwest"))
             vastuFacing = "North-West Facing";
-        else if (cleanLower.contains("south-east") || cleanLower.contains("southeast"))
+        else if (normalized.contains("south-east") || normalized.contains("southeast"))
             vastuFacing = "South-East Facing";
-        else if (cleanLower.contains("south-west") || cleanLower.contains("southwest"))
+        else if (normalized.contains("south-west") || normalized.contains("southwest"))
             vastuFacing = "South-West Facing";
-        else if (cleanLower.contains("facing west") || cleanLower.contains("west facing")
-                || cleanLower.contains("west"))
+        else if (normalized.contains("facing west") || normalized.contains("west facing")
+                || normalized.contains("west"))
             vastuFacing = "West Facing";
-        else if (cleanLower.contains("facing north") || cleanLower.contains("north facing")
-                || cleanLower.contains("north"))
+        else if (normalized.contains("facing north") || normalized.contains("north facing")
+                || normalized.contains("north"))
             vastuFacing = "North Facing";
-        else if (cleanLower.contains("facing south") || cleanLower.contains("south facing")
-                || cleanLower.contains("south"))
+        else if (normalized.contains("facing south") || normalized.contains("south facing")
+                || normalized.contains("south"))
             vastuFacing = "South Facing";
-        else if (cleanLower.contains("facing east") || cleanLower.contains("east facing")
-                || cleanLower.contains("east"))
+        else if (normalized.contains("facing east") || normalized.contains("east facing")
+                || normalized.contains("east"))
             vastuFacing = "East Facing";
 
         // 7. Amenities Extractor
