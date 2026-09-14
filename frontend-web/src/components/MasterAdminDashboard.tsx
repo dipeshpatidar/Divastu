@@ -168,8 +168,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     const input = text.trim();
     const cleanLower = input.toLowerCase();
 
-    // 1. Extract BHK / Layout (even embedded inside noisy strings like "fsf 2bhk kjasd")
-    let bhkMatch = input.match(/([1-9])\s*(bhk|rk|bedroom|room)/i);
+    // 1. Extract BHK / Layout (supports disconnected "4 ... bhk" or "4bhk")
+    let bhkMatch = input.match(/\b([1-9])\b[\s\S]{0,30}?\b(bhk|rk|bedroom|room)\b/i) || input.match(/([1-9])\s*(bhk|rk|bedroom|room)/i);
     let bhk = bhkMatch ? `${bhkMatch[1]} BHK` : '';
     if (!bhk) {
       if (/studio|1rk/i.test(input)) bhk = '1 RK Studio';
@@ -195,9 +195,10 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       rentVal = `₹${(parseInt(kMatch[1]) * 1000).toLocaleString('en-IN')}`;
     }
 
-    // 4. Noise-Tolerant Indore Sector Gazetteer Token Matching
+    // 4. Noise-Tolerant Indore Sector Gazetteer & Landmark Token Matching
     let sector = '';
     const SECTOR_GAZETTEER = [
+      { canonical: 'Rau Circle', keywords: ['rau circle', 'rau'] },
       { canonical: 'Chhoti Gwaltoli', keywords: ['choti', 'gwaltoli', 'chhoti'] },
       { canonical: 'Nanda Nagar', keywords: ['nanda', 'nandanagar'] },
       { canonical: 'Vijay Nagar', keywords: ['vijay', 'vijaynagar'] },
@@ -205,7 +206,6 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       { canonical: 'Palasia', keywords: ['palasia'] },
       { canonical: 'Super Corridor', keywords: ['super', 'corridor'] },
       { canonical: 'Nipania', keywords: ['nipania'] },
-      { canonical: 'Rau', keywords: ['rau'] },
       { canonical: 'AB Road', keywords: ['ab road', 'abroad'] },
       { canonical: 'LIG Circle', keywords: ['lig'] },
       { canonical: 'South Tukoganj', keywords: ['tukoganj'] },
@@ -229,10 +229,28 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     }
 
     if (!sector) {
-      sector = 'Chhoti Gwaltoli';
+      sector = 'Rau Circle';
     }
 
-    // 5. Extract Vastu Facing Direction (even if "east" and "facing" are separated by noise)
+    // 4.5. Society / Colony Landmark Detection (e.g. Shiva Vatika, Singapore City, Apollo DB City)
+    let colony = '';
+    const KNOWN_COLONIES = [
+      { canonical: 'Shiva Vatika', keywords: ['shiva vatika', 'shiva', 'vatika'] },
+      { canonical: 'Singapore City', keywords: ['singapore city', 'singapore'] },
+      { canonical: 'Apollo DB City', keywords: ['apollo db city', 'apollo'] },
+      { canonical: 'Silver Springs', keywords: ['silver springs'] },
+      { canonical: 'Treasure Town', keywords: ['treasure town'] },
+      { canonical: 'Shalimar Township', keywords: ['shalimar'] }
+    ];
+
+    for (const colObj of KNOWN_COLONIES) {
+      if (colObj.keywords.some(kw => cleanLower.includes(kw))) {
+        colony = colObj.canonical;
+        break;
+      }
+    }
+
+    // 5. Extract Vastu Facing Direction (supports disconnected "west ... facing")
     let vastuFacing = 'East Facing';
     const directions = [
       { key: 'north-east', label: 'North-East Facing' },
@@ -260,13 +278,15 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     if (/parking/i.test(input)) amenities.push('Covered Parking');
     if (/gated/i.test(input)) amenities.push('Gated Security');
 
-    const title = `${bhk} ${type} in ${sector}${amenities.length > 0 ? ' with ' + amenities.join(', ') : ''}`;
-    const label = `${bhk} ${type} (${sector})`;
+    const fullLocation = colony ? `${sector} (${colony})` : sector;
+    const title = `${bhk} ${type} in ${colony ? colony + ', ' : ''}${sector} (${vastuFacing})${amenities.length > 0 ? ' with ' + amenities.join(', ') : ''}`;
+    const label = `${bhk} ${type} (${fullLocation})`;
 
     return {
       bhk,
       type,
       sector,
+      colony,
       rentVal,
       vastuFacing,
       amenities,
