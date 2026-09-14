@@ -347,10 +347,12 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     const cleanLower = input.toLowerCase();
 
     // 0. Pre-Pass: Typo Auto-Correction & Normalization
+    // 0. Exhaustive Pre-Pass: Typo Auto-Correction & Normalization
     let normalized = cleanLower;
     normalized = normalized.replace(/\b(flt|flts|flatt|appartment|appatment|apartmnt|apt|apts)\b/g, 'flat');
     normalized = normalized.replace(/\b(viila|vlla|vlia|bunglow|bunglows|independant|indepent)\b/g, 'house');
     normalized = normalized.replace(/\b(plott|pott|lnd)\b/g, 'plot');
+    normalized = normalized.replace(/\b(penthous|pent\s*house|pent\-house)\b/g, 'penthouse');
     normalized = normalized.replace(/\b(semi\s*furnishd|semifurnished|semi\-furnished|semifurnish)\b/g, 'semi furnished');
     normalized = normalized.replace(/\b(fully\s*furnishd|full\s*furnished|fully\-furnished|fullfurnish)\b/g, 'fully furnished');
     normalized = normalized.replace(/\b(unfurnishd|un\-furnished|bare)\b/g, 'unfurnished');
@@ -359,7 +361,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     normalized = normalized.replace(/\b(noth\s*facing|north\s*faceing)\b/g, 'north facing');
     normalized = normalized.replace(/\b(suth\s*facing|south\s*faceing)\b/g, 'south facing');
     normalized = normalized.replace(/\b(rnt|ren|mothly\s*rent|pm|p\.m\.)\b/g, 'rent');
-    normalized = normalized.replace(/\b(depost|deposite|scurity\s*deposit|scurity\s*dep)\b/g, 'deposit');
+    normalized = normalized.replace(/\b(depost|deposite|diposite|diposit|scurity\s*deposit|scurity\s*dep)\b/g, 'deposit');
+    normalized = normalized.replace(/\b(near\s*by|nearby|near\s*to|opp\s*to)\b/g, 'near');
+    normalized = normalized.replace(/\b(brokraj|brokrage|brokorage|commission)\b/g, 'brokerage');
 
     // 1. Universal Fault-Tolerant BHK / Layout Extractor
     let bhk = 'Unspecified';
@@ -408,27 +412,28 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       }
     }
 
-    // 2. Extract Property Type (Auto-Corrects typos like flt, appartment, viila)
+    // 2. Extract Property Type (Penthouse prioritized to prevent 'house' substring collision)
     let type = '';
     let typeFound = false;
-    if (/house|villa|bungalow|independent|bunglow|viila|vlla/i.test(normalized)) { type = 'HOUSE'; typeFound = true; }
-    else if (/plot|land|commercial plot|plott|pott/i.test(normalized)) { type = 'PLOT'; typeFound = true; }
-    else if (/penthouse|penthous/i.test(normalized)) { type = 'PENTHOUSE'; typeFound = true; }
-    else if (/studio/i.test(normalized)) { type = 'STUDIO'; typeFound = true; }
+    if (/penthouse|penthous/i.test(normalized)) { type = 'PENTHOUSE'; typeFound = true; }
     else if (/air\s*bnb|airbnb/i.test(normalized)) { type = 'AIRBNB'; typeFound = true; }
+    else if (/studio/i.test(normalized)) { type = 'STUDIO'; typeFound = true; }
+    else if (/plot|land|commercial plot|plott|pott/i.test(normalized)) { type = 'PLOT'; typeFound = true; }
     else if (/flat|apartment|flt|flts|flatt|appartment|apartmnt|apt/i.test(normalized)) { type = 'FLAT'; typeFound = true; }
+    else if (/\bhouse\b|\bvilla\b|\bbungalow\b|\bindependent\b|\bbunglow\b|\bviila\b|\bvlla\b/i.test(normalized)) { type = 'HOUSE'; typeFound = true; }
 
-    // 3A. Brokerage Extractor (Days or Amount)
+    // 3A. Brokerage Extractor (Supports comma formatting e.g. ₹22,500)
     let brokerageDays: number | undefined = undefined;
     let brokerageVal = 'Unmentioned';
     let brokerageAmount: number | undefined = undefined;
     let brokerageFound = false;
     const brokerageDaysMatch = normalized.match(/\b(\d{1,2})\s*(?:days|day)\s*(?:brokerage|broker\s*fee|commission)?\b/i);
-    const brokerageMatch = normalized.match(/(\d{4,6}|\d{1,2}k)\s*(?:brokerage|broker\s*fee|commission)\b|\b(?:brokerage|broker\s*fee|commission)\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{4,6}|\d{1,2}k)\b/i);
+    const brokerageMatch = normalized.match(/(\d{1,3}(?:,\d{2,3})+|\d{4,6}|\d{1,2}k)\s*(?:brokerage|broker\s*fee|commission)\b|\b(?:brokerage|broker\s*fee|commission)\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{1,3}(?:,\d{2,3})+|\d{4,6}|\d{1,2}k)\b/i);
     if (brokerageMatch) {
       const rawB = brokerageMatch[1] || brokerageMatch[2];
       if (rawB) {
-        brokerageAmount = rawB.toLowerCase().endsWith('k') ? parseInt(rawB.slice(0, -1)) * 1000 : parseInt(rawB);
+        const cleanB = rawB.replace(/,/g, '');
+        brokerageAmount = cleanB.toLowerCase().endsWith('k') ? parseInt(cleanB.slice(0, -1)) * 1000 : parseInt(cleanB);
         brokerageVal = `₹${brokerageAmount.toLocaleString('en-IN')}`;
         brokerageFound = true;
       }
@@ -445,19 +450,24 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       bathrooms = parseInt(bathMatch[1]);
     }
 
-    // 3C. Area Sqft Extractor
+    // 3C. Area Sqft Extractor (Supports comma formatting e.g. 1,800 sqft)
     let areaSqFt = '';
-    const sqftMatch = normalized.match(/\b(\d{3,5})\s*(?:sqft|sq\.ft|sq\s*ft|sqfeet|square\s*feet|sq\s*meters|sqm)\b/i);
+    const sqftMatch = normalized.match(/\b(\d{1,3}(?:,\d{3})+|\d{3,5})\s*(?:sqft|sq\.ft|sq\s*ft|sqfeet|square\s*feet|sq\s*meters|sqm)\b/i);
     if (sqftMatch) {
       areaSqFt = `${sqftMatch[1]} sqft`;
     }
 
-    // 3D. Security Deposit Extractor
+    // 3D. Security Deposit Extractor (Supports comma formatting e.g. ₹90,000)
     let depositVal = '';
-    const depositMatch = normalized.match(/(\d+(?:\+\d+)?)\s*(?:security\s*deposit|deposit|dep|depost|deposite|scurity)\b|\b(?:security\s*deposit|deposit|depost)\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{4,6}|\d{1,2}k|\d\+\d)\b/i);
+    const depositMatch = normalized.match(/(\d+(?:\+\d+)?|\d{1,3}(?:,\d{2,3})+|\d{4,6}|\d{1,2}k)\s*(?:security\s*deposit|deposit|dep|depost|deposite|diposite|scurity)\b|\b(?:security\s*deposit|deposit|depost|deposite|diposite)\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{1,3}(?:,\d{2,3})+|\d{4,6}|\d{1,2}k|\d\+\d)\b/i);
     if (depositMatch) {
       const depRaw = depositMatch[1] || depositMatch[2];
-      depositVal = `${depRaw} Security Deposit`;
+      if (/^\d{1,3}(?:,\d{2,3})+|\d{4,6}$/.test(depRaw.replace(/,/g, ''))) {
+        const dAmt = parseInt(depRaw.replace(/,/g, ''));
+        depositVal = `₹${dAmt.toLocaleString('en-IN')} Security Deposit`;
+      } else {
+        depositVal = `${depRaw} Security Deposit`;
+      }
     }
 
     // 3E. Owner Name & Phone Extractor
@@ -482,25 +492,29 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       }
     }
 
-    // 3F. Extract Rent / Price
+    // 3F. Extract Rent / Price (Supports comma formatting e.g. ₹45,000)
     let rentVal = 'Unspecified';
     let rentAmount = 0;
     let rentFound = false;
-    const explicitRentMatch = normalized.match(/(\d{4,6}|\d{1,2}k)\s*(?:rent|per\s*month|\/month|pm)\b|\brent\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{4,6}|\d{1,2}k)\b/i);
+    const explicitRentMatch = normalized.match(/(\d{1,3}(?:,\d{2,3})+|\d{4,6}|\d{1,2}k)(?!\s*(?:brokerage|broker\s*fee|commission|deposit|sqft|bath))\s*(?:rent|per\s*month|\/month|pm)\b|\brent\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{1,3}(?:,\d{2,3})+|\d{4,6}|\d{1,2}k)\b/i);
     if (explicitRentMatch) {
       const rawR = explicitRentMatch[1] || explicitRentMatch[2];
       if (rawR) {
-        rentAmount = rawR.toLowerCase().endsWith('k') ? parseInt(rawR.slice(0, -1)) * 1000 : parseInt(rawR);
+        const cleanR = rawR.replace(/,/g, '');
+        rentAmount = cleanR.toLowerCase().endsWith('k') ? parseInt(cleanR.slice(0, -1)) * 1000 : parseInt(cleanR);
         rentVal = `₹${rentAmount.toLocaleString('en-IN')}`;
         rentFound = true;
       }
     } else {
-      let numberMatch = normalized.match(/\b(\d{4,6})\b/);
+      let numberMatch = normalized.match(/\b(\d{1,3}(?:,\d{2,3})+|\d{4,6})\b/);
       let kMatch = normalized.match(/\b(\d{1,2})k\b/i);
-      if (numberMatch && (!areaSqFt || !areaSqFt.startsWith(numberMatch[1])) && (!brokerageVal || !brokerageVal.includes(numberMatch[1]))) {
-        rentAmount = parseInt(numberMatch[1]);
-        rentVal = `₹${rentAmount.toLocaleString('en-IN')}`;
-        rentFound = true;
+      if (numberMatch) {
+        const cleanNum = numberMatch[1].replace(/,/g, '');
+        if ((!areaSqFt || !areaSqFt.startsWith(cleanNum)) && (!brokerageVal || !brokerageVal.includes(cleanNum))) {
+          rentAmount = parseInt(cleanNum);
+          rentVal = `₹${rentAmount.toLocaleString('en-IN')}`;
+          rentFound = true;
+        }
       } else if (kMatch) {
         rentAmount = parseInt(kMatch[1]) * 1000;
         rentVal = `₹${rentAmount.toLocaleString('en-IN')}`;

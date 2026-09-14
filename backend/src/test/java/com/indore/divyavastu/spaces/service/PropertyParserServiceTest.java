@@ -149,6 +149,29 @@ public class PropertyParserServiceTest {
     }
 
     @Test
+    public void testUserExactScreenshotPromptParsing() {
+        String userPrompt = "Luxury 3 BHK Penthouse of 1800 sqft in Vijay Nagar, Indore. Monthly rent ₹45,000, brokerage ₹22,500, security deposit ₹90,000. Owner John Doe +91 1234567890. North-East facing with terrace, balcony and pool. Fully furnished, ready to move, status live. near by mahalaxmi temple. 452010 and rent is 20000 with 1+1 diposite and brokerage is 10000";
+        ParsedPropertyDTO dto = propertyParserService.parseAndSave(userPrompt);
+
+        assertNotNull(dto);
+        assertEquals("3 BHK", dto.getBhk());
+        assertEquals("Penthouse", dto.getType());
+        assertEquals(45000.0, dto.getRentAmount());
+        assertEquals("₹22,500", dto.getBrokerageVal());
+        assertEquals("1800 sqft", dto.getAreaSqFt());
+        assertEquals("John Doe", dto.getOwnerName());
+        assertEquals("1234567890", dto.getOwnerPhone());
+        assertEquals("North-East Facing", dto.getVastuFacing());
+        assertEquals("Fully Furnished", dto.getFurnishingStatus());
+        assertEquals("Ready To Move", dto.getPossessionDate());
+        assertEquals("LIVE", dto.getStatus());
+        assertEquals("Vijay Nagar", dto.getSector());
+        assertEquals("Indore", dto.getCity());
+        assertEquals("452010", dto.getPincode());
+        assertEquals("Mahalaxmi Temple", dto.getLandmark());
+    }
+
+    @Test
     public void testInterveningWordsBhkAndNoFakeDefaults() {
         String prompt = "sdfjsdfjerijejfdsf 2 kldsjflkdjsf bhk";
         ParsedPropertyDTO dto = propertyParserService.parseAndSave(prompt);

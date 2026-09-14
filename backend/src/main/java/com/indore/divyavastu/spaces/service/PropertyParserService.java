@@ -76,7 +76,7 @@ public class PropertyParserService {
             Pattern.CASE_INSENSITIVE);
     private static final Pattern PINCODE_PATTERN = Pattern.compile("\\b([1-9]\\d{5})\\b");
     private static final Pattern LANDMARK_PATTERN = Pattern.compile(
-            "\\b(?:near|opposite|opp|behind|next\\s+to|adjacent\\s+to)\\s+([A-Za-z0-9\\s]{2,30}?)(?=\\s+for|\\s+rent|\\s+\\d|$)",
+            "\\b(?:landmark|near\\s*by|nearby|near\\s*to|near|opposite|opp|behind|next\\s+to|adjacent\\s+to)\\s+([A-Za-z0-9\\s]{2,30}?)(?=\\s+for|\\s+rent|\\s+\\d|\\.|,|\\$)",
             Pattern.CASE_INSENSITIVE);
 
     // Listing Status & Owner Patterns
@@ -157,7 +157,9 @@ public class PropertyParserService {
         normalized = normalized.replaceAll("\\b(noth\\s*facing|north\\s*faceing)\\b", "north facing");
         normalized = normalized.replaceAll("\\b(suth\\s*facing|south\\s*faceing)\\b", "south facing");
         normalized = normalized.replaceAll("\\b(rnt|ren|mothly\\s*rent|pm|p\\.m\\.)\\b", "rent");
-        normalized = normalized.replaceAll("\\b(depost|deposite|scurity\\s*deposit|scurity\\s*dep)\\b", "deposit");
+        normalized = normalized.replaceAll("\\b(depost|deposite|diposite|diposit|scurity\\s*deposit|scurity\\s*dep)\\b", "deposit");
+        normalized = normalized.replaceAll("\\b(near\\s*by|nearby|near\\s*to|opp\\s*to)\\b", "near");
+        normalized = normalized.replaceAll("\\b(brokraj|brokrage|brokorage|commission)\\b", "brokerage");
         normalized = normalized.replaceAll("\\b(saket\\s*nagr|saketnagar)\\b", "saket nagar");
         normalized = normalized.replaceAll("\\b(vijay\\s*nagr|vijayngr|vijaynagar)\\b", "vijay nagar");
         normalized = normalized.replaceAll("\\b(nanda\\s*nagr|nandanagar)\\b", "nanda nagar");
@@ -165,11 +167,37 @@ public class PropertyParserService {
         normalized = normalized.replaceAll("\\b(palasiaa)\\b", "palasia");
         normalized = normalized.replaceAll("\\b(nipaniya|nipaniyaa)\\b", "nipania");
 
-        // 1. Universal BHK Extractor (Studio/RK checked prior to generic numeric)
+        // 1. Universal BHK Extractor (Studio/1RK checked first, followed by explicit numeric BHK)
         String bhk = "Unspecified";
+        Matcher numBhkMatcher = NUM_BHK_PATTERN.matcher(input);
+        Matcher revBhkMatcher = REV_BHK_PATTERN.matcher(input);
+        Matcher wordBhkMatcher = WORD_BHK_PATTERN.matcher(input);
+
         if (normalized.contains("studio") || normalized.contains("1rk") || normalized.contains(" rk ")
                 || normalized.endsWith(" rk")) {
             bhk = "1 RK Studio";
+        } else if (numBhkMatcher.find()) {
+            String val = numBhkMatcher.group(1);
+            bhk = val.endsWith(".0") ? val.substring(0, val.length() - 2) + " BHK" : val + " BHK";
+        } else if (revBhkMatcher.find()) {
+            String val = revBhkMatcher.group(1);
+            bhk = val.endsWith(".0") ? val.substring(0, val.length() - 2) + " BHK" : val + " BHK";
+        } else if (wordBhkMatcher.find()) {
+            String w = wordBhkMatcher.group(1).toLowerCase();
+            String num = switch (w) {
+                case "one" -> "1";
+                case "two" -> "2";
+                case "three" -> "3";
+                case "four" -> "4";
+                case "five" -> "5";
+                case "six" -> "6";
+                case "seven" -> "7";
+                case "eight" -> "8";
+                case "nine" -> "9";
+                case "ten" -> "10";
+                default -> "2";
+            };
+            bhk = num + " BHK";
         } else if (normalized.contains("triplex")) {
             bhk = "Triplex Villa";
         } else if (normalized.contains("duplex") || normalized.contains("villa")) {
@@ -177,38 +205,10 @@ public class PropertyParserService {
         } else if (normalized.contains("penthouse")) {
             bhk = "Luxury Penthouse";
         } else {
-            Matcher numBhkMatcher = NUM_BHK_PATTERN.matcher(input);
-            Matcher revBhkMatcher = REV_BHK_PATTERN.matcher(input);
-            Matcher wordBhkMatcher = WORD_BHK_PATTERN.matcher(input);
-
-            if (numBhkMatcher.find()) {
-                String val = numBhkMatcher.group(1);
-                bhk = val.endsWith(".0") ? val.substring(0, val.length() - 2) + " BHK" : val + " BHK";
-            } else if (revBhkMatcher.find()) {
-                String val = revBhkMatcher.group(1);
-                bhk = val.endsWith(".0") ? val.substring(0, val.length() - 2) + " BHK" : val + " BHK";
-            } else if (wordBhkMatcher.find()) {
-                String w = wordBhkMatcher.group(1).toLowerCase();
-                String num = switch (w) {
-                    case "one" -> "1";
-                    case "two" -> "2";
-                    case "three" -> "3";
-                    case "four" -> "4";
-                    case "five" -> "5";
-                    case "six" -> "6";
-                    case "seven" -> "7";
-                    case "eight" -> "8";
-                    case "nine" -> "9";
-                    case "ten" -> "10";
-                    default -> "2";
-                };
-                bhk = num + " BHK";
-            } else {
-                // Global Fallback Extractor: If any single number exists and prompt contains BHK/RK/Bed tokens or typos anywhere
-                Matcher anyDigit = Pattern.compile("\\b([1-9]\\d?(?:\\.5)?)\\b").matcher(input);
-                if (anyDigit.find() && Pattern.compile("(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk)", Pattern.CASE_INSENSITIVE).matcher(input).find()) {
-                    bhk = anyDigit.group(1) + " BHK";
-                }
+            // Global Fallback Extractor: If any single number exists and prompt contains BHK/RK/Bed tokens or typos anywhere
+            Matcher anyDigit = Pattern.compile("\\b([1-9]\\d?(?:\\.5)?)\\b").matcher(input);
+            if (anyDigit.find() && Pattern.compile("(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk)", Pattern.CASE_INSENSITIVE).matcher(input).find()) {
+                bhk = anyDigit.group(1) + " BHK";
             }
         }
 
@@ -219,22 +219,20 @@ public class PropertyParserService {
             bathrooms = bathMatcher.group(1) + " Baths";
         }
 
-        // 2. Property Type Extractor (Flat, House, Villa, Apartment, Airbnb, Plot,
-        // Studio, Penthouse, Duplex)
+        // 2. Property Type Extractor (Penthouse prioritized to prevent 'house' substring collision)
         String type = null;
-        if (normalized.contains("airbnb") || normalized.contains("serviced stay")) {
-            type = "Airbnb";
-        } else if (normalized.contains("apartment") || normalized.contains("flat") || normalized.contains("flt")) {
-            type = "Flat";
-        } else if (normalized.contains("house") || normalized.contains("bungalow") || normalized.contains("independent")
-                || normalized.contains("villa") || normalized.contains("duplex")) {
-            type = "House";
-        } else if (normalized.contains("plot") || normalized.contains("land")) {
-            type = "Plot";
-        } else if (normalized.contains("penthouse")) {
+        if (normalized.contains("penthouse") || normalized.contains("penthous")) {
             type = "Penthouse";
+        } else if (normalized.contains("airbnb") || normalized.contains("serviced stay")) {
+            type = "Airbnb";
         } else if (normalized.contains("studio")) {
             type = "Studio";
+        } else if (normalized.contains("apartment") || normalized.contains("flat") || normalized.contains("flt")) {
+            type = "Flat";
+        } else if (normalized.contains("plot") || normalized.contains("land")) {
+            type = "Plot";
+        } else if (Pattern.compile("\\b(?:house|bungalow|independent|villa|duplex|bunglow|viila|vlla)\\b", Pattern.CASE_INSENSITIVE).matcher(normalized).find()) {
+            type = "House";
         }
 
         // 2.5. Listing Status Extractor
