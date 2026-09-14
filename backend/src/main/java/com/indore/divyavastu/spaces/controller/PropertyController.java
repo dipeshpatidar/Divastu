@@ -19,6 +19,7 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/api/v1/properties")
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class PropertyController {
 
     private final ListingRepository listingRepository;
