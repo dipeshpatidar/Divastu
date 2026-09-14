@@ -77,7 +77,7 @@ const HERO_BANNERS = [
 export const HeroSection: React.FC<HeroSectionProps> = ({ onSearch }) => {
   const [selectedCityId, setSelectedCityId] = useState<string>('INDORE');
   const [activeTab, setActiveTab] = useState<'RENT' | 'PLOT' | 'COMMERCIAL' | 'PG'>('RENT');
-  const [selectedSectors, setSelectedSectors] = useState<string[]>(['Vijay Nagar']);
+  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [propertyType, setPropertyType] = useState<string>('ALL');
   const [maxBudget, setMaxBudget] = useState<number>(25000);
   const [verifiedOnly, setVerifiedOnly] = useState<boolean>(false);

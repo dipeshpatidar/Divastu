@@ -595,18 +595,46 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
               {/* ENTERPRISE METADATA OVERLAY BADGES (LOCATION, PRICE, VASTU, ROOM TAG & VERIFIED SEAL) */}
               <div className="absolute top-4 left-4 z-20 flex flex-wrap gap-2 max-w-xl pointer-events-none">
+                {/* ACTIVE PHOTO ROOM TAG BADGE */}
+                {(() => {
+                  const tagKey = property?.taggedMedia?.[activePhotoIdx]?.roomTag || ['LIVING_ROOM', 'MASTER_BEDROOM', 'KITCHEN', 'BATHROOM', 'BALCONY', 'BEDROOM', 'EXTERIOR', 'AMENITIES', 'FLOOR_PLAN'][activePhotoIdx % 9];
+                  const tagConfig: Record<string, { label: string; emoji: string }> = {
+                    GENERAL: { label: 'Property Photo', emoji: '📸' },
+                    LIVING_ROOM: { label: 'Living Room', emoji: '🛋️' },
+                    MASTER_BEDROOM: { label: 'Master Bedroom', emoji: '🛏️' },
+                    BEDROOM: { label: 'Guest Bedroom', emoji: '🛏️' },
+                    KITCHEN: { label: 'Modular Kitchen', emoji: '🍳' },
+                    BATHROOM: { label: 'Bathroom', emoji: '🚿' },
+                    BALCONY: { label: 'Balcony & View', emoji: '🌅' },
+                    EXTERIOR: { label: 'Building Exterior', emoji: '🏢' },
+                    AMENITIES: { label: 'Society Amenities', emoji: '🏊' },
+                    FLOOR_PLAN: { label: 'Floor Plan', emoji: '📐' }
+                  };
+                  const tagInfo = tagConfig[tagKey] || tagConfig.GENERAL;
+                  if (tagKey === 'GENERAL') return null;
+                  return (
+                    <span className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-black px-3.5 py-1.5 rounded-xl border border-emerald-300/50 backdrop-blur-md shadow-xl flex items-center gap-1.5 animate-pulse">
+                      <span>{tagInfo.emoji} {tagInfo.label}</span>
+                    </span>
+                  );
+                })()}
+
                 <span className="bg-slate-950/90 text-white text-xs font-black px-3.5 py-1.5 rounded-xl border border-slate-700 backdrop-blur-md shadow-xl flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>{property.sector || 'Vijay Nagar'}, Indore</span>
+                  <span>{property.sector ? `${property.sector}, Indore` : (property.city || 'Indore')}</span>
                 </span>
 
-                <span className="bg-slate-950/90 text-emerald-400 font-mono text-xs font-black px-3.5 py-1.5 rounded-xl border border-emerald-500/40 backdrop-blur-md shadow-xl">
-                  🏷️ ₹{property.monthlyRent ? property.monthlyRent.toLocaleString('en-IN') : '22,000'} / mo
-                </span>
+                {property.monthlyRent ? (
+                  <span className="bg-slate-950/90 text-emerald-400 font-mono text-xs font-black px-3.5 py-1.5 rounded-xl border border-emerald-500/40 backdrop-blur-md shadow-xl">
+                    🏷️ ₹{property.monthlyRent.toLocaleString('en-IN')} / mo
+                  </span>
+                ) : null}
 
-                <span className="bg-slate-950/90 text-amber-300 text-xs font-bold px-3.5 py-1.5 rounded-xl border border-amber-500/40 backdrop-blur-md shadow-xl">
-                  🧭 North-East Vastu Facing
-                </span>
+                {property.vastuFacing && property.vastuFacing !== 'Not Specified' && (
+                  <span className="bg-slate-950/90 text-amber-300 text-xs font-bold px-3.5 py-1.5 rounded-xl border border-amber-500/40 backdrop-blur-md shadow-xl">
+                    🧭 {property.vastuFacing}
+                  </span>
+                )}
 
                 <span className="bg-emerald-950/90 text-emerald-300 text-xs font-extrabold px-3.5 py-1.5 rounded-xl border border-emerald-500/50 backdrop-blur-md shadow-xl flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-emerald-400" />
@@ -632,19 +660,40 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
               )}
             </div>
 
-            {/* Bottom Filmstrip Controls */}
-            <div className="flex items-center justify-center gap-2 z-10" onClick={(e) => e.stopPropagation()}>
-              {propertyImages.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActivePhotoIdx(idx)}
-                  className={`w-16 h-12 rounded-xl overflow-hidden border-2 transition-all ${
-                    activePhotoIdx === idx ? 'border-emerald-400 ring-4 ring-emerald-400/30 scale-110' : 'border-slate-700 opacity-60 hover:opacity-100'
-                  }`}
-                >
-                  <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
-                </button>
-              ))}
+            {/* Bottom Filmstrip Controls with Room Badges */}
+            <div className="flex items-center justify-center gap-2 z-10 overflow-x-auto max-w-full p-2" onClick={(e) => e.stopPropagation()}>
+              {propertyImages.map((img, idx) => {
+                const tagKey = property?.taggedMedia?.[idx]?.roomTag || ['LIVING_ROOM', 'MASTER_BEDROOM', 'KITCHEN', 'BATHROOM', 'BALCONY', 'BEDROOM', 'EXTERIOR', 'AMENITIES', 'FLOOR_PLAN'][idx % 9];
+                const tagEmojis: Record<string, string> = {
+                  LIVING_ROOM: '🛋️',
+                  MASTER_BEDROOM: '🛏️',
+                  BEDROOM: '🛏️',
+                  KITCHEN: '🍳',
+                  BATHROOM: '🚿',
+                  BALCONY: '🌅',
+                  EXTERIOR: '🏢',
+                  AMENITIES: '🏊',
+                  FLOOR_PLAN: '📐'
+                };
+                const emoji = tagEmojis[tagKey];
+
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => setActivePhotoIdx(idx)}
+                    className={`relative w-16 h-12 rounded-xl overflow-hidden border-2 transition-all group shrink-0 ${
+                      activePhotoIdx === idx ? 'border-emerald-400 ring-4 ring-emerald-400/30 scale-110' : 'border-slate-700 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                    {emoji && (
+                      <span className="absolute bottom-0.5 right-0.5 bg-slate-950/90 text-[10px] px-1 rounded backdrop-blur-xs shadow-xs">
+                        {emoji}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </motion.div>
         )}

@@ -23,7 +23,7 @@ public class CloudinaryService {
     }
 
     /**
-     * Uploads photo file to Cloudinary under divyavastu/properties/images
+     * Uploads photo file to Cloudinary under pathome/properties/images
      */
     public String uploadImage(MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -34,7 +34,7 @@ public class CloudinaryService {
             Map<?, ?> uploadResult = cloudinary.uploader().upload(
                     file.getBytes(),
                     ObjectUtils.asMap(
-                            "folder", "divyavastu/properties/images",
+                            "folder", "pathome/properties/images",
                             "resource_type", "image",
                             "format", "webp",
                             "quality", "auto"
@@ -50,7 +50,7 @@ public class CloudinaryService {
     }
 
     /**
-     * Uploads video walkthrough MP4 file to Cloudinary under divyavastu/properties/videos
+     * Uploads video walkthrough MP4 file to Cloudinary under pathome/properties/videos
      */
     public String uploadVideo(MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -61,7 +61,7 @@ public class CloudinaryService {
             Map<?, ?> uploadResult = cloudinary.uploader().upload(
                     file.getBytes(),
                     ObjectUtils.asMap(
-                            "folder", "divyavastu/properties/videos",
+                            "folder", "pathome/properties/videos",
                             "resource_type", "video",
                             "quality", "auto"
                     )

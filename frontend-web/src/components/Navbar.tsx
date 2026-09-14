@@ -188,7 +188,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {user?.fullName ? user.fullName.charAt(0).toUpperCase() : role.charAt(0)}
                 </div>
                 <span className="text-xs font-bold max-w-[180px] sm:max-w-[220px] truncate hidden sm:inline text-slate-200">
-                  {user?.fullName || role}
+                  {(user?.fullName || role).replace(/divyavastu/gi, 'Pathome')}
                 </span>
                 <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-300 ${profileDropdownOpen ? 'rotate-180' : ''}`} />
               </motion.button>
@@ -204,7 +204,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   >
                     <div className="px-4 py-3 border-b border-slate-800/80 bg-slate-900/60">
                       <p className="text-xs font-bold text-white flex items-center justify-between">
-                        <span className="truncate max-w-[130px]">{user?.fullName || 'User'}</span>
+                        <span className="truncate max-w-[130px]">{(user?.fullName || 'User').replace(/divyavastu/gi, 'Pathome')}</span>
                         <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border ${
                           role === 'SUPER_ADMIN' || role === 'ADMIN' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
                           role === 'SUB_ADMIN' ? 'bg-purple-500/20 text-purple-300 border-purple-500/40' :
@@ -213,7 +213,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                           {role}
                         </span>
                       </p>
-                      <p className="text-[11px] text-slate-400 truncate mt-0.5">{user?.email || 'admin@divyavastu.in'}</p>
+                      <p className="text-[11px] text-slate-400 truncate mt-0.5">{(user?.email || 'admin@pathome.in').replace(/divyavastu/gi, 'pathome')}</p>
                     </div>
 
                     <div className="p-1">

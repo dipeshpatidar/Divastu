@@ -189,6 +189,30 @@ export const PropertyShowcase: React.FC<PropertyShowcaseProps> = ({
                                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Escort Verified
                               </motion.span>
                               
+                              {/* Active Image Room Tag Badge */}
+                              {(() => {
+                                const currentImgIdx = activeImageIndex[prop.id] || 0;
+                                const tagKey = prop.taggedMedia?.[currentImgIdx]?.roomTag || ['LIVING_ROOM', 'MASTER_BEDROOM', 'KITCHEN', 'BATHROOM', 'BALCONY', 'BEDROOM', 'EXTERIOR'][currentImgIdx % 7];
+                                const tagEmojis: Record<string, string> = {
+                                  LIVING_ROOM: '🛋️ Living Room',
+                                  MASTER_BEDROOM: '🛏️ Master Bedroom',
+                                  BEDROOM: '🛏️ Guest Bedroom',
+                                  KITCHEN: '🍳 Kitchen',
+                                  BATHROOM: '🚿 Bathroom',
+                                  BALCONY: '🌅 Balcony',
+                                  EXTERIOR: '🏢 Exterior',
+                                  AMENITIES: '🏊 Amenities',
+                                  FLOOR_PLAN: '📐 Floor Plan'
+                                };
+                                const label = tagEmojis[tagKey];
+                                if (!label || tagKey === 'GENERAL') return null;
+                                return (
+                                  <span className="bg-slate-950/90 text-amber-300 text-[10px] font-extrabold px-2.5 py-1 rounded-full border border-amber-500/40 backdrop-blur-md shadow-md font-mono">
+                                    {label}
+                                  </span>
+                                );
+                              })()}
+
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();

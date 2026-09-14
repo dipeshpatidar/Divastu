@@ -51,7 +51,7 @@ public abstract class Listing {
     @Column(nullable = false)
     private String city = "Indore";
 
-    @Column(name = "bhk_count")
+    @Column(name = "bhk_count", nullable = false)
     private String bhkCount;
 
     @Column(name = "furnishing_status")

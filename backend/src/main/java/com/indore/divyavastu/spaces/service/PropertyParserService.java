@@ -39,18 +39,18 @@ public class PropertyParserService {
 
     // Immediate & High-Precision Forward/Reverse Rent Patterns (Strict word boundaries & zero cross-field bleeding)
     private static final Pattern FWD_RENT_PATTERN = Pattern.compile(
-            "\\b(?:monthly\\s*rent|rent|per\\s*month|/month|pm|rnt|ren)\\b\\s*[:\\-]?\\s*(?:(?!(?:brokerage|commission|deposit|security|depost))[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,2}?(?:rs\\.?|₹)?\\s*\\b(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b(?!\\s*(?:days|day|sqft|sq|feet|square|meters|bath))",
+            "\\b(?:monthly\\s*rent|rent|per\\s*month|/month|pm|rnt|ren)\\b(?:\\s+(?:is|of|amount|fee|charge|rs)){0,3}\\s*[:\\-]?\\s*(?:rs\\.?|₹)?\\s*\\b(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern REV_RENT_PATTERN = Pattern.compile(
-            "\\b(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b(?!\\s*(?:days|day|brokerage|broker|commission|deposit|security|sqft|sq|feet|square|meters|bath))\\s*[:\\-]?\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,2}?(?:rent|per\\s*month|/month|pm|rnt|ren|monthly\\s*rent)\\b",
+            "\\b(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b\\s*[:\\-]?\\s*(?:rs\\.?|₹)?\\s*(?:rent|per\\s*month|/month|pm|rnt|ren|monthly\\s*rent)\\b",
             Pattern.CASE_INSENSITIVE);
 
-    // Explicit Forward & Reverse Brokerage Patterns
+    // Explicit Forward & Reverse Brokerage Patterns (Supports typos "brokraj", "brokrage", "brookerage")
     private static final Pattern FWD_BROKERAGE_PATTERN = Pattern.compile(
-            "\\b(?:brokerage|broker\\s*fee|commission)\\b\\s*[:\\-]?\\s*(?:(?!(?:rent|rnt|ren|monthly|deposit|security|depost))[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,2}?(?:rs\\.?|₹)?\\s*\\b(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b(?!\\s*(?:days|day|sqft|sq|feet|square|meters|bath))",
+            "\\b(?:brokerage|brokraj|brokrage|brookerage|brokerg|broker\\s*fee|commission)\\b(?:\\s+(?:fee|fees|is|of|amount|charge|charges|=|-)){0,3}\\s*[:\\-]?\\s*(?:rs\\.?|₹)?\\s*\\b(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern REV_BROKERAGE_PATTERN = Pattern.compile(
-            "\\b(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b(?!\\s*(?:days|day|rent|monthly|rnt|ren|deposit|security|depost|sqft|sq|feet|square|meters|bath))\\s*[:\\-]?\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,2}?(?:brokerage|broker\\s*fee|commission)\\b",
+            "\\b(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b\\s*[:\\-]?\\s*(?:rs\\.?|₹)?\\s*(?:fee|fees|is|of|amount|charge|charges)?\\s*(?:brokerage|brokraj|brokrage|brookerage|brokerg|broker\\s*fee|commission)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern BROKERAGE_DAYS_PATTERN = Pattern.compile(
             "\\b(\\d{1,2})\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,3}?(?:day|days)\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,3}?(?:rent|brokerage)?\\b",
@@ -58,22 +58,22 @@ public class PropertyParserService {
 
     // Explicit Area / Sqft Pattern (Forward & Reverse Multi-Word Distance Independent, 3+ digits)
     private static final Pattern SQFT_PATTERN = Pattern.compile(
-            "\\b(\\d{1,3}(?:,\\d{3})+|\\d{3,5})\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,5}?(?:sqft|sq\\.ft|sq\\s*ft|sqfeet|square\\s*feet|sq\\s*meters|sqm)\\b|\\b(?:sqft|sq\\.ft|sq\\s*ft|sqfeet|square\\s*feet|sq\\s*meters|sqm)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,5}?(\\d{1,3}(?:,\\d{3})+|\\d{3,5})\\b",
+            "\\b(\\d{1,3}(?:,\\d{3})+|\\d{3,5})\\s*(?:[a-zA-Z\\-\\_]{1,30}\\s+){0,5}?(?:sqft|sq\\.ft|sq\\s*ft|sqfeet|square\\s*feet|sq\\s*meters|sqm)\\b|\\b(?:sqft|sq\\.ft|sq\\s*ft|sqfeet|square\\s*feet|sq\\s*meters|sqm)\\b\\s*(?:[a-zA-Z\\-\\_]{1,30}\\s+){0,5}?(\\d{1,3}(?:,\\d{3})+|\\d{3,5})\\b",
             Pattern.CASE_INSENSITIVE);
 
-    // Explicit Forward & Reverse Security Deposit Patterns
+    // Explicit Forward & Reverse Security Deposit Patterns (Supports typos "securuity", "is 1+1 60000")
     private static final Pattern FWD_DEPOSIT_PATTERN = Pattern.compile(
-            "\\b(?:security\\s*deposit|deposit|dep|depost|deposite|scurity)\\b\\s*[:\\-]?\\s*(?:(?!(?:rent|rnt|ren|monthly|brokerage|commission))[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,2}?(?:rs\\.?|₹)?\\s*\\b([1-3]\\+[1-3]|\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b(?!\\s*(?:days|day|sqft|sq|feet|square|meters|bath))",
+            "\\b(?:security\\s*deposit|deposit|dep|depost|deposite|diposite|scurity|securuity)\\b(?:\\s+(?:is|amount|of|=|-)){0,3}\\s*[:\\-]?\\s*(?:rs\\.?|₹)?\\s*\\b([1-3]\\+[1-3]\\s*\\d{4,6}|[1-3]\\+[1-3]|\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern REV_DEPOSIT_PATTERN = Pattern.compile(
-            "\\b([1-3]\\+[1-3]|\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b(?!\\s*(?:days|day|rent|monthly|rnt|ren|brokerage|broker|commission|sqft|sq|feet|square|meters|bath))\\s*[:\\-]?\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,2}?(?:security\\s*deposit|deposit|dep|depost|deposite|scurity)\\b",
+            "\\b([1-3]\\+[1-3]\\s*\\d{4,6}|[1-3]\\+[1-3]|\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b\\s*[:\\-]?\\s*(?:rs\\.?|₹)?\\s*(?:is|amount)?\\s*(?:security\\s*deposit|deposit|dep|depost|deposite|diposite|scurity|securuity)\\b",
             Pattern.CASE_INSENSITIVE);
 
-    // Furnishing & Possession Patterns
+    // Furnishing & Possession Patterns (Supports natural text dates e.g. "20th of september", "25th of sep")
     private static final Pattern FURNISHING_PATTERN = Pattern
             .compile("\\b(unfurnished|semi[\\-\\s]?furnished|fully[\\-\\s]?furnished)\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern POSSESSION_PATTERN = Pattern.compile(
-            "\\b(ready\\s*to\\s*move|immediate[\\s\\-]?possession|available\\s*from\\s*[a-zA-Z0-9\\s]{3,15}|possession\\s*[a-zA-Z0-9\\s]{3,15})\\b",
+            "\\b(?:ready\\s*to\\s*move|immediate[\\s\\-]?possession|available\\s*from\\s*[a-zA-Z0-9\\s]{3,15}|possession\\s*date|possession)\\b(?:\\s+(?:is|on|from|by)){0,2}\\s*[:\\-]?\\s*(\\d{1,2}(?:st|nd|rd|th)?(?:\\s+of)?\\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)(?:\\s+\\d{4})?|\\d{1,2}[-\\/]\\d{1,2}[-\\/]\\d{2,4}|\\d{4}-\\d{2}-\\d{2}|ready\\s*to\\s*move|immediate|available\\s*[a-zA-Z0-9\\s]{3,15})\\b|\\b(ready\\s*to\\s*move|immediate[\\s\\-]?possession|immediate)\\b",
             Pattern.CASE_INSENSITIVE);
 
     // Address, State, Pincode & Landmark Patterns
@@ -89,9 +89,12 @@ public class PropertyParserService {
     private static final Pattern STATUS_PATTERN = Pattern.compile("\\b(live|pending|sold|expired|rented|removed)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern OWNER_NAME_PATTERN = Pattern.compile(
-            "\\b(?:owner\\s*name|owner)\\s*[:\\-]?\\s*([A-Za-z\\s]{2,30}?)(?=\\s+\\d|\\s+\\+?91|\\s+phone|\\s+mobile|\\s+rent|\\s+brokerage|$)",
+            "\\b(?:owner\\s*name|owner|contact)\\s*[:\\-]?\\s*([A-Za-z]{2,20}(?:\\s+[A-Za-z]{2,20}){0,3})\\b",
             Pattern.CASE_INSENSITIVE);
-    private static final Pattern PHONE_PATTERN = Pattern.compile("\\b(?:\\+?91[\\-\\s]?)?([1-9]\\d{9}|\\d{8,11})\\b");
+    private static final Pattern REV_OWNER_NAME_PATTERN = Pattern.compile(
+            "\\b([A-Za-z]{2,20}(?:\\s+[A-Za-z]{2,20}){0,3})\\s+(?:owner|contact)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern PHONE_PATTERN = Pattern.compile("(?:\\+?91[\\-\\s]?)?([1-9](?:[\\-\\s]?\\d){7,10})");
 
     private static final Pattern NUM_PRICE_PATTERN = Pattern.compile("\\b(\\d{4,6})\\b(?!\\s*(?:sqft|sq|feet|square|meters|days|day|bhk|baths|bed|pin|pincode|deposit|security))", Pattern.CASE_INSENSITIVE);
     private static final Pattern K_PRICE_PATTERN = Pattern.compile("\\b(\\d{1,2})k\\b", Pattern.CASE_INSENSITIVE);
@@ -120,10 +123,10 @@ public class PropertyParserService {
     // Known Core Indore Sector & Locality Master Set for O(1) locality-to-city hard-binding
     private static final Set<String> KNOWN_INDORE_SECTORS = Set.of(
             "vijay nagar", "nanda nagar", "palasia", "old palasia", "saket nagar", "nipania",
-            "bhawarkua", "mahalakshmi nagar", "rau", "mhow", "lig colony", "sukhlia", "khajrana",
-            "bypass road", "annapurna", "sudama nagar", "khandwa road", "ab road", "bicholi mardana",
-            "kanadia road", "rajendra nagar", "chandan nagar", "scheme 54", "scheme 78", "scheme 74",
-            "scheme 140", "scheme 114", "tilak nagar", "manorama ganj", "race course road"
+            "bhawarkua", "mahalakshmi nagar", "mahalaxmi nagar", "mahalaxmi", "chikatsak nagar", "chikatsak",
+            "rau", "mhow", "lig colony", "sukhlia", "khajrana", "bypass road", "annapurna", "sudama nagar",
+            "khandwa road", "ab road", "bicholi mardana", "kanadia road", "rajendra nagar", "chandan nagar",
+            "scheme 54", "scheme 78", "scheme 74", "scheme 140", "scheme 114", "tilak nagar", "manorama ganj", "race course road"
     );
 
     private final LocalityRepository localityRepository;
@@ -174,14 +177,14 @@ public class PropertyParserService {
         normalized = normalized.replaceAll("\\b(semi\\s*furnishd|semifurnished|semi\\-furnished|semifurnish)\\b", "semi furnished");
         normalized = normalized.replaceAll("\\b(fully\\s*furnishd|full\\s*furnished|fully\\-furnished|fullfurnish)\\b", "fully furnished");
         normalized = normalized.replaceAll("\\b(unfurnishd|un\\-furnished|bare)\\b", "unfurnished");
-        normalized = normalized.replaceAll("\\b(est\\s*facing|east\\s*faceing)\\b", "east facing");
-        normalized = normalized.replaceAll("\\b(wst\\s*facing|west\\s*faceing)\\b", "west facing");
-        normalized = normalized.replaceAll("\\b(noth\\s*facing|north\\s*faceing)\\b", "north facing");
-        normalized = normalized.replaceAll("\\b(suth\\s*facing|south\\s*faceing)\\b", "south facing");
+        normalized = normalized.replaceAll("\\b(est\\s*facing|east\\s*faceing|east\\s*dacing)\\b", "east facing");
+        normalized = normalized.replaceAll("\\b(wst\\s*facing|west\\s*faceing|west\\s*dacing)\\b", "west facing");
+        normalized = normalized.replaceAll("\\b(noth\\s*facing|north\\s*faceing|north\\s*dacing)\\b", "north facing");
+        normalized = normalized.replaceAll("\\b(suth\\s*facing|south\\s*faceing|south\\s*dacing)\\b", "south facing");
         normalized = normalized.replaceAll("\\b(rnt|ren|mothly\\s*rent|pm|p\\.m\\.)\\b", "rent");
-        normalized = normalized.replaceAll("\\b(depost|deposite|diposite|diposit|scurity\\s*deposit|scurity\\s*dep)\\b", "deposit");
-        normalized = normalized.replaceAll("\\b(near\\s*by|nearby|near\\s*to|opp\\s*to)\\b", "near");
-        normalized = normalized.replaceAll("\\b(brokraj|brokrage|brokorage|commission)\\b", "brokerage");
+        normalized = normalized.replaceAll("\\b(depost|deposite|diposite|diposit|scurity\\s*deposit|scurity\\s*dep|securuity\\s*deposit|securuity)\\b", "deposit");
+        normalized = normalized.replaceAll("\\b(near\\s*by|nearby|near\\s*to|opp\\s*to|infront\\s*of)\\b", "near");
+        normalized = normalized.replaceAll("\\b(brokraj|brokrage|brookerage|brokerg|brokorage|commission)\\b", "brokerage");
         normalized = normalized.replaceAll("\\b(saket\\s*nagr|saketnagar)\\b", "saket nagar");
         normalized = normalized.replaceAll("\\b(vijay\\s*nagr|vijayngr|vijaynagar)\\b", "vijay nagar");
         normalized = normalized.replaceAll("\\b(nanda\\s*nagr|nandanagar)\\b", "nanda nagar");
@@ -273,17 +276,37 @@ public class PropertyParserService {
 
         String ownerName = null;
         Matcher ownerMatcher = OWNER_NAME_PATTERN.matcher(input);
-        if (ownerMatcher.find()) {
-            ownerName = capitalizeWords(ownerMatcher.group(1).trim());
+        if (ownerMatcher.find() && ownerMatcher.group(1) != null && !ownerMatcher.group(1).isBlank()) {
+            String candidate = ownerMatcher.group(1).replaceAll("(?i)\\b(is|live|facing|flat|house|villa|apartment|plot|furnished|fully|semi|unfurnished|bhk|rk|bedroom|bath|baths)\\b", "").trim();
+            if (!candidate.isBlank()) {
+                ownerName = capitalizeWords(candidate);
+            }
+        }
+        if (ownerName == null) {
+            Matcher revOwnerMatcher = REV_OWNER_NAME_PATTERN.matcher(input);
+            if (revOwnerMatcher.find() && revOwnerMatcher.group(1) != null) {
+                String candidate = revOwnerMatcher.group(1).replaceAll("(?i)\\b(is|live|facing|flat|house|villa|apartment|plot|furnished|fully|semi|unfurnished|bhk|rk|bedroom|bath|baths)\\b", "").trim();
+                if (!candidate.isBlank()) {
+                    ownerName = capitalizeWords(candidate);
+                }
+            }
         }
 
         String ownerPhone = null;
         Matcher phoneMatcher = PHONE_PATTERN.matcher(input);
-        while (phoneMatcher.find()) {
-            String pCandidate = phoneMatcher.group(1);
-            if (!pCandidate.equals(pincode)) {
-                ownerPhone = pCandidate;
-                break;
+        if (phoneMatcher.find()) {
+            String rawDigits = phoneMatcher.group(0).replaceAll("\\D", "");
+            if (rawDigits.startsWith("91") && rawDigits.length() > 10) {
+                rawDigits = rawDigits.substring(2);
+            }
+            if (rawDigits.length() >= 8) {
+                if (pincode == null || !rawDigits.equals(pincode)) {
+                    if (rawDigits.length() == 10) {
+                        ownerPhone = "+91 " + rawDigits.substring(0, 5) + " " + rawDigits.substring(5);
+                    } else {
+                        ownerPhone = "+91 " + rawDigits;
+                    }
+                }
             }
         }
 
@@ -291,13 +314,19 @@ public class PropertyParserService {
         double rentAmount = 0.0;
         boolean rentFound = false;
 
-        Matcher fwdRent = FWD_RENT_PATTERN.matcher(normalized);
-        while (fwdRent.find()) {
-            String rawRent = fwdRent.group(1);
+        // Step 1: Check REV Rent
+        Matcher revRent = REV_RENT_PATTERN.matcher(normalized);
+        while (revRent.find()) {
+            String rawRent = revRent.group(1);
             if (rawRent != null) {
                 String cleanRent = rawRent.replace(",", "");
                 if (pincode != null && pincode.equals(cleanRent)) continue;
                 if (ownerPhone != null && ownerPhone.contains(cleanRent)) continue;
+
+                String nearestKeyword = findNearestPrecedingKeyword(normalized, revRent.start(1));
+                if ("BROKERAGE".equals(nearestKeyword) || "DEPOSIT".equals(nearestKeyword)) {
+                    continue;
+                }
 
                 rentAmount = cleanRent.toLowerCase().endsWith("k")
                         ? Double.parseDouble(cleanRent.substring(0, cleanRent.length() - 1)) * 1000
@@ -307,14 +336,20 @@ public class PropertyParserService {
             }
         }
 
+        // Step 2: Check FWD Rent
         if (!rentFound) {
-            Matcher revRent = REV_RENT_PATTERN.matcher(normalized);
-            while (revRent.find()) {
-                String rawRent = revRent.group(1);
+            Matcher fwdRent = FWD_RENT_PATTERN.matcher(normalized);
+            while (fwdRent.find()) {
+                String rawRent = fwdRent.group(1);
                 if (rawRent != null) {
                     String cleanRent = rawRent.replace(",", "");
                     if (pincode != null && pincode.equals(cleanRent)) continue;
                     if (ownerPhone != null && ownerPhone.contains(cleanRent)) continue;
+
+                    String nearestKeyword = findNearestPrecedingKeyword(normalized, fwdRent.start(1));
+                    if ("BROKERAGE".equals(nearestKeyword) || "DEPOSIT".equals(nearestKeyword)) {
+                        continue;
+                    }
 
                     rentAmount = cleanRent.toLowerCase().endsWith("k")
                             ? Double.parseDouble(cleanRent.substring(0, cleanRent.length() - 1)) * 1000
@@ -327,34 +362,42 @@ public class PropertyParserService {
 
         // 3B. Explicit Brokerage & Brokerage Days Extractor
         String brokerageVal = "Unmentioned";
-        Matcher fwdBrokerage = FWD_BROKERAGE_PATTERN.matcher(normalized);
-        if (fwdBrokerage.find()) {
-            String rawVal = fwdBrokerage.group(1);
+        Matcher revBrokerage = REV_BROKERAGE_PATTERN.matcher(normalized);
+        while (revBrokerage.find()) {
+            String rawVal = revBrokerage.group(1);
             if (rawVal != null) {
                 String cleanVal = rawVal.replace(",", "");
                 if ((pincode == null || !pincode.equals(cleanVal)) && (ownerPhone == null || !ownerPhone.contains(cleanVal))) {
+                    String nearestKeyword = findNearestPrecedingKeyword(normalized, revBrokerage.start(1));
+                    if ("RENT".equals(nearestKeyword) || "DEPOSIT".equals(nearestKeyword)) {
+                        continue;
+                    }
+
                     double bAmt = cleanVal.toLowerCase().endsWith("k")
                             ? Double.parseDouble(cleanVal.substring(0, cleanVal.length() - 1)) * 1000
                             : Double.parseDouble(cleanVal);
-                    if (!rentFound || Math.abs(rentAmount - bAmt) > 0.01) {
-                        brokerageVal = String.format("₹%,.0f", bAmt);
-                    }
+                    brokerageVal = String.format("₹%,.0f", bAmt);
+                    break;
                 }
             }
         }
         if ("Unmentioned".equals(brokerageVal)) {
-            Matcher revBrokerage = REV_BROKERAGE_PATTERN.matcher(normalized);
-            if (revBrokerage.find()) {
-                String rawVal = revBrokerage.group(1);
+            Matcher fwdBrokerage = FWD_BROKERAGE_PATTERN.matcher(normalized);
+            while (fwdBrokerage.find()) {
+                String rawVal = fwdBrokerage.group(1);
                 if (rawVal != null) {
                     String cleanVal = rawVal.replace(",", "");
                     if ((pincode == null || !pincode.equals(cleanVal)) && (ownerPhone == null || !ownerPhone.contains(cleanVal))) {
+                        String nearestKeyword = findNearestPrecedingKeyword(normalized, fwdBrokerage.start(1));
+                        if ("RENT".equals(nearestKeyword) || "DEPOSIT".equals(nearestKeyword)) {
+                            continue;
+                        }
+
                         double bAmt = cleanVal.toLowerCase().endsWith("k")
                                 ? Double.parseDouble(cleanVal.substring(0, cleanVal.length() - 1)) * 1000
                                 : Double.parseDouble(cleanVal);
-                        if (!rentFound || Math.abs(rentAmount - bAmt) > 0.01) {
-                            brokerageVal = String.format("₹%,.0f", bAmt);
-                        }
+                        brokerageVal = String.format("₹%,.0f", bAmt);
+                        break;
                     }
                 }
             }
@@ -378,24 +421,26 @@ public class PropertyParserService {
 
         // 3D. Explicit Security Deposit Extractor
         String depositVal = null;
-        Matcher fwdDeposit = FWD_DEPOSIT_PATTERN.matcher(normalized);
-        if (fwdDeposit.find()) {
-            String depRaw = fwdDeposit.group(1);
+        Matcher revDeposit = REV_DEPOSIT_PATTERN.matcher(normalized);
+        while (revDeposit.find()) {
+            String depRaw = revDeposit.group(1);
             if (depRaw != null) {
                 String cleanDep = depRaw.replace(",", "");
                 if ((pincode == null || !pincode.equals(cleanDep)) && (ownerPhone == null || !ownerPhone.contains(cleanDep))) {
                     depositVal = depRaw + " Security Deposit";
+                    break;
                 }
             }
         }
         if (depositVal == null) {
-            Matcher revDeposit = REV_DEPOSIT_PATTERN.matcher(normalized);
-            if (revDeposit.find()) {
-                String depRaw = revDeposit.group(1);
+            Matcher fwdDeposit = FWD_DEPOSIT_PATTERN.matcher(normalized);
+            while (fwdDeposit.find()) {
+                String depRaw = fwdDeposit.group(1);
                 if (depRaw != null) {
                     String cleanDep = depRaw.replace(",", "");
                     if ((pincode == null || !pincode.equals(cleanDep)) && (ownerPhone == null || !ownerPhone.contains(cleanDep))) {
                         depositVal = depRaw + " Security Deposit";
+                        break;
                     }
                 }
             }
@@ -411,7 +456,12 @@ public class PropertyParserService {
         String possessionDate = null;
         Matcher possMatcher = POSSESSION_PATTERN.matcher(input);
         if (possMatcher.find()) {
-            possessionDate = capitalizeWords(possMatcher.group(0).trim());
+            String rawP = possMatcher.group(1) != null ? possMatcher.group(1) : possMatcher.group(0);
+            if (rawP.toLowerCase().contains("ready to move") || rawP.toLowerCase().contains("immediate")) {
+                possessionDate = "Ready To Move";
+            } else {
+                possessionDate = capitalizeWords(rawP.trim());
+            }
         }
 
         // 3F. State & Landmark Extractor
@@ -443,9 +493,17 @@ public class PropertyParserService {
 
         if (!rentFound) {
             Matcher kMatcher = K_PRICE_PATTERN.matcher(input);
-            if (kMatcher.find()) {
-                rentAmount = Double.parseDouble(kMatcher.group(1)) * 1000;
+            while (kMatcher.find()) {
+                String kVal = kMatcher.group(1);
+                double candidateRent = Double.parseDouble(kVal) * 1000;
+                String formattedCand = String.format("₹%,.0f", candidateRent);
+                if ((brokerageVal != null && (brokerageVal.toLowerCase().contains(kVal + "k") || brokerageVal.equals(formattedCand)))
+                        || (depositVal != null && (depositVal.toLowerCase().contains(kVal + "k") || depositVal.equals(formattedCand)))) {
+                    continue;
+                }
+                rentAmount = candidateRent;
                 rentFound = true;
+                break;
             }
         }
 
@@ -465,9 +523,12 @@ public class PropertyParserService {
             }
         }
 
-        // Step 4B: Check Known Core Indore Sectors (Hard-bind locality to Indore)
+        // Step 4B: Check Known Core Indore Sectors (Hard-bind locality to Indore, sort by length descending)
         if (sector.isBlank()) {
-            for (String knownSec : KNOWN_INDORE_SECTORS) {
+            List<String> sortedSectors = KNOWN_INDORE_SECTORS.stream()
+                    .sorted((a, b) -> Integer.compare(b.length(), a.length()))
+                    .toList();
+            for (String knownSec : sortedSectors) {
                 if (cleanLower.contains(knownSec)) {
                     sector = capitalizeWords(knownSec);
                     city = "Indore";
@@ -531,6 +592,9 @@ public class PropertyParserService {
             sector = NOISE_PREFIX_PATTERN.matcher(sector).replaceAll("").trim();
             if (!city.isBlank() && sector.toLowerCase().endsWith(" " + city.toLowerCase())) {
                 sector = sector.substring(0, sector.length() - city.length()).trim();
+            }
+            if (sector.matches(".*\\b\\d{4,}\\b.*")) {
+                sector = "";
             }
         }
 
@@ -705,6 +769,29 @@ public class PropertyParserService {
         dto.setSavedToDatabase(newlySaved);
 
         return dto;
+    }
+
+    private String findNearestPrecedingKeyword(String fullText, int numberIndex) {
+        int windowStart = Math.max(0, numberIndex - 35);
+        String textBefore = fullText.substring(windowStart, numberIndex).toLowerCase();
+
+        int lastRent = Math.max(
+                Math.max(textBefore.lastIndexOf("monthly rent"), textBefore.lastIndexOf("rent")),
+                Math.max(textBefore.lastIndexOf("rnt"), textBefore.lastIndexOf("ren"))
+        );
+        int lastBrokerage = Math.max(
+                Math.max(textBefore.lastIndexOf("brokerage"), textBefore.lastIndexOf("broker")),
+                Math.max(textBefore.lastIndexOf("commission"), textBefore.lastIndexOf("brokrage"))
+        );
+        int lastDeposit = Math.max(
+                Math.max(textBefore.lastIndexOf("security deposit"), textBefore.lastIndexOf("deposit")),
+                Math.max(textBefore.lastIndexOf("depost"), textBefore.lastIndexOf("securuity"))
+        );
+
+        if (lastRent > lastBrokerage && lastRent > lastDeposit) return "RENT";
+        if (lastBrokerage > lastRent && lastBrokerage > lastDeposit) return "BROKERAGE";
+        if (lastDeposit > lastRent && lastDeposit > lastBrokerage) return "DEPOSIT";
+        return "NONE";
     }
 
     private String capitalizeWords(String str) {

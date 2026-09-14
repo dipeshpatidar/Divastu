@@ -23,10 +23,18 @@ import { propertyService } from '../services/propertyService';
 
 const getInitialSession = (): { role: UserRole; user: UserProfile | null } => {
   try {
-    const savedRole = localStorage.getItem('divyavastu_role') as UserRole | null;
-    const savedUserStr = localStorage.getItem('divyavastu_user');
+    const savedRole = (localStorage.getItem('pathome_role') || localStorage.getItem('divyavastu_role')) as UserRole | null;
+    const savedUserStr = localStorage.getItem('pathome_user') || localStorage.getItem('divyavastu_user');
     if (savedRole && savedUserStr) {
-      const parsedUser = JSON.parse(savedUserStr);
+      let parsedUser = JSON.parse(savedUserStr);
+      if (parsedUser) {
+        if (parsedUser.fullName) {
+          parsedUser.fullName = parsedUser.fullName.replace(/divyavastu/gi, 'Pathome');
+        }
+        if (parsedUser.email) {
+          parsedUser.email = parsedUser.email.replace(/divyavastu/gi, 'pathome');
+        }
+      }
       return { role: savedRole, user: parsedUser };
     }
   } catch (err) {
@@ -810,6 +818,8 @@ export const Home: React.FC = () => {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('pathome_role');
+    localStorage.removeItem('pathome_user');
     localStorage.removeItem('divyavastu_role');
     localStorage.removeItem('divyavastu_user');
     setUser(null);

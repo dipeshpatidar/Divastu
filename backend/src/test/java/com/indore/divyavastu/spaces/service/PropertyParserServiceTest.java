@@ -111,7 +111,7 @@ public class PropertyParserServiceTest {
         assertEquals("525 sqft", dto.getAreaSqFt());
         assertEquals("1+1 Security Deposit", dto.getDepositVal());
         assertEquals("Piyushi Saha", dto.getOwnerName());
-        assertEquals("458888248", dto.getOwnerPhone());
+        assertEquals("+91 458888248", dto.getOwnerPhone());
         assertEquals("Not Specified", dto.getVastuFacing());
     }
 
@@ -128,7 +128,7 @@ public class PropertyParserServiceTest {
         assertEquals("525 sqft", dto.getAreaSqFt());
         assertEquals("1+1 Security Deposit", dto.getDepositVal());
         assertEquals("Piyushi Saha", dto.getOwnerName());
-        assertEquals("9876543210", dto.getOwnerPhone());
+        assertEquals("+91 98765 43210", dto.getOwnerPhone());
         assertEquals("East Facing", dto.getVastuFacing());
         assertEquals("Fully Furnished", dto.getFurnishingStatus());
         assertEquals("Ready To Move", dto.getPossessionDate());
@@ -160,7 +160,7 @@ public class PropertyParserServiceTest {
         assertEquals("₹22,500", dto.getBrokerageVal());
         assertEquals("1800 sqft", dto.getAreaSqFt());
         assertEquals("John Doe", dto.getOwnerName());
-        assertEquals("1234567890", dto.getOwnerPhone());
+        assertEquals("+91 12345 67890", dto.getOwnerPhone());
         assertEquals("North-East Facing", dto.getVastuFacing());
         assertEquals("Fully Furnished", dto.getFurnishingStatus());
         assertEquals("Ready To Move", dto.getPossessionDate());
@@ -198,7 +198,7 @@ public class PropertyParserServiceTest {
         assertEquals(25000.0, dto2.getRentAmount());
         assertEquals("₹25,000", dto2.getRentVal());
         assertEquals("Jhon Doe", dto2.getOwnerName());
-        assertEquals("9876543210", dto2.getOwnerPhone());
+        assertEquals("+91 98765 43210", dto2.getOwnerPhone());
         assertEquals("East Facing", dto2.getVastuFacing());
         assertEquals("Semi Furnished", dto2.getFurnishingStatus());
     }
@@ -222,5 +222,58 @@ public class PropertyParserServiceTest {
         assertNotNull(dto3);
         assertEquals("Saket Nagar", dto3.getSector());
         assertEquals("Indore", dto3.getCity());
+    }
+
+    @Test
+    public void testPhoneExtractionVariations() {
+        // Spaced 5+5 digit phone number with country code
+        String promptSpaced = "2 BHK in Nanda Nagar. Monthly rent 30000. Owner Ramesh Sharma +91 98260 12345. East facing.";
+        ParsedPropertyDTO dtoSpaced = propertyParserService.parseAndSave(promptSpaced);
+        assertEquals("Ramesh Sharma", dtoSpaced.getOwnerName());
+        assertEquals("+91 98260 12345", dtoSpaced.getOwnerPhone());
+
+        // Dashed phone number
+        String promptDashed = "2 BHK flat. Owner Suresh 98260-12345 rent 15000";
+        ParsedPropertyDTO dtoDashed = propertyParserService.parseAndSave(promptDashed);
+        assertEquals("Suresh", dtoDashed.getOwnerName());
+        assertEquals("+91 98260 12345", dtoDashed.getOwnerPhone());
+
+        // Contiguous 10-digit phone number
+        String promptContiguous = "2 BHK flat rent 20000 owner Anita 9123456789";
+        ParsedPropertyDTO dtoContiguous = propertyParserService.parseAndSave(promptContiguous);
+        assertEquals("Anita", dtoContiguous.getOwnerName());
+        assertEquals("+91 91234 56789", dtoContiguous.getOwnerPhone());
+    }
+
+    @Test
+    public void testScreenshotUserPromptsParsing() {
+        // Exact Prompt 1 from screenshot
+        String prompt1 = "2bhk flat on rent near bombay chemist infront of Infiniti hotel mahalaxmi nagar rent is 30000 & the security deposit is 1+1 60000 & the brokerage Fee is 15000 & possession date 20th of september west facing Flat fully furnished flat Dipesh patidar owner 6263421859 & 3 bathroom";
+        ParsedPropertyDTO dto1 = propertyParserService.parseAndSave(prompt1);
+
+        assertNotNull(dto1);
+        assertEquals("2 BHK", dto1.getBhk());
+        assertEquals("Flat", dto1.getType());
+        assertEquals(30000.0, dto1.getRentAmount());
+        assertEquals("₹15,000", dto1.getBrokerageVal());
+        assertEquals("Dipesh Patidar", dto1.getOwnerName());
+        assertEquals("+91 62634 21859", dto1.getOwnerPhone());
+        assertEquals("West Facing", dto1.getVastuFacing());
+        assertEquals("Fully Furnished", dto1.getFurnishingStatus());
+        assertEquals("3 Baths", dto1.getBathrooms());
+        assertEquals("Mahalaxmi Nagar", dto1.getSector());
+
+        // Exact Prompt 2 from screenshot
+        String prompt2 = "1bhk flat on rent near opal homes chikatsak nagar mahalaxmi nagar 17000 rent 36000 securuity deposit 8500 brokerage & possession date is 25th of sep owner name dipesh patidar 845888248 east dacing semi furnished brokerage is 7000";
+        ParsedPropertyDTO dto2 = propertyParserService.parseAndSave(prompt2);
+
+        assertNotNull(dto2);
+        assertEquals("1 BHK", dto2.getBhk());
+        assertEquals("Flat", dto2.getType());
+        assertEquals(17000.0, dto2.getRentAmount());
+        assertEquals("₹7,000", dto2.getBrokerageVal());
+        assertEquals("Dipesh Patidar", dto2.getOwnerName());
+        assertEquals("East Facing", dto2.getVastuFacing());
+        assertEquals("Semi Furnished", dto2.getFurnishingStatus());
     }
 }

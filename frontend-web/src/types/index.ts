@@ -1,9 +1,12 @@
 export type UserRole = 'GUEST' | 'TENANT' | 'EMPLOYEE' | 'SUB_ADMIN' | 'SUPER_ADMIN' | 'ADMIN';
 
 export type RoomTag = 
+  | 'GENERAL'
   | 'LIVING_ROOM' 
+  | 'MASTER_BEDROOM'
   | 'BEDROOM' 
   | 'KITCHEN' 
+  | 'BATHROOM'
   | 'BALCONY' 
   | 'EXTERIOR' 
   | 'AMENITIES' 
@@ -64,6 +67,7 @@ export interface Property {
   taggedMedia?: PropertyMediaAsset[];
   videoUrl?: string;
   vastuScore?: number;
+  vastuFacing?: string;
   verified: boolean;
   ownerPhone: string;
   latitude: number;

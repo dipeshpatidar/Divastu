@@ -137,28 +137,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               <div className="grid grid-cols-2 gap-1.5 text-[10px]">
                 <button
                   type="button"
-                  onClick={() => { setEmail('superadmin@divyavastu.in'); setPassword('SuperAdmin123!'); setRoleSelect('SUPER_ADMIN'); }}
+                  onClick={() => { setEmail('superadmin@pathome.in'); setPassword('SuperAdmin123!'); setRoleSelect('SUPER_ADMIN'); }}
                   className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 py-1.5 px-2 rounded-xl text-left font-semibold transition-all"
                 >
                   🔑 Super Admin
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setEmail('subadmin@divyavastu.in'); setPassword('SubAdmin123!'); setRoleSelect('SUB_ADMIN'); }}
+                  onClick={() => { setEmail('subadmin@pathome.in'); setPassword('SubAdmin123!'); setRoleSelect('SUB_ADMIN'); }}
                   className="bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 py-1.5 px-2 rounded-xl text-left font-semibold transition-all"
                 >
                   🔒 Sub-Admin
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setEmail('employee@divyavastu.in'); setPassword('Employee123!'); setRoleSelect('EMPLOYEE'); }}
+                  onClick={() => { setEmail('employee@pathome.in'); setPassword('Employee123!'); setRoleSelect('EMPLOYEE'); }}
                   className="bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 py-1.5 px-2 rounded-xl text-left font-semibold transition-all"
                 >
                   👥 Employee (CRM)
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setEmail('tenant@divyavastu.in'); setPassword('Password123!'); setRoleSelect('TENANT'); }}
+                  onClick={() => { setEmail('tenant@pathome.in'); setPassword('Password123!'); setRoleSelect('TENANT'); }}
                   className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 py-1.5 px-2 rounded-xl text-left font-semibold transition-all"
                 >
                   🏠 Tenant

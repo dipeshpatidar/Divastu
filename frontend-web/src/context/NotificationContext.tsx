@@ -54,7 +54,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Helper to fetch current active role from localStorage session
   const getActiveRole = useCallback((): string => {
     try {
-      const role = localStorage.getItem('divyavastu_role');
+      const role = localStorage.getItem('pathome_role') || localStorage.getItem('divyavastu_role');
       if (!role || role === 'GUEST') return 'ALL';
       return role.toUpperCase();
     } catch {

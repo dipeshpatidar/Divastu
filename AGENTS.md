@@ -1,8 +1,8 @@
-# AGENTS Guidelines for Divyavastu Spaces
+# AGENTS Guidelines for Pathome Spaces
 
 ## High-Performance & Database Guidelines
 
-When developing features for Divyavastu Spaces (Backend Spring Boot & Frontend Web/Mobile):
+When developing features for Pathome Spaces (Backend Spring Boot & Frontend Web/Mobile):
 
 1. **$O(1)$ Space and Time Complexity**:
    - Always prioritize sub-millisecond execution times.
@@ -24,4 +24,9 @@ When developing features for Divyavastu Spaces (Backend Spring Boot & Frontend W
 5. **Centralized Global Exception Handling**:
    - All HTTP REST controllers must route unhandled exceptions through `@RestControllerAdvice` (`GlobalExceptionHandler.java`).
    - Standardized structured JSON response: `{ timestamp, status, error, message, path }`.
+
+6. **Strict Meaningful UI Copywriting (Zero Garbage & Developer Notes)**:
+   - Every single user-facing text string, header, label, badge, tooltip, button CTA, and notification message across the frontend (Web/Mobile) MUST be clean, production-ready, customer-centric, and meaningful.
+   - Never include developer notes, layout indicators, debug tags (e.g. no "(100% Full Width)", no "(Extracted in Real-Time)"), placeholder junk, or arbitrary filler text.
+
 

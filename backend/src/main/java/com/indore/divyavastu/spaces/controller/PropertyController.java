@@ -109,25 +109,32 @@ public class PropertyController {
     public ResponseEntity<Listing> createProperty(@RequestBody Map<String, Object> body) {
         Objects.requireNonNull(body, "Property payload must not be null");
 
+        String ownerPhone = (String) body.get("ownerPhoneNumber");
+        String sector = (String) body.get("sector");
+        Object rentObj = body.getOrDefault("monthlyRent", body.get("price"));
+        String bhkCount = (String) body.getOrDefault("bhkCount", body.get("bhk"));
+
+        validateRequiredFields(ownerPhone, sector, rentObj, bhkCount);
+
         RentalDetails rental = new RentalDetails();
-        rental.setTitle((String) body.getOrDefault("title", "New Property Listing"));
-        rental.setDescription((String) body.getOrDefault("description", "Vetted zero brokerage home in Indore"));
-        rental.setAddress((String) body.getOrDefault("address", "Vijay Nagar Main Road"));
-        rental.setSector((String) body.getOrDefault("sector", "Vijay Nagar"));
+        rental.setTitle((String) body.getOrDefault("title", bhkCount + " Flat in " + sector));
+        rental.setDescription((String) body.getOrDefault("description", "Vetted zero brokerage home in " + sector));
+        rental.setAddress((String) body.getOrDefault("address", sector + ", Indore"));
+        rental.setSector(sector);
         rental.setCity((String) body.getOrDefault("city", "Indore"));
-        rental.setBhkCount((String) body.getOrDefault("bhkCount", body.getOrDefault("bhk", "2 BHK")));
+        rental.setBhkCount(bhkCount);
         rental.setFurnishingStatus((String) body.getOrDefault("furnishingStatus", "Semi-Furnished"));
         rental.setVastuFacing((String) body.getOrDefault("vastuFacing", "North-East Facing"));
         if (body.containsKey("amenities")) {
             Object am = body.get("amenities");
             rental.setAmenities(am instanceof List ? String.join(", ", (List<String>) am) : am.toString());
         }
-        rental.setOwnerPhoneNumber((String) body.getOrDefault("ownerPhoneNumber", "+91 98260 00000"));
+        rental.setOwnerPhoneNumber(ownerPhone.trim());
         rental.setLatitude(Double.valueOf(body.getOrDefault("latitude", 22.7533).toString()));
         rental.setLongitude(Double.valueOf(body.getOrDefault("longitude", 75.8937).toString()));
         rental.setTotalAreaSqFt(Double.valueOf(body.getOrDefault("totalAreaSqFt", 1500).toString()));
-        rental.setMonthlyRent(new BigDecimal(body.getOrDefault("monthlyRent", body.getOrDefault("price", "20000")).toString()));
-        rental.setSecurityDeposit(new BigDecimal(body.getOrDefault("securityDeposit", "40000").toString()));
+        rental.setMonthlyRent(new BigDecimal(rentObj.toString().replaceAll("[^0-9.]", "")));
+        rental.setSecurityDeposit(new BigDecimal(body.getOrDefault("securityDeposit", String.valueOf(rental.getMonthlyRent().doubleValue() * 2)).toString()));
         rental.setStatus(ListingStatus.ACTIVE);
         rental.setPropertyType(PropertyType.FLAT);
 
@@ -219,11 +226,73 @@ public class PropertyController {
         ));
     }
 
+    private void validateRequiredFields(String ownerPhone, String sector, Object rentObj, String bhkCount) {
+        List<String> missing = new ArrayList<>();
+
+        if (ownerPhone == null || ownerPhone.isBlank() || ownerPhone.equalsIgnoreCase("Not Specified") || ownerPhone.equalsIgnoreCase("Unspecified")) {
+            missing.add("Owner Phone Number (Must not be null)");
+        } else if (!ownerPhone.trim().startsWith("+")) {
+            missing.add("Owner Phone Country Code (Prefix '+' required, e.g. +91 98260 12345)");
+        }
+
+        if (sector == null || sector.isBlank() || sector.equalsIgnoreCase("Not Specified") || sector.equalsIgnoreCase("Unspecified")) {
+            missing.add("Locality / Sector Name (Must not be null)");
+        }
+
+        double rentVal = 0.0;
+        if (rentObj != null) {
+            try {
+                rentVal = Double.parseDouble(rentObj.toString().replaceAll("[^0-9.]", ""));
+            } catch (Exception ignored) {}
+        }
+        if (rentVal <= 0) {
+            missing.add("Monthly Rent Amount (Must be greater than 0)");
+        }
+
+        if (bhkCount == null || bhkCount.isBlank() || bhkCount.equalsIgnoreCase("Not Specified") || bhkCount.equalsIgnoreCase("Unspecified")) {
+            missing.add("BHK Layout Count (Must not be null)");
+        }
+
+        if (!missing.isEmpty()) {
+            throw new IllegalArgumentException("Property Creation Rejected: Missing or invalid required non-null fields: " + String.join(", ", missing));
+        }
+    }
+
+    private RentalDetails buildRentalDetailsFromDTO(ParsedPropertyDTO dto) {
+        validateRequiredFields(
+                dto.getOwnerPhone(),
+                dto.getSector(),
+                dto.getRentAmount() != null ? dto.getRentAmount() : dto.getRentVal(),
+                dto.getBhk()
+        );
+
+        RentalDetails listing = new RentalDetails();
+        listing.setTitle(dto.getTitle() != null && !dto.getTitle().isBlank() ? dto.getTitle() : (dto.getBhk() + " Flat in " + dto.getSector()));
+        listing.setDescription(dto.getDescription() != null && !dto.getDescription().isBlank() ? dto.getDescription() : (dto.getBhk() + " Flat located in " + dto.getSector() + ", " + (dto.getCity() != null ? dto.getCity() : "Indore")));
+        listing.setSector(dto.getSector());
+        listing.setAddress(dto.getAddress() != null && !dto.getAddress().isBlank() ? dto.getAddress() : (dto.getSector() + ", " + (dto.getCity() != null ? dto.getCity() : "Indore")));
+        listing.setCity(dto.getCity() != null && !dto.getCity().isBlank() ? dto.getCity() : "Indore");
+        listing.setBhkCount(dto.getBhk());
+        listing.setFurnishingStatus(dto.getFurnishingStatus() != null && !dto.getFurnishingStatus().isBlank() ? dto.getFurnishingStatus() : "Semi-Furnished");
+        listing.setVastuFacing(dto.getVastuFacing() != null && !dto.getVastuFacing().isBlank() ? dto.getVastuFacing() : "East Facing");
+        if (dto.getAmenities() != null && !dto.getAmenities().isEmpty()) {
+            listing.setAmenities(String.join(", ", dto.getAmenities()));
+        }
+        listing.setMonthlyRent(BigDecimal.valueOf(dto.getRentAmount()));
+        listing.setSecurityDeposit(BigDecimal.valueOf(dto.getRentAmount() * 2));
+        listing.setOwnerPhoneNumber(dto.getOwnerPhone().trim());
+        listing.setLatitude(22.7533);
+        listing.setLongitude(75.8937);
+        listing.setStatus(ListingStatus.ACTIVE);
+        listing.setPropertyType(dto.getType() != null && dto.getType().equalsIgnoreCase("House") ? PropertyType.HOUSE : PropertyType.FLAT);
+        return listing;
+    }
+
     private RoomTag parseRoomTag(String roomTagStr) {
         try {
             return RoomTag.valueOf(roomTagStr.toUpperCase());
         } catch (Exception e) {
-            return RoomTag.LIVING_ROOM;
+            return RoomTag.GENERAL;
         }
     }
 

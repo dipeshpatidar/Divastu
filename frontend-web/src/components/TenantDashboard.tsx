@@ -387,7 +387,7 @@ export const TenantDashboard: React.FC<TenantDashboardProps> = ({
             </div>
             <div className="flex items-baseline justify-between gap-1">
               <span className="text-xs font-bold text-slate-900 font-['Outfit'] truncate">
-                {selectedSectors[0] || 'Vijay Nagar'} 3BHK
+                {selectedSectors[0] || 'Selected Sector'} 3BHK
               </span>
               <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded font-mono shrink-0">
                 Today 4 PM
@@ -464,7 +464,7 @@ export const TenantDashboard: React.FC<TenantDashboardProps> = ({
                   </div>
                   <div className="text-[10px] text-slate-400 font-mono truncate flex items-center gap-1 mt-0.5">
                     <MapPin className="w-3 h-3 text-emerald-500 shrink-0" />
-                    <span>{selectedSectors[0] || 'Vijay Nagar'} 3BHK • Today 4 PM</span>
+                    <span>{selectedSectors[0] || 'Selected Sector'} 3BHK • Today 4 PM</span>
                   </div>
                 </div>
               </div>
@@ -570,7 +570,7 @@ export const TenantDashboard: React.FC<TenantDashboardProps> = ({
                         <Phone className="w-3.5 h-3.5 text-slate-950" /> Call Escort Rahul
                       </a>
                       <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${selectedSectors[0] || 'Vijay Nagar'} Indore Escort Meeting Point`)}`}
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${selectedSectors[0] || 'Selected Sector'} Indore Escort Meeting Point`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 font-extrabold text-[11px] py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-colors"
@@ -1171,7 +1171,7 @@ export const TenantDashboard: React.FC<TenantDashboardProps> = ({
               <motion.a
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${selectedSectors[0] || 'Vijay Nagar'} Indore Escort Meeting Point`)}`}
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${selectedSectors[0] || 'Selected Sector'} Indore Escort Meeting Point`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-extrabold text-[11px] py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5"

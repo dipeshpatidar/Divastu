@@ -13,18 +13,18 @@ class JwtUtilsTest {
     @BeforeEach
     void setUp() {
         jwtUtils = new JwtUtils();
-        ReflectionTestUtils.setField(jwtUtils, "jwtSecret", "DivyavastuSpacesSuperSecretKeyForJWTAuthTokenGeneration2026!");
+        ReflectionTestUtils.setField(jwtUtils, "jwtSecret", "PathomeSpacesSuperSecretKeyForJWTAuthTokenGeneration2026!");
         ReflectionTestUtils.setField(jwtUtils, "jwtExpirationMs", 3600000L);
     }
 
     @Test
     void testGenerateAndValidateToken() {
-        String token = jwtUtils.generateToken(101L, "tenant@divyavastu.in", "ROLE_TENANT");
+        String token = jwtUtils.generateToken(101L, "tenant@pathome.in", "ROLE_TENANT");
 
         assertNotNull(token);
         assertTrue(jwtUtils.validateToken(token));
 
-        assertEquals("tenant@divyavastu.in", jwtUtils.getEmailFromToken(token));
+        assertEquals("tenant@pathome.in", jwtUtils.getEmailFromToken(token));
         assertEquals(101L, jwtUtils.getUserIdFromToken(token));
         assertEquals("ROLE_TENANT", jwtUtils.getRoleFromToken(token));
     }

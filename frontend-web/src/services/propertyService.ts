@@ -30,22 +30,22 @@ export const propertyService = {
 
       return {
         id: item.id,
-        title: item.title || 'Indore Property',
+        title: item.title || '',
         listingType: item.listingType || 'RENT',
         propertyType: item.propertyType || 'FLAT',
         city: item.city || 'Indore',
-        sector: item.sector || 'Vijay Nagar',
-        bhk: item.bhkCount || item.bhk || '3BHK',
-        monthlyRent: item.monthlyRent ? Number(item.monthlyRent) : 20000,
-        securityDeposit: item.securityDeposit ? Number(item.securityDeposit) : 40000,
+        sector: item.sector || '',
+        bhk: item.bhkCount || item.bhk || '',
+        monthlyRent: item.monthlyRent ? Number(item.monthlyRent) : 0,
+        securityDeposit: item.securityDeposit ? Number(item.securityDeposit) : 0,
         askingPrice: item.askingPrice ? Number(item.askingPrice) : undefined,
-        totalAreaSqFt: item.totalAreaSqFt || 1500,
-        images: images.length > 0 ? images : ['/assets/hero_luxury.jpg', '/assets/interior_living.jpg'],
-        videoUrl: video || '/assets/videos/property_walkthrough_1.mp4',
+        totalAreaSqFt: item.totalAreaSqFt ? Number(item.totalAreaSqFt) : 0,
+        images: images,
+        videoUrl: video || '',
         verified: item.status === 'ACTIVE',
-        ownerPhone: item.ownerPhoneNumber || '+91 98260 *****',
-        latitude: item.latitude || 22.7533,
-        longitude: item.longitude || 75.8937
+        ownerPhone: item.ownerPhoneNumber || '',
+        latitude: item.latitude,
+        longitude: item.longitude
       };
     });
   },

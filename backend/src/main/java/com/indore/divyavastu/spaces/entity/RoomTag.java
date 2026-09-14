@@ -1,10 +1,13 @@
 package com.indore.divyavastu.spaces.entity;
 
 public enum RoomTag {
+    GENERAL("🌐 General / Untagged"),
     LIVING_ROOM("🛋️ Living Room"),
-    BEDROOM("🛏️ Master Bedroom"),
+    MASTER_BEDROOM("🛏️ Master Bedroom"),
+    BEDROOM("🛏️ Guest Bedroom"),
     KITCHEN("🍳 Modular Kitchen"),
-    BALCONY("🌳 Balcony & View"),
+    BATHROOM("🚿 Bathroom & Restroom"),
+    BALCONY("🌅 Balcony & View"),
     EXTERIOR("🏢 Building Exterior"),
     AMENITIES("🏊 Society Amenities"),
     FLOOR_PLAN("📐 Floor Plan Blueprint");

@@ -4,9 +4,9 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
   application:
-    name: divyavastu-spaces-backend
+    name: pathome-spaces-backend
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/divyavastu_db}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/pathome_db}
     username: ${SPRING_DATASOURCE_USERNAME:dipeshpatidar}
     password: ${SPRING_DATASOURCE_PASSWORD:}
     driver-class-name: org.postgresql.Driver
@@ -32,12 +32,12 @@ spring:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:DivyavastuSpacesSuperSecretKeyForJWTAuthTokenGeneration2026!}
+    secret: ${JWT_SECRET:PathomeSpacesSuperSecretKeyForJWTAuthTokenGeneration2026!}
     expiration-ms: 86400000
 
 meta:
   webhook:
-    verify-token: ${META_VERIFY_TOKEN:DIVYAVASTU_META_VERIFY_TOKEN_2026}
+    verify-token: ${META_VERIFY_TOKEN:PATHOME_META_VERIFY_TOKEN_2026}
   graph:
     api:
       token: ${META_GRAPH_TOKEN:MOCK_META_GRAPH_API_TOKEN}
