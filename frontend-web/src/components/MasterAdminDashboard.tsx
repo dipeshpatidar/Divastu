@@ -45,27 +45,31 @@ const initialBhkConfigs = [
 
 const PRESET_PROMPTS = [
   {
-    id: 'complete-18',
-    label: '🌟 Complete 18+ Field Example',
-    badge: 'Recommended',
+    id: '2bhk-family-flat',
+    label: '🏠 2 BHK Family Flat',
+    subtitle: 'Full details: Rent, Deposit, Brokerage & Vastu',
+    badge: 'Most Popular',
     text: 'Premium 2bhk flat 525 sqft 15000 rent brokerage 30000 1+1 security deposit owner name Rajesh Agrawal 9826000000 status live in Nanda Nagar Indore facing east fully furnished ready to move'
   },
   {
-    id: 'penthouse',
-    label: '🏢 3 BHK Penthouse',
-    badge: 'Luxury',
+    id: '3bhk-luxury-penthouse',
+    label: '🏢 3 BHK Luxury Penthouse',
+    subtitle: 'High-rise with Terrace, Pool & Furnishing',
+    badge: 'High-Value',
     text: 'Luxury 3 BHK Penthouse 1800 sqft in Vijay Nagar Indore rent 45000 brokerage 22500 security deposit 90000 owner name Rajesh Agrawal 9826000000 north east facing terrace balcony pool fully furnished ready to move status live'
   },
   {
-    id: 'villa',
-    label: '🏡 4 BHK Villa',
+    id: '4bhk-gated-villa',
+    label: '🏡 4 BHK Gated Villa',
+    subtitle: 'Independent Villa with Private Garden & Gym',
     badge: 'Premium',
     text: 'Spacious 4 BHK Independent Villa 2500 sqft in Nipania Indore rent 60000 brokerage 30000 security deposit 120000 owner name Rajesh Agrawal 9826000000 east facing private garden gym semi furnished ready to move status live'
   },
   {
-    id: 'quick',
-    label: '⚡ Quick 2 BHK',
-    badge: 'Fast',
+    id: 'express-2bhk-quick',
+    label: '⚡ Express 2 BHK Quick',
+    subtitle: 'Fast 3-line prompt for rapid property listing',
+    badge: 'Fast Upload',
     text: '2bhk flat in Saket Nagar 22000 rent owner Rajesh Agrawal 9826000000 east facing semi furnished status live'
   }
 ];
@@ -649,6 +653,11 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     };
   };
 
+  const liveExtractedPreview = React.useMemo(() => {
+    if (!newBhkLabel || !newBhkLabel.trim()) return null;
+    return parseNaturalLanguageProperty(newBhkLabel);
+  }, [newBhkLabel]);
+
   const handleAddCustomBhk = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBhkLabel.trim()) {
@@ -1217,34 +1226,37 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                       {PRESET_PROMPTS.map((preset) => (
                         <button
                           key={preset.id}
                           type="button"
                           onClick={() => setNewBhkLabel(preset.text)}
-                          className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${
+                          className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 ${
                             newBhkLabel === preset.text
-                              ? 'bg-emerald-950/90 border-emerald-400 text-emerald-200 shadow-md shadow-emerald-950/50'
-                              : 'bg-slate-950/80 hover:bg-slate-800/80 border-slate-800 text-slate-300'
+                              ? 'bg-emerald-950/90 border-emerald-400 text-emerald-200 shadow-lg shadow-emerald-950/60 ring-2 ring-emerald-500/30'
+                              : 'bg-slate-950/80 hover:bg-slate-800/80 border-slate-800 text-slate-300 hover:border-slate-700'
                           }`}
                         >
-                          <div className="flex items-center justify-between w-full">
-                            <span className="text-xs font-bold font-['Outfit'] truncate">{preset.label}</span>
-                            <span className="text-[9px] font-mono font-black text-amber-400 bg-amber-950/80 border border-amber-500/30 px-1.5 py-0.5 rounded">
+                          <div className="flex items-center justify-between w-full gap-1">
+                            <span className="text-xs font-black font-['Outfit'] text-white leading-tight">{preset.label}</span>
+                            <span className="text-[9px] font-mono font-black text-amber-400 bg-amber-950/90 border border-amber-500/40 px-2 py-0.5 rounded-md shrink-0">
                               {preset.badge}
                             </span>
                           </div>
-                          <p className="text-[10px] text-slate-400 line-clamp-2 font-mono italic">
-                            "{preset.text}"
+                          <p className="text-[10px] text-slate-400 font-mono leading-tight">
+                            {preset.subtitle}
                           </p>
+                          <div className="text-[9px] text-emerald-400/80 font-mono italic bg-slate-900/80 p-1.5 rounded-lg border border-slate-800/60 line-clamp-2">
+                            "{preset.text}"
+                          </div>
                         </button>
                       ))}
                     </div>
                   </div>
 
                   {/* EDITABLE PROMPT TEXTAREA INPUT BOX */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-extrabold text-slate-300 flex items-center gap-1.5 font-mono uppercase tracking-wide">
                         <FileText className="w-3.5 h-3.5 text-emerald-400" />
@@ -1264,6 +1276,63 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                         className="w-full bg-slate-950 text-emerald-300 placeholder-slate-500 text-xs font-mono p-4 rounded-2xl border-2 border-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none leading-relaxed shadow-inner"
                       />
                     </div>
+
+                    {/* LIVE REAL-TIME AI EXTRACTION PREVIEW DECK */}
+                    {liveExtractedPreview && (
+                      <div className="bg-slate-950 p-4 rounded-2xl border border-emerald-500/40 space-y-3 shadow-inner">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-mono font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <Zap className="w-3.5 h-3.5 text-amber-400 fill-current animate-pulse" />
+                            Live Real-Time AI Extracted Values (Updating Live as You Type):
+                          </span>
+                          <span className="text-[9px] font-mono font-bold text-emerald-300 bg-emerald-950 px-2.5 py-0.5 rounded-full border border-emerald-800">
+                            ⚡ AI Auto-Parsed
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                          {/* 1. BHK */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">BHK Layout</span>
+                            <span className="text-xs font-black text-white font-['Outfit'] truncate block mt-0.5">{liveExtractedPreview.bhk || '2 BHK'}</span>
+                          </div>
+
+                          {/* 2. Sector / Locality */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">Locality / Sector</span>
+                            <span className="text-xs font-black text-emerald-300 font-['Outfit'] truncate block mt-0.5" title={liveExtractedPreview.sector}>
+                              {liveExtractedPreview.sector || 'Indore'}
+                            </span>
+                          </div>
+
+                          {/* 3. Monthly Rent */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">Monthly Rent</span>
+                            <span className="text-xs font-black text-amber-300 font-['Outfit'] truncate block mt-0.5">{liveExtractedPreview.rentVal || 'N/A'}</span>
+                          </div>
+
+                          {/* 4. Brokerage Fee */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">Brokerage Fee</span>
+                            <span className="text-xs font-black text-purple-300 font-['Outfit'] truncate block mt-0.5">{liveExtractedPreview.brokerageVal || 'Direct Owner'}</span>
+                          </div>
+
+                          {/* 5. Owner Details */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">Owner Details</span>
+                            <span className="text-xs font-black text-cyan-300 font-['Outfit'] truncate block mt-0.5" title={`${liveExtractedPreview.ownerName} (${liveExtractedPreview.ownerPhone})`}>
+                              {liveExtractedPreview.ownerName !== 'Not Specified' ? liveExtractedPreview.ownerName : 'Rajesh Agrawal'}
+                            </span>
+                          </div>
+
+                          {/* 6. Vastu Facing */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">Vastu Facing</span>
+                            <span className="text-xs font-black text-teal-300 font-['Outfit'] truncate block mt-0.5">{liveExtractedPreview.vastuFacing || 'East Facing'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* PHOTOS AND VIDEOS UPLOAD SECTION (DRAG & DROP + ATTACH MEDIA BUTTON) */}
@@ -1365,11 +1434,6 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     </button>
                   </div>
                 </form>
-              </motion.div>
-
-              {/* BHK DEMAND VISUAL SCORE GAUGES */}
-              <motion.div variants={cardVariants}>
-                <BhkDemandGaugeGrid />
               </motion.div>
 
               {/* EXACT EXTRACTED PARAMETERS SUMMARY CARD FOR UPLOADED PROPERTIES */}
@@ -1677,6 +1741,11 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                   </div>
                 </motion.div>
               )}
+
+              {/* BHK DEMAND VISUAL SCORE GAUGES */}
+              <motion.div variants={cardVariants}>
+                <BhkDemandGaugeGrid />
+              </motion.div>
 
               {/* BHK CONFIGURATION MANAGER HEADER */}
               <motion.div variants={cardVariants} className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm">
