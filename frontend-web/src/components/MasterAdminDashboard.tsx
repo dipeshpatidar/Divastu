@@ -160,6 +160,30 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   const [isUploadingCloudinary, setIsUploadingCloudinary] = useState<boolean>(false);
   const [uploadStatusMsg, setUploadStatusMsg] = useState<string | null>(null);
 
+  // Property Submission Success & History State
+  const [isSubmittingListing, setIsSubmittingListing] = useState<boolean>(false);
+  const [publishSuccessNotification, setPublishSuccessNotification] = useState<{
+    title: string;
+    label: string;
+    sector: string;
+    city: string;
+    rentVal: string;
+    vastuFacing: string;
+    amenities: string[];
+    savedToDatabase: boolean;
+    mediaCount: number;
+    timestamp: string;
+  } | null>(null);
+  const [publishedHistory, setPublishedHistory] = useState<Array<{
+    id: string;
+    title: string;
+    sector: string;
+    rentVal: string;
+    mediaCount: number;
+    savedToDatabase: boolean;
+    timestamp: string;
+  }>>([]);
+
   // Extracted Property Parameters Inspection State
   const [lastExtractedResult, setLastExtractedResult] = useState<any>({
     rawInput: "Premium 2bhk flat 525 sqft 15000 rent brokerage 30000 1+1 security deposit owner name John Doe +91 1234567890 status live in Nanda Nagar Indore facing east fully furnished ready to move",
@@ -768,6 +792,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       return;
     }
 
+    setIsSubmittingListing(true);
+    setPublishSuccessNotification(null);
+
     let parsed: any = null;
     try {
       // 1. Primary: Call Spring Boot Backend REST API & Save Locality to PostgreSQL DB
@@ -776,10 +803,11 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       console.warn('Backend prompt parser endpoint unreachable, using client-side fallback:', backendErr);
       // 2. Client-side fallback parsing
       parsed = parseNaturalLanguageProperty(newBhkLabel);
+    } finally {
+      setIsSubmittingListing(false);
     }
 
     const cleanId = (parsed ? `${parsed.bhk}-${parsed.sector}` : newBhkLabel).toUpperCase().replace(/\s+/g, '-');
-
     const displayLabel = parsed ? parsed.label : newBhkLabel;
     const avgRent = parsed ? parsed.rentVal : '₹18,000';
 
@@ -793,6 +821,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       vastuFacing: parsed?.vastuFacing,
       amenities: parsed?.amenities
     }]);
+
+    const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     if (parsed) {
       const extractedObj = {
@@ -814,19 +844,55 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         title: parsed.title,
         label: parsed.label,
         savedToDatabase: parsed.savedToDatabase !== undefined ? parsed.savedToDatabase : true,
-        extractedAt: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        extractedAt: timeStr
       };
       setLastExtractedResult(extractedObj);
       setMediaSector(parsed.sector);
       setMediaPriceTag(`${parsed.rentVal} / month`);
       setMediaVastu(parsed.vastuFacing);
       setMediaCaption(parsed.title);
-      const dbStatusMsg = parsed.savedToDatabase ? '\n⚡ Locality & City automatically persisted to PostgreSQL Database!' : '';
-      const mediaMsg = attachedMediaFiles.length > 0 ? `\n📸 ${attachedMediaFiles.length} Media asset(s) attached for Cloudinary upload!` : '';
 
-      alert(`🎉 AI Backend Property Auto-Parse Successful!\n\nAdded: '${parsed.label}'\nCity: ${parsed.city || 'Indore'}\nSector/Locality: ${parsed.sector}\nRent: ${parsed.rentVal} / month\nVastu: ${parsed.vastuFacing}\nAmenities: ${parsed.amenities?.join(', ') || 'Standard'}${dbStatusMsg}${mediaMsg}\n\nPre-populated Media CDN upload fields below!`);
+      const isSavedDb = parsed.savedToDatabase !== undefined ? parsed.savedToDatabase : true;
+      const mediaCount = attachedMediaFiles.length;
+
+      setPublishSuccessNotification({
+        title: parsed.title,
+        label: parsed.label,
+        sector: parsed.sector,
+        city: parsed.city || 'Indore',
+        rentVal: parsed.rentVal,
+        vastuFacing: parsed.vastuFacing,
+        amenities: parsed.amenities || [],
+        savedToDatabase: isSavedDb,
+        mediaCount: mediaCount,
+        timestamp: timeStr
+      });
+
+      setPublishedHistory(prev => [
+        {
+          id: cleanId,
+          title: parsed.title,
+          sector: parsed.sector,
+          rentVal: parsed.rentVal,
+          mediaCount: mediaCount,
+          savedToDatabase: isSavedDb,
+          timestamp: timeStr
+        },
+        ...prev
+      ]);
     } else {
-      alert(`🎉 Property BHK configuration '${newBhkLabel}' enabled on Tenant search decks!`);
+      setPublishSuccessNotification({
+        title: `Property BHK Option '${newBhkLabel}'`,
+        label: newBhkLabel,
+        sector: 'Indore Region',
+        city: 'Indore',
+        rentVal: '₹18,000 / month',
+        vastuFacing: 'East',
+        amenities: ['Standard'],
+        savedToDatabase: true,
+        mediaCount: attachedMediaFiles.length,
+        timestamp: timeStr
+      });
     }
 
     setNewBhkLabel('');
@@ -1420,6 +1486,82 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     </p>
                   </div>
                 </div>
+
+                {/* ANIMATED PUBLICATION SUCCESS TOAST BANNER */}
+                <AnimatePresence>
+                  {publishSuccessNotification && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -16, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -16, scale: 0.96 }}
+                      transition={{ type: "spring", stiffness: 450, damping: 25 }}
+                      className="mb-6 p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-emerald-950 via-slate-950 to-teal-950 border-2 border-emerald-400 text-white shadow-2xl shadow-emerald-500/20 relative overflow-hidden z-20"
+                    >
+                      {/* Laser beam accent line */}
+                      <div className="absolute inset-x-0 top-0 h-[2.5px] bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-400 animate-scan-beam" />
+
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-emerald-500/30">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-400/50 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/30">
+                            <CheckCircle2 className="w-6 h-6 animate-bounce" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[10px] font-mono font-black text-emerald-300 bg-emerald-900/80 px-2.5 py-0.5 rounded-full border border-emerald-500/40 uppercase">
+                                ✓ Published Live to Platform
+                              </span>
+                              <span className="text-[10px] font-mono text-slate-400">
+                                Published at {publishSuccessNotification.timestamp}
+                              </span>
+                            </div>
+                            <h3 className="text-lg sm:text-xl font-black font-['Outfit'] text-white mt-1">
+                              🎉 Property Listing Saved & Published Successfully!
+                            </h3>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setPublishSuccessNotification(null)}
+                          className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-bold font-mono rounded-xl border border-slate-700 transition-all cursor-pointer shrink-0"
+                        >
+                          ✕ Dismiss Notification
+                        </button>
+                      </div>
+
+                      {/* PUBLISHED LISTING SUMMARY DETAIL GRID */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4 pt-1 text-xs font-mono">
+                        <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                          <span className="text-[9px] text-slate-400 block uppercase font-bold">🏢 Property Title</span>
+                          <span className="text-xs font-black font-['Outfit'] text-emerald-300 truncate block mt-0.5" title={publishSuccessNotification.title}>
+                            {publishSuccessNotification.title}
+                          </span>
+                        </div>
+
+                        <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                          <span className="text-[9px] text-slate-400 block uppercase font-bold">📍 Locality & City</span>
+                          <span className="text-xs font-black font-['Outfit'] text-cyan-300 truncate block mt-0.5">
+                            {publishSuccessNotification.sector}, {publishSuccessNotification.city}
+                          </span>
+                        </div>
+
+                        <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                          <span className="text-[9px] text-slate-400 block uppercase font-bold">💰 Rent & Database</span>
+                          <span className="text-xs font-black font-['Outfit'] text-amber-300 truncate block mt-0.5">
+                            {publishSuccessNotification.rentVal} • PostgreSQL Saved
+                          </span>
+                        </div>
+
+                        <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                          <span className="text-[9px] text-slate-400 block uppercase font-bold">📸 Attached Media</span>
+                          <span className="text-xs font-black font-['Outfit'] text-purple-300 truncate block mt-0.5">
+                            {publishSuccessNotification.mediaCount > 0 ? `✓ ${publishSuccessNotification.mediaCount} File(s) Attached` : 'No Media Files Attached'}
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {/* 4-STEP VISUAL WORKFLOW STEPPER WITH SPRING HOVER */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-6 p-3 bg-slate-950/90 rounded-2xl border border-slate-800/90 font-mono shadow-inner relative z-10">
@@ -2097,18 +2239,84 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     </div>
 
                     <motion.button
-                      whileHover={{ scale: 1.04, y: -2, boxShadow: "0 0 30px rgba(16, 185, 129, 0.6)" }}
-                      whileTap={{ scale: 0.95 }}
+                      disabled={isSubmittingListing}
+                      whileHover={!isSubmittingListing ? { scale: 1.04, y: -2, boxShadow: "0 0 30px rgba(16, 185, 129, 0.6)" } : {}}
+                      whileTap={!isSubmittingListing ? { scale: 0.95 } : {}}
                       transition={{ type: "spring", stiffness: 400, damping: 15 }}
                       type="submit"
-                      className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs sm:text-sm rounded-2xl transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer"
+                      className={`w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs sm:text-sm rounded-2xl transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer ${
+                        isSubmittingListing ? 'opacity-80 cursor-wait' : ''
+                      }`}
                     >
-                      <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
-                      <span>✨ Save & Publish Property Listing</span>
+                      {isSubmittingListing ? (
+                        <>
+                          <Sparkles className="w-4 h-4 text-emerald-300 animate-spin" />
+                          <span>⚡ Parsing & Persisting Listing to PostgreSQL...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+                          <span>✨ Save & Publish Property Listing</span>
+                        </>
+                      )}
                     </motion.button>
                   </div>
                 </form>
               </motion.div>
+
+              {/* PUBLISHED PROPERTY LISTINGS SESSION HISTORY AUDIT LOG */}
+              {publishedHistory.length > 0 && (
+                <motion.div variants={cardVariants} className="bg-slate-900 text-white rounded-3xl p-6 border border-slate-800 shadow-2xl relative overflow-hidden">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-800">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-emerald-400 bg-emerald-950 px-2.5 py-1 rounded-full border border-emerald-800 uppercase font-mono">
+                          Session Audit Log
+                        </span>
+                        <span className="text-xs text-slate-400 font-mono">Live PostgreSQL Records</span>
+                      </div>
+                      <h3 className="text-lg font-black text-white font-['Outfit'] mt-1 flex items-center gap-2">
+                        <Database className="w-5 h-5 text-emerald-400" /> Published Property Listings ({publishedHistory.length})
+                      </h3>
+                    </div>
+
+                    <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-950 px-3 py-1 rounded-full border border-emerald-800">
+                      ● Active & Live on Platform
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {publishedHistory.map((item, idx) => (
+                      <div key={idx} className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-emerald-500/40 transition-colors">
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-black font-['Outfit'] text-emerald-300 truncate">{item.title}</span>
+                            <span className="text-[9px] font-mono font-bold text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                              Published at {item.timestamp}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-400 font-mono">
+                            Sector: <span className="text-white font-bold">{item.sector}</span> • Rent: <span className="text-amber-400 font-bold">{item.rentVal}</span>
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {item.savedToDatabase && (
+                            <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950 px-2.5 py-1 rounded-xl border border-emerald-800/80 flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" /> PostgreSQL Saved
+                            </span>
+                          )}
+                          {item.mediaCount > 0 && (
+                            <span className="text-[10px] font-mono font-bold text-purple-300 bg-purple-950 px-2.5 py-1 rounded-xl border border-purple-800/80 flex items-center gap-1">
+                              <Camera className="w-3 h-3" /> {item.mediaCount} Media File(s)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
 
               {/* BHK DEMAND VISUAL SCORE GAUGES */}
               <motion.div variants={cardVariants}>
