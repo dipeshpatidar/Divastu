@@ -995,7 +995,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
             <ShieldCheck className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-xs font-black font-['Outfit'] text-white leading-tight">Divyavastu Admin Portal</h2>
+            <h2 className="text-xs font-black font-['Outfit'] text-white leading-tight">Pathome Admin Portal</h2>
             <span className="text-[10px] text-emerald-400 font-mono font-bold block">Indore Region HQ</span>
           </div>
         </div>
@@ -1506,7 +1506,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-black text-emerald-400 bg-emerald-950 px-3 py-1 rounded-full border border-emerald-800 uppercase font-mono tracking-wider flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Divyavastu Smart Property Parser
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Pathome Smart Property Parser
                       </span>
                       <span className="text-[10px] font-black text-cyan-400 bg-cyan-950 px-3 py-1 rounded-full border border-cyan-800 uppercase font-mono tracking-wider">
                         Indore Locality Registry

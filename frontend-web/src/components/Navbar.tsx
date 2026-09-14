@@ -72,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <a href="#" className={`font-['Outfit',sans-serif] text-base sm:text-xl font-black tracking-tight flex items-center gap-1.5 ${
                 isAdminRole ? 'text-white' : 'text-slate-900'
               }`}>
-                Divyavastu <span className="text-emerald-500">Spaces</span>
+                Path<span className="text-emerald-500">ome</span>
               </a>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className={`text-[9px] sm:text-[10px] font-extrabold px-2 py-0.5 rounded-full border flex items-center gap-1.5 ${
@@ -81,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     : 'text-emerald-700 bg-emerald-50 border-emerald-200'
                 }`}>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                  Indore HQ
+                  Your Dreams, Our Efforts
                 </span>
                 {isAdminRole && (
                   <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30 hidden sm:inline">
@@ -102,7 +102,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 How It Works
               </a>
               <a href="#why-us" className="text-xs font-bold text-slate-700 hover:text-emerald-600 transition-colors">
-                Why Divyavastu
+                Why Pathome
               </a>
             </nav>
           )}

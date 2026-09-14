@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 # ==============================================================================
-# Divyavastu Spaces - Unified Application Launcher
+# ==============================================================================
+# Pathome - Unified Application Launcher (Your Dreams, Our Efforts)
 # Starts PostgreSQL health check, Spring Boot Backend (8080) & Vite Frontend (5173)
 # ==============================================================================
 
@@ -17,7 +18,7 @@ RESET="\033[0m"
 
 echo -e "${BOLD}${CYAN}"
 echo "=========================================================================="
-echo "          🏢 DIVYAVASTU SPACES - FULL STACK LOCAL LAUNCHER              "
+echo "          🏢 PATHOME - YOUR DREAMS, OUR EFFORTS (LOCAL LAUNCHER)          "
 echo "=========================================================================="
 echo -e "${RESET}"
 
@@ -60,7 +61,7 @@ FRONTEND_PID=""
 
 cleanup() {
     echo ""
-    echo -e "${BOLD}${RED}Shutting down Divyavastu Spaces services...${RESET}"
+    echo -e "${BOLD}${RED}Shutting down Pathome services...${RESET}"
     if [ -n "$BACKEND_PID" ]; then
         echo -e "${YELLOW}Stopping Spring Boot Backend (PID: ${BACKEND_PID})...${RESET}"
         kill -15 "$BACKEND_PID" 2>/dev/null || kill -9 "$BACKEND_PID" 2>/dev/null || true
@@ -93,7 +94,7 @@ echo ""
 
 echo -e "${BOLD}${GREEN}"
 echo "=========================================================================="
-echo "🚀 DIVYAVASTU SPACES APPLICATION IS LIVE!"
+echo "🚀 PATHOME APPLICATION IS LIVE! (Your Dreams, Our Efforts)"
 echo "   - Frontend Web App:  http://localhost:5173"
 echo "   - Backend REST APIs: http://localhost:8080/api/v1/properties"
 echo "   - Press Ctrl+C in this terminal to stop both servers cleanly."

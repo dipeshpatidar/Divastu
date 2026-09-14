@@ -192,7 +192,7 @@ export const TenantDashboard: React.FC<TenantDashboardProps> = ({
     setSelectedSectors([city.sectors[0] || 'Main Sector']);
     setShowCityPicker(false);
     if (city.status === 'LAUNCHING_SOON') {
-      alert(`🎉 Divyavastu Spaces is expanding to ${city.name}! You are registered on the VIP early access list.`);
+      alert(`🎉 Pathome is expanding to ${city.name}! You are registered on the VIP early access list.`);
     }
   };
 

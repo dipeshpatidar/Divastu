@@ -24,7 +24,7 @@ const steps = [
   {
     number: '03',
     title: 'Finalize Lease & Claim ₹1,000 Cashback',
-    description: 'Finalize rent directly with the owner. Upload your executed lease agreement on Divyavastu Spaces to get ₹1,000 credited directly to your UPI bank account.',
+    description: 'Finalize rent directly with the owner. Upload your executed lease agreement on Pathome to get ₹1,000 credited directly to your UPI bank account.',
     icon: Gift,
     color: 'amber',
     badge: 'Direct UPI Payout',
@@ -53,7 +53,7 @@ export const HowItWorks: React.FC = () => {
             Simple 3-Step Journey
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 font-['Outfit',sans-serif] mt-3 tracking-tight">
-            How Divyavastu Spaces Works
+            How Pathome Works
           </h2>
           <p className="text-slate-600 text-xs sm:text-sm mt-2.5 leading-relaxed">
             Eliminating broker markups and ghost listings with physical ground verification & direct cashback rewards.

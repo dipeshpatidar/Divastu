@@ -116,7 +116,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onSearch }) => {
     setSelectedSectors([city.sectors[0] || 'Main Sector']);
     setShowCityPicker(false);
     if (city.status === 'LAUNCHING_SOON') {
-      alert(`🎉 Divyavastu Spaces is expanding to ${city.name}! You are registered on the VIP early access list.`);
+      alert(`🎉 Pathome is expanding to ${city.name}! You are registered on the VIP early access list.`);
     }
   };
 
@@ -304,7 +304,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onSearch }) => {
             transition={{ duration: 0.5, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
             className="text-slate-300 text-sm sm:text-base max-w-2xl font-normal leading-relaxed"
           >
-            First 5 guided property tours are 100% free with on-site escorts. Active in {selectedCity.name} and expanding nationwide across top tech hubs.
+            <span className="text-emerald-400 font-bold">Pathome</span> — <span className="text-white font-semibold">Your Dreams, Our Efforts</span>. First 5 guided property tours are 100% free with on-site escorts. Active in {selectedCity.name} and expanding nationwide across top tech hubs.
           </motion.p>
 
         </div>

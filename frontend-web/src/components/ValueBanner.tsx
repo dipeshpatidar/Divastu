@@ -33,13 +33,13 @@ export const ValueBanner: React.FC = () => {
           className="text-center max-w-xl mx-auto mb-8"
         >
           <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-3.5 py-1 rounded-full border border-emerald-200">
-            Why Divyavastu Spaces?
+            Why Pathome?
           </span>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Outfit',sans-serif] mt-2.5">
-            Disrupting Legacy Real Estate Clutter
+            Your Dreams, Our Efforts
           </h2>
           <p className="text-slate-500 text-xs sm:text-sm mt-1.5 leading-relaxed">
-            Built to eliminate fake broker spam and unverified listings in Indore.
+            Built to eliminate fake broker spam and unverified listings.
           </p>
         </motion.div>
 

@@ -217,7 +217,7 @@ export const NotificationCenterDrawer: React.FC = () => {
 
             {/* FOOTER */}
             <div className="p-4 border-t border-slate-800/80 bg-slate-950/90 text-center font-mono text-[10px] text-slate-500 relative z-10">
-              Divyavastu Centralized Event Bus & Real-time Notification Engine Active
+              Pathome Centralized Event Bus & Real-time Notification Engine Active
             </div>
           </motion.aside>
         </>

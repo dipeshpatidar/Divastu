@@ -91,7 +91,7 @@ public class NotificationService {
                 TargetRole.ADMIN,
                 null,
                 "Master Admin Telemetry Active",
-                "Divyavastu Spaces core engine is live with 100% database indexing & Cloudinary streaming.",
+                "Pathome core engine is live with 100% database indexing & Cloudinary streaming.",
                 "System status: 100% Operational",
                 "SYSTEM",
                 "success"
@@ -120,7 +120,7 @@ public class NotificationService {
         repository.save(new SystemNotification(
                 TargetRole.TENANT,
                 null,
-                "Welcome to Divyavastu Spaces!",
+                "Welcome to Pathome!",
                 "Browse verified 100% direct listings in Vijay Nagar, Palasia, and Nanda Nagar with zero brokerage hassle.",
                 "VIP Pass Status: 5 Free Visits Active",
                 "PROPERTY",
