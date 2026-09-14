@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
   BarChart3, Users, CheckSquare, ShieldCheck, TrendingUp, DollarSign,
   CheckCircle2, XCircle, ArrowUpRight, Award, FileText, Zap, ChevronRight, ChevronLeft,
@@ -74,14 +74,40 @@ const PRESET_PROMPTS = [
   }
 ];
 
-const containerVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { staggerChildren: 0.08, duration: 0.35, ease: [0.16, 1, 0.3, 1] as const } }
+const containerVariants: Variants = {
+  hidden: { opacity: 0, y: 24, scale: 0.97, filter: 'blur(8px)' },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    filter: 'blur(0px)',
+    transition: {
+      staggerChildren: 0.08,
+      duration: 0.45,
+      ease: [0.16, 1, 0.3, 1]
+    }
+  },
+  exit: {
+    opacity: 0,
+    y: -18,
+    scale: 0.98,
+    filter: 'blur(8px)',
+    transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] }
+  }
 };
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 12, scale: 0.98 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const } }
+const cardVariants: Variants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 350,
+      damping: 26
+    }
+  }
 };
 
 const mockEmployeeRoster = [
@@ -897,16 +923,20 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
               Select Navigation Panel:
             </div>
             <div className="grid grid-cols-1 gap-2">
-              {adminNavItems.map((item) => {
+              {adminNavItems.map((item, index) => {
                 const isActive = activeTab === item.id || (activeTab === 'overview' && item.id === 'funnel');
                 const Icon = item.icon;
                 return (
-                  <button
+                  <motion.button
                     key={item.id}
+                    initial={{ opacity: 0, x: -14 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.04, type: "spring", stiffness: 400, damping: 24 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => handleTabSelect(item.id)}
-                    className={`w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between transition-all ${
+                    className={`w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
                       isActive
-                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 font-black'
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-600/30 font-black'
                         : 'bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800/80'
                     }`}
                   >
@@ -919,7 +949,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     }`}>
                       {item.badge}
                     </span>
-                  </button>
+                  </motion.button>
                 );
               })}
             </div>
@@ -968,47 +998,50 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
             )}
           </div>
 
-          {/* NAV ITEMS LIST */}
-          <nav className="space-y-1.5">
+          {/* NAV ITEMS LIST WITH MAGNETIC LIQUID SLIDING TRANSITION */}
+          <nav className="space-y-1.5 relative">
             {adminNavItems.map((item) => {
               const isActive = activeTab === item.id || (activeTab === 'overview' && item.id === 'funnel');
               const Icon = item.icon;
               return (
-                <button
+                <motion.button
                   key={item.id}
+                  whileHover={!isActive ? { x: 5 } : { scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 450, damping: 25 }}
                   onClick={() => handleTabSelect(item.id)}
-                  className={`w-full relative px-3 py-3 rounded-2xl text-xs font-bold flex items-center justify-between transition-all duration-200 group cursor-pointer ${isActive
-                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
-                      : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
-                    }`}
+                  className={`w-full relative px-3 py-3 rounded-2xl text-xs font-bold flex items-center justify-between transition-colors duration-200 group cursor-pointer ${
+                    isActive ? 'text-white' : 'text-slate-700 hover:text-slate-900'
+                  }`}
                   title={isSidebarCollapsed ? item.label : undefined}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Icon className={`w-4.5 h-4.5 shrink-0 ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-emerald-600'}`} />
+                  {/* LIQUID ACTIVE PILL SLIDER */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeSidebarIndicator"
+                      className="absolute inset-0 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 rounded-2xl shadow-lg shadow-emerald-600/30 z-0"
+                      transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                    />
+                  )}
+
+                  <div className="relative z-10 flex items-center gap-2.5 min-w-0">
+                    <Icon className={`w-4.5 h-4.5 shrink-0 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-emerald-600'}`} />
                     {!isSidebarCollapsed && (
-                      <motion.span
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.2 }}
-                        className="truncate font-['Outfit'] font-bold text-xs"
-                      >
+                      <span className="truncate font-['Outfit'] font-bold text-xs">
                         {item.label}
-                      </motion.span>
+                      </span>
                     )}
                   </div>
 
                   {!isSidebarCollapsed && (
-                    <motion.span
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.2 }}
-                      className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold font-mono border shrink-0 ml-1 ${isActive
-                          ? 'bg-emerald-700 text-emerald-100 border-emerald-500/40'
+                    <span
+                      className={`relative z-10 px-2 py-0.5 rounded-full text-[9px] font-extrabold font-mono border shrink-0 ml-1 transition-colors ${isActive
+                          ? 'bg-emerald-700 text-emerald-100 border-emerald-500/40 shadow-xs'
                           : 'bg-slate-100 text-slate-600 border-slate-200'
                         }`}
                     >
                       {item.badge}
-                    </motion.span>
+                    </span>
                   )}
 
                   {/* SLEEK FLOATING TOOLTIP WHEN COLLAPSED */}
@@ -1018,7 +1051,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                       <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono bg-emerald-500 text-slate-950 font-black">{item.badge}</span>
                     </div>
                   )}
-                </button>
+                </motion.button>
               );
             })}
           </nav>
@@ -1079,24 +1112,59 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
             </div>
           </div>
 
-          {/* 4 STAT BADGES */}
+          {/* AMBIENT AURORA MESH */}
+          <div className="absolute -top-24 -right-24 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
+
+          {/* 4 STAT BADGES WITH INTERACTIVE SPRING HOVER & GLOW */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-100 relative z-10">
-            <div className="bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/80">
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Meta Ads Leads</span>
-              <span className="text-xl font-black text-slate-900 font-mono mt-0.5 block">482 Total</span>
-            </div>
-            <div className="bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/80">
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Escorted Tours</span>
-              <span className="text-xl font-black text-emerald-700 font-mono mt-0.5 block">184 Passes</span>
-            </div>
-            <div className="bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/80">
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Staff Online</span>
-              <span className="text-xl font-black text-amber-700 font-mono mt-0.5 block">2 / 3 Staff</span>
-            </div>
-            <div className="bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/80">
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Pending Leaves</span>
-              <span className="text-xl font-black text-indigo-700 font-mono mt-0.5 block">{leaves.filter(l => l.status === 'PENDING').length} Requests</span>
-            </div>
+            <motion.div
+              whileHover={{ y: -4, scale: 1.02, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-slate-50/80 hover:bg-white p-3.5 rounded-2xl border border-slate-200/80 hover:border-slate-400 hover:shadow-lg hover:shadow-slate-200/60 transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block group-hover:text-slate-900 transition-colors">Meta Ads Leads</span>
+                <span className="text-[9px] font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">+18%</span>
+              </div>
+              <span className="text-xl font-black text-slate-900 font-mono mt-1 block">482 Total</span>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ y: -4, scale: 1.02, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-slate-50/80 hover:bg-white p-3.5 rounded-2xl border border-slate-200/80 hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-500/10 transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block group-hover:text-emerald-800 transition-colors">Escorted Tours</span>
+                <span className="text-[9px] font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Active</span>
+              </div>
+              <span className="text-xl font-black text-emerald-700 font-mono mt-1 block">184 Passes</span>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ y: -4, scale: 1.02, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-slate-50/80 hover:bg-white p-3.5 rounded-2xl border border-slate-200/80 hover:border-amber-400 hover:shadow-lg hover:shadow-amber-500/10 transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block group-hover:text-amber-800 transition-colors">Staff Online</span>
+                <span className="text-[9px] font-mono font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">GPS Live</span>
+              </div>
+              <span className="text-xl font-black text-amber-700 font-mono mt-1 block">2 / 3 Staff</span>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ y: -4, scale: 1.02, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-slate-50/80 hover:bg-white p-3.5 rounded-2xl border border-slate-200/80 hover:border-indigo-400 hover:shadow-lg hover:shadow-indigo-500/10 transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block group-hover:text-indigo-800 transition-colors">Pending Leaves</span>
+                <span className="text-[9px] font-mono font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">Audit</span>
+              </div>
+              <span className="text-xl font-black text-indigo-700 font-mono mt-1 block">{leaves.filter(l => l.status === 'PENDING').length} Requests</span>
+            </motion.div>
           </div>
         </div>
 
@@ -1110,7 +1178,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              exit="hidden"
+              exit="exit"
               className="space-y-6"
             >
               {/* GOOGLE ANALYTICS REVENUE & TOUR AREA GRAPH */}
@@ -1137,7 +1205,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              exit="hidden"
+              exit="exit"
               className="space-y-6"
             >
               {/* GPS Telemetry Console */}
@@ -1270,7 +1338,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              exit="hidden"
+              exit="exit"
               className="space-y-6"
             >
               {/* Lease Cashback Approvals */}
@@ -1320,17 +1388,21 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
           {/* TAB 4: BHK ENGINE & CLOUDINARY MEDIA CDN */}
           {(activeTab === 'config' || activeTab === 'media') && (
             <motion.div
-              key="tab-config"
+              key={`tab-${activeTab}`}
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              exit="hidden"
+              exit="exit"
               className="space-y-6"
             >
               {/* PRIMARY SMART PROPERTY UPLOAD & PROMPT CONSOLE */}
               <motion.div variants={cardVariants} className="bg-slate-900 text-white rounded-3xl p-6 sm:p-7 border border-slate-800 shadow-2xl relative overflow-hidden">
+                {/* COOL ANIMATED AMBIENT AURORA GLOW ORBS */}
+                <div className="absolute -top-28 -right-28 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
+                <div className="absolute -bottom-28 -left-28 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none animate-pulse" style={{ animationDelay: '1.5s' }} />
+
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 mb-5 border-b border-slate-800">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 mb-5 border-b border-slate-800 relative z-10">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-black text-emerald-400 bg-emerald-950 px-3 py-1 rounded-full border border-emerald-800 uppercase font-mono tracking-wider flex items-center gap-1.5">
@@ -1349,9 +1421,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                   </div>
                 </div>
 
-                {/* 4-STEP VISUAL WORKFLOW STEPPER */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-6 p-3 bg-slate-950/90 rounded-2xl border border-slate-800/90 font-mono shadow-inner">
-                  <div className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-all ${
+                {/* 4-STEP VISUAL WORKFLOW STEPPER WITH SPRING HOVER */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-6 p-3 bg-slate-950/90 rounded-2xl border border-slate-800/90 font-mono shadow-inner relative z-10">
+                  <motion.div whileHover={{ scale: 1.02, y: -1 }} className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-all ${
                     newBhkLabel ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-500/40 shadow-sm' : 'bg-slate-900/80 text-slate-400 border border-slate-800/60'
                   }`}>
                     <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black text-xs shrink-0 border border-emerald-500/30">1</div>
@@ -1359,9 +1431,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                       <div className="font-black uppercase text-[9px] text-emerald-400 tracking-wider">Step 1: Input Prompt</div>
                       <div className="truncate font-sans font-bold text-slate-200">Type or 1-Click Preset</div>
                     </div>
-                  </div>
+                  </motion.div>
 
-                  <div className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-all ${
+                  <motion.div whileHover={{ scale: 1.02, y: -1 }} className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-all ${
                     liveExtractedPreview && !liveExtractedPreview.isGarbageInput ? 'bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 shadow-sm' : 'bg-slate-900/80 text-slate-400 border border-slate-800/60'
                   }`}>
                     <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-black text-xs shrink-0 border border-cyan-500/30">2</div>
@@ -1369,9 +1441,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                       <div className="font-black uppercase text-[9px] text-cyan-400 tracking-wider">Step 2: Auto Extraction</div>
                       <div className="truncate font-sans font-bold text-slate-200">Identified Parameters</div>
                     </div>
-                  </div>
+                  </motion.div>
 
-                  <div className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-all ${
+                  <motion.div whileHover={{ scale: 1.02, y: -1 }} className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-all ${
                     attachedMediaFiles.length > 0 ? 'bg-indigo-950/90 text-indigo-300 border border-indigo-500/40 shadow-sm' : 'bg-slate-900/80 text-slate-400 border border-slate-800/60'
                   }`}>
                     <div className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-black text-xs shrink-0 border border-indigo-500/30">3</div>
@@ -1379,9 +1451,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                       <div className="font-black uppercase text-[9px] text-indigo-400 tracking-wider">Step 3: Attach Media</div>
                       <div className="truncate font-sans font-bold text-slate-200">Photos & Video</div>
                     </div>
-                  </div>
+                  </motion.div>
 
-                  <div className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-all ${
+                  <motion.div whileHover={{ scale: 1.02, y: -1 }} className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-all ${
                     lastExtractedResult?.savedToDatabase ? 'bg-purple-950/90 text-purple-300 border border-purple-500/40 shadow-sm' : 'bg-slate-900/80 text-slate-400 border border-slate-800/60'
                   }`}>
                     <div className="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-black text-xs shrink-0 border border-purple-500/30">4</div>
@@ -1389,11 +1461,11 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                       <div className="font-black uppercase text-[9px] text-purple-400 tracking-wider">Step 4: Save & Publish</div>
                       <div className="truncate font-sans font-bold text-slate-200">Publish Property</div>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
 
-                <form onSubmit={handleAddCustomBhk} className="space-y-5">
-                  {/* 1-CLICK PRESET EXAMPLE PROMPT BUTTONS */}
+                <form onSubmit={handleAddCustomBhk} className="space-y-5 relative z-10">
+                  {/* 1-CLICK PRESET EXAMPLE PROMPT BUTTONS WITH BOUNCY SPRINGS */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-xs font-extrabold text-slate-300 flex items-center gap-1.5 uppercase font-mono tracking-wide">
@@ -1401,13 +1473,15 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                         Click to Load Example Prompt (1-Click Presets):
                       </label>
                       {newBhkLabel && (
-                        <button
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           type="button"
                           onClick={() => setNewBhkLabel('')}
                           className="text-[11px] text-rose-400 hover:text-rose-300 font-bold font-mono transition-colors cursor-pointer flex items-center gap-1"
                         >
                           <span>↺ Reset Prompt</span>
-                        </button>
+                        </motion.button>
                       )}
                     </div>
 
@@ -1430,16 +1504,19 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                       </select>
                     </div>
 
-                    {/* DESKTOP/TABLET PRESET GRID (DESKTOPS >= 640px) */}
+                    {/* DESKTOP/TABLET PRESET GRID (DESKTOPS >= 640px) WITH SPRING HOVER */}
                     <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-3">
                       {PRESET_PROMPTS.map((preset) => (
-                        <button
+                        <motion.button
                           key={preset.id}
                           type="button"
+                          whileHover={{ scale: 1.03, y: -2 }}
+                          whileTap={{ scale: 0.96 }}
+                          transition={{ type: "spring", stiffness: 450, damping: 18 }}
                           onClick={() => setNewBhkLabel(preset.text)}
-                          className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                          className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 relative overflow-hidden ${
                             newBhkLabel === preset.text
-                              ? 'bg-emerald-950/90 border-emerald-400 text-emerald-200 shadow-lg shadow-emerald-950/60 ring-2 ring-emerald-500/30'
+                              ? 'bg-emerald-950/90 border-emerald-400 text-emerald-200 shadow-xl shadow-emerald-950/60 ring-2 ring-emerald-500/40'
                               : 'bg-slate-950/80 hover:bg-slate-800/80 border-slate-800 text-slate-300 hover:border-slate-700'
                           }`}
                         >
@@ -1455,7 +1532,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                           <div className="text-[9px] text-emerald-400/80 font-mono italic bg-slate-900/80 p-1.5 rounded-lg border border-slate-800/60 line-clamp-2">
                             "{preset.text}"
                           </div>
-                        </button>
+                        </motion.button>
                       ))}
                     </div>
                   </div>
@@ -1487,11 +1564,13 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                     {/* LIVE REAL-TIME IDENTIFIED PROPERTY ATTRIBUTES */}
                     {liveExtractedPreview && (
-                      <div className={`p-4 sm:p-5 rounded-2xl border space-y-4 shadow-xl transition-all ${
+                      <div className={`p-4 sm:p-5 rounded-2xl border space-y-4 shadow-xl transition-all relative overflow-hidden ${
                         liveExtractedPreview.isGarbageInput
                           ? 'bg-amber-950/40 border-amber-500/40'
                           : 'bg-slate-950/95 border-emerald-500/40'
                       }`}>
+                        {/* COOL CYBER SCAN BEAM ANIMATION ACROSS ATTRIBUTE CARD */}
+                        <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 via-teal-300 to-transparent animate-scan-beam opacity-80 pointer-events-none" />
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className={`text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider flex items-center gap-1.5 ${
@@ -1513,104 +1592,108 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                           {!liveExtractedPreview.isGarbageInput && (
                             <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                              <button
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                                 type="button"
                                 onClick={handleOpenInlineEdit}
                                 className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-300 text-[11px] font-extrabold rounded-xl transition-all border border-amber-500/40 flex items-center gap-1 cursor-pointer shadow-sm"
                               >
                                 <SlidersHorizontal className="w-3 h-3" />
                                 <span>✏️ Edit Fields</span>
-                              </button>
+                              </motion.button>
 
-                              <button
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                                 type="button"
                                 onClick={handleCopyJson}
                                 className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 text-[11px] font-bold rounded-xl transition-all border border-slate-700 flex items-center gap-1 cursor-pointer shadow-sm"
                               >
                                 {copiedJson ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-400" />}
                                 <span>{copiedJson ? 'Copied!' : '📋 Copy Summary'}</span>
-                              </button>
+                              </motion.button>
 
-                              <button
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                                 type="button"
                                 onClick={handleFillMediaFromExtracted}
                                 className="px-3 py-1.5 bg-cyan-950/90 hover:bg-cyan-900 text-cyan-200 text-[11px] font-extrabold rounded-xl transition-all border border-cyan-500/40 flex items-center gap-1 cursor-pointer shadow-sm"
                               >
                                 <Tag className="w-3 h-3 text-cyan-400" />
                                 <span>🏷️ Tag Photos</span>
-                              </button>
+                              </motion.button>
                             </div>
                           )}
                         </div>
 
-                        {/* CATEGORY SEGMENTED FILTER TABS FOR 18 ATTRIBUTES */}
+                        {/* CATEGORY SEGMENTED FILTER TABS WITH SLIDING LIQUID PILL */}
                         {!liveExtractedPreview.isGarbageInput && (
-                          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-                            <button
-                              type="button"
-                              onClick={() => setActiveAttributeTab('all')}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold font-mono transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                                activeAttributeTab === 'all'
-                                  ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/50 shadow-md'
-                                  : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:text-slate-200'
-                              }`}
-                            >
-                              <span>🌐 All 18 Attributes</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => setActiveAttributeTab('location')}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold font-mono transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                                activeAttributeTab === 'location'
-                                  ? 'bg-blue-950 text-blue-300 border border-blue-500/50 shadow-md'
-                                  : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:text-slate-200'
-                              }`}
-                            >
-                              <span>📍 Location & Type (6)</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => setActiveAttributeTab('pricing')}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold font-mono transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                                activeAttributeTab === 'pricing'
-                                  ? 'bg-amber-950 text-amber-300 border border-amber-500/50 shadow-md'
-                                  : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:text-slate-200'
-                              }`}
-                            >
-                              <span>💰 Rent & Financials (5)</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => setActiveAttributeTab('specs')}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold font-mono transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                                activeAttributeTab === 'specs'
-                                  ? 'bg-purple-950 text-purple-300 border border-purple-500/50 shadow-md'
-                                  : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:text-slate-200'
-                              }`}
-                            >
-                              <span>🛋️ Specs & Amenities (7)</span>
-                            </button>
+                          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar relative">
+                            {[
+                              { id: 'all', label: '🌐 All 18 Attributes', activeStyle: 'text-emerald-300 border-emerald-500/50 bg-emerald-950' },
+                              { id: 'location', label: '📍 Location & Type (6)', activeStyle: 'text-blue-300 border-blue-500/50 bg-blue-950' },
+                              { id: 'pricing', label: '💰 Rent & Financials (5)', activeStyle: 'text-amber-300 border-amber-500/50 bg-amber-950' },
+                              { id: 'specs', label: '🛋️ Specs & Amenities (7)', activeStyle: 'text-purple-300 border-purple-500/50 bg-purple-950' }
+                            ].map(tab => {
+                              const isTabActive = activeAttributeTab === tab.id;
+                              return (
+                                <button
+                                  key={tab.id}
+                                  type="button"
+                                  onClick={() => setActiveAttributeTab(tab.id as any)}
+                                  className={`relative px-3.5 py-1.5 rounded-xl text-xs font-extrabold font-mono transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                                    isTabActive
+                                      ? tab.activeStyle + ' font-black shadow-md border'
+                                      : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:text-slate-200'
+                                  }`}
+                                >
+                                  {isTabActive && (
+                                    <motion.div
+                                      layoutId="activeCategoryTabPill"
+                                      className="absolute inset-0 bg-white/5 rounded-xl pointer-events-none"
+                                      transition={{ type: "spring", stiffness: 450, damping: 30 }}
+                                    />
+                                  )}
+                                  <span className="relative z-10">{tab.label}</span>
+                                </button>
+                              );
+                            })}
                           </div>
                         )}
 
-                        {/* 18-CARD CATEGORIZED REAL-TIME PARAMETER INSPECTION GRID */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
+                        {/* 18-CARD CATEGORIZED REAL-TIME PARAMETER INSPECTION GRID WITH MORPHING LAYOUT ANIMATIONS */}
+                        <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
                           {/* CATEGORY 1: LOCATION & TYPE */}
                           {(activeAttributeTab === 'all' || activeAttributeTab === 'location') && (
                             <>
                               {/* 1. BHK Layout */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🏠 BHK Layout</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   liveExtractedPreview.bhk === 'Unspecified' ? 'text-slate-500 italic' : 'text-white'
                                 }`}>{liveExtractedPreview.bhk}</span>
-                              </div>
+                              </motion.div>
 
                               {/* 2. Property Type */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🏷️ Property Type</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   !liveExtractedPreview.type ? 'text-slate-500 italic' : 'text-indigo-300'
@@ -1624,43 +1707,75 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                                    liveExtractedPreview.type === 'AIRBNB' ? 'Airbnb' :
                                    (liveExtractedPreview.type || 'Unspecified')}
                                 </span>
-                              </div>
+                              </motion.div>
 
                               {/* 3. Locality / Sector */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📍 Locality / Sector</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   liveExtractedPreview.sector === 'Not Specified' ? 'text-slate-500 italic' : 'text-emerald-300'
                                 }`} title={liveExtractedPreview.sector}>
                                   {liveExtractedPreview.sector}
                                 </span>
-                              </div>
+                              </motion.div>
 
                               {/* 4. City & State */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🏙️ City & State</span>
                                 <span className="text-xs font-black font-['Outfit'] truncate block mt-0.5 text-blue-300">
                                   {liveExtractedPreview.city || 'Indore'}{liveExtractedPreview.state ? `, ${liveExtractedPreview.state}` : ''}
                                 </span>
-                              </div>
+                              </motion.div>
 
                               {/* 11. Landmark */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🏢 Landmark</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   !liveExtractedPreview.landmark ? 'text-slate-500 italic' : 'text-yellow-300'
                                 }`} title={liveExtractedPreview.landmark || 'Unspecified'}>
                                   {liveExtractedPreview.landmark || 'Unspecified'}
                                 </span>
-                              </div>
+                              </motion.div>
 
                               {/* 12. Pincode */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📌 Pincode</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   !liveExtractedPreview.pincode ? 'text-slate-500 italic' : 'text-indigo-400'
                                 }`}>{liveExtractedPreview.pincode || 'Unspecified'}</span>
-                              </div>
+                              </motion.div>
                             </>
                           )}
 
@@ -1668,46 +1783,86 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                           {(activeAttributeTab === 'all' || activeAttributeTab === 'pricing') && (
                             <>
                               {/* 5. Monthly Rent */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">💰 Monthly Rent</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   liveExtractedPreview.rentVal === 'Unspecified' ? 'text-slate-500 italic' : 'text-amber-300'
                                 }`}>{liveExtractedPreview.rentVal}</span>
-                              </div>
+                              </motion.div>
 
                               {/* 6. Brokerage Fee */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">💼 Brokerage Fee</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   liveExtractedPreview.brokerageVal === 'Unmentioned' ? 'text-slate-500 italic' : 'text-purple-300'
                                 }`}>{liveExtractedPreview.brokerageVal}</span>
-                              </div>
+                              </motion.div>
 
                               {/* 7. Security Deposit */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-rose-500/50 hover:shadow-lg hover:shadow-rose-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🛡️ Security Deposit</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   !liveExtractedPreview.depositVal || liveExtractedPreview.depositVal === 'Unspecified' ? 'text-slate-500 italic' : 'text-rose-300'
                                 }`}>{liveExtractedPreview.depositVal || 'Unspecified'}</span>
-                              </div>
+                              </motion.div>
 
                               {/* 10. Possession Date */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📅 Possession Date</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   !liveExtractedPreview.possessionDate ? 'text-slate-500 italic' : 'text-emerald-400'
                                 }`}>{liveExtractedPreview.possessionDate || 'Unspecified'}</span>
-                              </div>
+                              </motion.div>
 
                               {/* 17. Listing Status */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-lime-500/50 hover:shadow-lg hover:shadow-lime-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">⚡ Listing Status</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   !liveExtractedPreview.status ? 'text-slate-500 italic' : 'text-lime-300'
                                 }`}>
                                   {liveExtractedPreview.status || 'LIVE'}
                                 </span>
-                              </div>
+                              </motion.div>
                             </>
                           )}
 
@@ -1715,51 +1870,99 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                           {(activeAttributeTab === 'all' || activeAttributeTab === 'specs') && (
                             <>
                               {/* 8. Carpet Area */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📐 Carpet Area</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   !liveExtractedPreview.areaSqFt || liveExtractedPreview.areaSqFt === 'Unspecified' ? 'text-slate-500 italic' : 'text-orange-300'
                                 }`}>{liveExtractedPreview.areaSqFt || 'Unspecified'}</span>
-                              </div>
+                              </motion.div>
 
                               {/* 9. Bathrooms */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🛁 Bathrooms</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   !liveExtractedPreview.bathrooms ? 'text-slate-500 italic' : 'text-cyan-300'
                                 }`}>{liveExtractedPreview.bathrooms ? `${liveExtractedPreview.bathrooms} Baths` : 'Unspecified'}</span>
-                              </div>
+                              </motion.div>
 
                               {/* 13. Owner Name */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">👤 Owner Name</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   liveExtractedPreview.ownerName === 'Not Specified' ? 'text-slate-500 italic' : 'text-cyan-300'
                                 }`} title={liveExtractedPreview.ownerName}>
                                   {liveExtractedPreview.ownerName}
                                 </span>
-                              </div>
+                              </motion.div>
 
                               {/* 14. Owner Phone */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-sky-500/50 hover:shadow-lg hover:shadow-sky-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📞 Owner Contact</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   liveExtractedPreview.ownerPhone === 'Not Specified' ? 'text-slate-500 italic' : 'text-sky-300'
                                 }`} title={liveExtractedPreview.ownerPhone}>
                                   {liveExtractedPreview.ownerPhone}
                                 </span>
-                              </div>
+                              </motion.div>
 
                               {/* 15. Vastu Facing */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-teal-500/50 hover:shadow-lg hover:shadow-teal-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🧭 Vastu Facing</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   liveExtractedPreview.vastuFacing === 'Not Specified' ? 'text-slate-500 italic' : 'text-teal-300'
                                 }`}>{liveExtractedPreview.vastuFacing}</span>
-                              </div>
+                              </motion.div>
 
                               {/* 16. Furnishing Status */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-fuchsia-500/50 hover:shadow-lg hover:shadow-fuchsia-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🛋️ Furnishing</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   liveExtractedPreview.furnishingStatus === 'UNSPECIFIED' ? 'text-slate-500 italic' : 'text-fuchsia-300'
@@ -1769,20 +1972,28 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                                    liveExtractedPreview.furnishingStatus === 'UNFURNISHED' ? 'Unfurnished' :
                                    'Unspecified'}
                                 </span>
-                              </div>
+                              </motion.div>
 
                               {/* 18. Amenities */}
-                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.88 }}
+                                whileHover={{ scale: 1.05, y: -3, transition: { type: 'spring', stiffness: 450, damping: 18 } }}
+                                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                                className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-violet-500/50 hover:shadow-lg hover:shadow-violet-950/50 transition-colors cursor-pointer"
+                              >
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">✨ Key Amenities</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   !liveExtractedPreview.amenities || liveExtractedPreview.amenities.length === 0 ? 'text-slate-500 italic' : 'text-violet-300'
                                 }`} title={liveExtractedPreview.amenities?.join(', ') || 'Standard'}>
                                   {liveExtractedPreview.amenities && liveExtractedPreview.amenities.length > 0 ? liveExtractedPreview.amenities.join(', ') : 'Standard'}
                                 </span>
-                              </div>
+                              </motion.div>
                             </>
                           )}
-                        </div>
+                        </motion.div>
 
                         {/* Optional Missing Fields Indicator */}
                         {liveExtractedPreview.missingFields && liveExtractedPreview.missingFields.length > 0 && !liveExtractedPreview.isGarbageInput && (
@@ -1878,20 +2089,23 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     </div>
                   </div>
 
-                  {/* SUBMIT BUTTON */}
+                  {/* SUBMIT BUTTON WITH COOL NEON SPRING TRANSITION */}
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
                     <div className="text-xs text-slate-400 flex items-center gap-1.5 font-mono">
                       <Info className="w-4 h-4 text-emerald-400 shrink-0" />
                       <span>Submitting will parse prompt parameters, generate title & publish property listing</span>
                     </div>
 
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.04, y: -2, boxShadow: "0 0 30px rgba(16, 185, 129, 0.6)" }}
+                      whileTap={{ scale: 0.95 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 15 }}
                       type="submit"
                       className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs sm:text-sm rounded-2xl transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
                       <span>✨ Save & Publish Property Listing</span>
-                    </button>
+                    </motion.button>
                   </div>
                 </form>
               </motion.div>

@@ -226,4 +226,32 @@
   background: #059669;
 }
 
+@keyframes gradientX {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradientX 4s ease infinite;
+}
+
+@keyframes scanBeamHorizontal {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+.animate-scan-beam {
+  animation: scanBeamHorizontal 3s ease-in-out infinite;
+}
+
+
 

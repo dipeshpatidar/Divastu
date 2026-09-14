@@ -43,8 +43,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           : 'bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-sm/50'
       }`}
     >
-      {/* GLOWING TOP ACCENT BEAM LINE */}
-      <div className="h-[2px] w-full bg-gradient-to-r from-emerald-500 via-teal-400 via-indigo-500 to-amber-400 animate-pulse" />
+      {/* GLOWING TOP ACCENT BEAM LINE WITH FLOWING GRADIENT */}
+      <div className="h-[2.5px] w-full bg-gradient-to-r from-emerald-500 via-cyan-400 via-indigo-500 to-amber-400 animate-gradient-x shadow-[0_0_12px_rgba(16,185,129,0.5)]" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
         
