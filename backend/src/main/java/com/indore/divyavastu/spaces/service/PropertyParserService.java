@@ -30,12 +30,13 @@ public class PropertyParserService {
         String input = prompt.trim();
         String cleanLower = input.toLowerCase();
 
-        // 1. Extract BHK / Layout
-        Pattern bhkPattern = Pattern.compile("\\b([1-9])\\b[\\s\\S]{0,30}?\\b(bhk|rk|bedroom|room)\\b", Pattern.CASE_INSENSITIVE);
+        // 1. Extract BHK / Layout (handles both '4bhk' and '4 bhk' / '4 bedroom')
+        Pattern bhkPattern = Pattern.compile("(?:\\b|\\b)([1-9])\\s*(?:bhk|rk|bedroom|room)\\b|\\b([1-9])\\b[\\s\\S]{0,20}?\\b(?:bhk|rk|bedroom|room)\\b", Pattern.CASE_INSENSITIVE);
         Matcher bhkMatcher = bhkPattern.matcher(input);
         String bhk = "2 BHK";
         if (bhkMatcher.find()) {
-            bhk = bhkMatcher.group(1) + " BHK";
+            String num = bhkMatcher.group(1) != null ? bhkMatcher.group(1) : bhkMatcher.group(2);
+            bhk = num + " BHK";
         } else if (cleanLower.contains("studio") || cleanLower.contains("1rk")) {
             bhk = "1 RK Studio";
         } else if (cleanLower.contains("duplex") || cleanLower.contains("villa")) {
