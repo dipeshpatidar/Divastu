@@ -30,15 +30,40 @@ public class PropertyParserService {
         String input = prompt.trim();
         String cleanLower = input.toLowerCase();
 
-        // 1. Extract BHK / Layout (handles both '4bhk' and '4 bhk' / '4 bedroom')
-        Pattern bhkPattern = Pattern.compile("(?:\\b|\\b)([1-9])\\s*(?:bhk|rk|bedroom|room)\\b|\\b([1-9])\\b[\\s\\S]{0,20}?\\b(?:bhk|rk|bedroom|room)\\b", Pattern.CASE_INSENSITIVE);
-        Matcher bhkMatcher = bhkPattern.matcher(input);
+        // 1. Universal BHK / Layout Extractor (Supports '1.5bhk', '2.5 bhk', '4bhk', '10bhk', 'three bhk', 'studio', 'duplex', etc.)
         String bhk = "2 BHK";
-        if (bhkMatcher.find()) {
-            String num = bhkMatcher.group(1) != null ? bhkMatcher.group(1) : bhkMatcher.group(2);
+
+        // Regex for Numeric & Fractional BHKs (e.g. 1.5 bhk, 2.5bhk, 3bhk, 4 bedroom, 5 beds)
+        Pattern numBhkPattern = Pattern.compile("\\b(\\d+(?:\\.\\d+)?)\\s*(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\\b", Pattern.CASE_INSENSITIVE);
+        Matcher numBhkMatcher = numBhkPattern.matcher(input);
+
+        // Word to number mapping (e.g. "three bhk" -> 3 BHK)
+        Pattern wordBhkPattern = Pattern.compile("\\b(one|two|three|four|five|six|seven|eight|nine|ten)\\s*(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\\b", Pattern.CASE_INSENSITIVE);
+        Matcher wordBhkMatcher = wordBhkPattern.matcher(input);
+
+        if (numBhkMatcher.find()) {
+            String val = numBhkMatcher.group(1);
+            bhk = val.endsWith(".0") ? val.substring(0, val.length() - 2) + " BHK" : val + " BHK";
+        } else if (wordBhkMatcher.find()) {
+            String w = wordBhkMatcher.group(1).toLowerCase();
+            String num = switch (w) {
+                case "one" -> "1";
+                case "two" -> "2";
+                case "three" -> "3";
+                case "four" -> "4";
+                case "five" -> "5";
+                case "six" -> "6";
+                case "seven" -> "7";
+                case "eight" -> "8";
+                case "nine" -> "9";
+                case "ten" -> "10";
+                default -> "2";
+            };
             bhk = num + " BHK";
-        } else if (cleanLower.contains("studio") || cleanLower.contains("1rk")) {
+        } else if (cleanLower.contains("studio") || cleanLower.contains("1rk") || cleanLower.contains("rk")) {
             bhk = "1 RK Studio";
+        } else if (cleanLower.contains("triplex")) {
+            bhk = "Triplex Villa";
         } else if (cleanLower.contains("duplex") || cleanLower.contains("villa")) {
             bhk = "Duplex Villa";
         } else if (cleanLower.contains("penthouse")) {
