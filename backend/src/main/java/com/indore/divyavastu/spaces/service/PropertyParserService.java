@@ -110,6 +110,22 @@ public class PropertyParserService {
             Pattern.CASE_INSENSITIVE);
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
+    // Master Indian Cities & Tier-1/Tier-2 Metros Allow-list for fail-safe extraction
+    private static final Set<String> MASTER_INDIAN_CITIES = Set.of(
+            "indore", "bhopal", "ujjain", "jabalpur", "gwalior", "pune", "mumbai", "delhi",
+            "gurgaon", "noida", "bangalore", "hyderabad", "chennai", "kolkata", "ahmedabad",
+            "jaipur", "surat", "lucknow", "chandigarh", "goa", "dewas", "ratlam", "dhar"
+    );
+
+    // Known Core Indore Sector & Locality Master Set for O(1) locality-to-city hard-binding
+    private static final Set<String> KNOWN_INDORE_SECTORS = Set.of(
+            "vijay nagar", "nanda nagar", "palasia", "old palasia", "saket nagar", "nipania",
+            "bhawarkua", "mahalakshmi nagar", "rau", "mhow", "lig colony", "sukhlia", "khajrana",
+            "bypass road", "annapurna", "sudama nagar", "khandwa road", "ab road", "bicholi mardana",
+            "kanadia road", "rajendra nagar", "chandan nagar", "scheme 54", "scheme 78", "scheme 74",
+            "scheme 140", "scheme 114", "tilak nagar", "manorama ganj", "race course road"
+    );
+
     private final LocalityRepository localityRepository;
 
     // High-Speed $O(1)$ Concurrent L1 In-Memory Caches
@@ -439,7 +455,7 @@ public class PropertyParserService {
         String sector = "";
         String city = "";
 
-        // Check L1 Locality Cache
+        // Step 4A: Check L1 Locality Cache
         for (Map.Entry<String, Locality> entry : localityCache.entrySet()) {
             if (cleanLower.contains(entry.getKey())) {
                 Locality loc = entry.getValue();
@@ -449,22 +465,29 @@ public class PropertyParserService {
             }
         }
 
-        // Check L1 City Cache or standard major cities
+        // Step 4B: Check Known Core Indore Sectors (Hard-bind locality to Indore)
+        if (sector.isBlank()) {
+            for (String knownSec : KNOWN_INDORE_SECTORS) {
+                if (cleanLower.contains(knownSec)) {
+                    sector = capitalizeWords(knownSec);
+                    city = "Indore";
+                    break;
+                }
+            }
+        }
+
+        // Step 4C: Check City Cache or Master Indian Cities Allow-list
         if (city.isBlank()) {
             for (String c : cityCache) {
-                if (cleanLower.contains(c)) {
+                if (cleanLower.contains(c) && MASTER_INDIAN_CITIES.contains(c)) {
                     city = capitalizeWords(c);
                     break;
                 }
             }
         }
 
-        // Dynamic City Scanner for unregistered cities in text
         if (city.isBlank()) {
-            List<String> knownCities = Arrays.asList("indore", "bhopal", "pune", "bangalore", "mumbai", "delhi",
-                    "gurgaon", "noida", "hyderabad", "chennai", "kolkata", "ahmedabad", "jaipur", "surat", "lucknow",
-                    "chandigarh", "goa");
-            for (String kc : knownCities) {
+            for (String kc : MASTER_INDIAN_CITIES) {
                 if (cleanLower.contains(kc)) {
                     city = capitalizeWords(kc);
                     break;
@@ -472,18 +495,18 @@ public class PropertyParserService {
             }
         }
 
+        // Step 4D: Dynamic City Scanner for explicit city declarations (strictly validated against Master Indian Cities)
         if (city.isBlank()) {
             Matcher cityMatcher = CITY_NER_PATTERN.matcher(input);
             if (cityMatcher.find()) {
-                String candidateCity = cityMatcher.group(1).trim();
-                if (!candidateCity.equalsIgnoreCase("the") && !candidateCity.equalsIgnoreCase("flat")
-                        && !candidateCity.equalsIgnoreCase("house")) {
+                String candidateCity = cityMatcher.group(1).trim().toLowerCase();
+                if (MASTER_INDIAN_CITIES.contains(candidateCity)) {
                     city = capitalizeWords(candidateCity);
                 }
             }
         }
 
-        // Dynamic Sector / Street / Road / Suffix Scanner
+        // Step 4E: Dynamic Sector / Street / Suffix Scanner
         if (sector.isBlank()) {
             Matcher suffixMatcher = SUFFIX_LOCALITY_PATTERN.matcher(normalized);
             if (suffixMatcher.find()) {
@@ -492,7 +515,7 @@ public class PropertyParserService {
             }
         }
 
-        // Dynamic Preposition NER Scanner
+        // Step 4F: Dynamic Preposition NER Scanner
         if (sector.isBlank()) {
             Matcher prepMatcher = PREP_LOCALITY_PATTERN.matcher(normalized);
             if (prepMatcher.find()) {
@@ -503,8 +526,7 @@ public class PropertyParserService {
             }
         }
 
-        // Clean noise prefixes (e.g., '4bhk flat in', 'in', 'at', 'near') and trailing
-        // city names from sector
+        // Clean noise prefixes (e.g., '4bhk flat in', 'in', 'at', 'near') and trailing duplicate city/sector names
         if (!sector.isBlank()) {
             sector = NOISE_PREFIX_PATTERN.matcher(sector).replaceAll("").trim();
             if (!city.isBlank() && sector.toLowerCase().endsWith(" " + city.toLowerCase())) {
@@ -515,8 +537,8 @@ public class PropertyParserService {
         if (sector.isBlank()) {
             sector = "Not Specified";
         }
-        if (city.isBlank() || city.equalsIgnoreCase("Vijay") || city.equalsIgnoreCase("Nagar") || city.equalsIgnoreCase("Palasia")) {
-            city = "Indore"; // Baseline fallback
+        if (city.isBlank() || !MASTER_INDIAN_CITIES.contains(city.toLowerCase())) {
+            city = "Indore"; // Baseline fallback to primary metro hub
         }
 
         // 5. Dynamic Society / Project Name Detection

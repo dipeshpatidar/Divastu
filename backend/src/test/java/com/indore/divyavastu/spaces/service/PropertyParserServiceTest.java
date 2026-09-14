@@ -202,4 +202,25 @@ public class PropertyParserServiceTest {
         assertEquals("East Facing", dto2.getVastuFacing());
         assertEquals("Semi Furnished", dto2.getFurnishingStatus());
     }
+
+    @Test
+    public void testRepetitiveLocalityAndFailSafeCityParsing() {
+        String prompt1 = "3 BHK Penthouse in Vijay Nagar, Vijay";
+        ParsedPropertyDTO dto1 = propertyParserService.parseAndSave(prompt1);
+        assertNotNull(dto1);
+        assertEquals("Vijay Nagar", dto1.getSector());
+        assertEquals("Indore", dto1.getCity());
+
+        String prompt2 = "2 BHK Flat in Nanda Nagar, Nanda";
+        ParsedPropertyDTO dto2 = propertyParserService.parseAndSave(prompt2);
+        assertNotNull(dto2);
+        assertEquals("Nanda Nagar", dto2.getSector());
+        assertEquals("Indore", dto2.getCity());
+
+        String prompt3 = "1 BHK Studio near Saket Nagar for 12000";
+        ParsedPropertyDTO dto3 = propertyParserService.parseAndSave(prompt3);
+        assertNotNull(dto3);
+        assertEquals("Saket Nagar", dto3.getSector());
+        assertEquals("Indore", dto3.getCity());
+    }
 }
