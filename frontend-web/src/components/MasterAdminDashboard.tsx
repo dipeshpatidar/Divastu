@@ -49,28 +49,28 @@ const PRESET_PROMPTS = [
     label: '🏠 2 BHK Family Flat',
     subtitle: 'Full details: Rent, Deposit, Brokerage & Vastu',
     badge: 'Most Popular',
-    text: 'Premium 2bhk flat 525 sqft 15000 rent brokerage 30000 1+1 security deposit owner name John Doe +91 1234567890 status live in Nanda Nagar Indore facing east fully furnished ready to move'
+    text: 'Premium 2 BHK flat of 525 sqft in Nanda Nagar, Indore. Monthly rent ₹30,000, brokerage ₹15,000, 1+1 security deposit. Owner John Doe +91 1234567890. East facing, fully furnished, ready to move, status live.'
   },
   {
     id: '3bhk-luxury-penthouse',
     label: '🏢 3 BHK Luxury Penthouse',
     subtitle: 'High-rise with Terrace, Pool & Furnishing',
     badge: 'High-Value',
-    text: 'Luxury 3 BHK Penthouse 1800 sqft in Vijay Nagar Indore rent 45000 brokerage 22500 security deposit 90000 owner name John Doe +91 1234567890 north east facing terrace balcony pool fully furnished ready to move status live'
+    text: 'Luxury 3 BHK Penthouse of 1800 sqft in Vijay Nagar, Indore. Monthly rent ₹45,000, brokerage ₹22,500, security deposit ₹90,000. Owner John Doe +91 1234567890. North-East facing with terrace, balcony and pool. Fully furnished, ready to move, status live.'
   },
   {
     id: '4bhk-gated-villa',
     label: '🏡 4 BHK Gated Villa',
     subtitle: 'Independent Villa with Private Garden & Gym',
     badge: 'Premium',
-    text: 'Spacious 4 BHK Independent Villa 2500 sqft in Nipania Indore rent 60000 brokerage 30000 security deposit 120000 owner name John Doe +91 1234567890 east facing private garden gym semi furnished ready to move status live'
+    text: 'Spacious 4 BHK Independent Villa of 2500 sqft in Nipania, Indore. Monthly rent ₹60,000, brokerage ₹30,000, security deposit ₹120,000. Owner John Doe +91 1234567890. East facing with private garden and gym. Semi furnished, ready to move, status live.'
   },
   {
     id: 'express-2bhk-quick',
     label: '⚡ Express 2 BHK Quick',
     subtitle: 'Fast 3-line prompt for rapid property listing',
     badge: 'Fast Upload',
-    text: '2bhk flat in Saket Nagar 22000 rent owner John Doe +91 1234567890 east facing semi furnished status live'
+    text: '2 BHK flat in Saket Nagar, Indore for ₹22,000 monthly rent. Owner John Doe +91 1234567890. East facing, semi furnished, status live.'
   }
 ];
 
