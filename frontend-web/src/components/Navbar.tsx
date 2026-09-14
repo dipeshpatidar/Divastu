@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { UserRole, UserProfile } from '../types';
 import { 
   Building2, Sparkles, Gift, User, LogOut, Bookmark, Calendar, 
-  Users, BarChart3, ShieldCheck, CheckSquare, ChevronDown, SlidersHorizontal, UploadCloud, Layers
+  Users, BarChart3, ShieldCheck, CheckSquare, ChevronDown, SlidersHorizontal, UploadCloud, Layers, Bell
 } from 'lucide-react';
+import { useNotification } from '../context/NotificationContext';
 
 interface NavbarProps {
   user: UserProfile | null;
@@ -26,6 +27,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveAdminTab
 }) => {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const { unreadCount, isDrawerOpen, setIsDrawerOpen } = useNotification();
 
   const visitsUsed = user?.freeVisitsUsed || 0;
   const isPaywallActive = visitsUsed >= 5;
@@ -142,6 +144,26 @@ export const Navbar: React.FC<NavbarProps> = ({
               </motion.button>
             </>
           )}
+
+          {/* CENTRALIZED NOTIFICATION BELL BUTTON WITH PULSING UNREAD BADGE */}
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.94 }}
+            onClick={() => setIsDrawerOpen(!isDrawerOpen)}
+            className={`relative p-2 sm:p-2.5 rounded-2xl border transition-all cursor-pointer shadow-md ${
+              isAdminRole
+                ? 'bg-slate-900/90 text-emerald-400 border-slate-800 hover:border-emerald-500/50 hover:bg-slate-800'
+                : 'bg-slate-900/90 text-emerald-400 border-slate-800 hover:bg-slate-800'
+            }`}
+            title="Open Portal Notification Center"
+          >
+            <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 text-slate-950 font-mono font-black text-[10px] flex items-center justify-center border-2 border-slate-950 shadow-lg shadow-emerald-500/50 animate-bounce">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </motion.button>
 
           {/* USER PROFILE & LOGOUT DROPDOWN HUB */}
           {role !== 'GUEST' && (

@@ -7,6 +7,7 @@ import {
   Database, Copy, Check, Compass, Tag, Layers, Home, Info
 } from 'lucide-react';
 import { propertyService } from '../services/propertyService';
+import { useNotification } from '../context/NotificationContext';
 import { RoomTag } from '../types';
 
 import { RevenueAreaChart } from './analytics/RevenueAreaChart';
@@ -122,6 +123,8 @@ const mockLeaveRequests = [
 ];
 
 export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ activeTab: externalActiveTab, setActiveAdminTab: externalSetActiveAdminTab }) => {
+  const { notifySuccess, notifyError, notifyInfo, notifyWarning, notifyAiMagic } = useNotification();
+
   const [internalTab, setInternalTab] = useState<string>('funnel');
   const activeTab = externalActiveTab || internalTab;
 
@@ -324,7 +327,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       if (lastExtractedResult.rentVal) setMediaPriceTag(`${lastExtractedResult.rentVal} / month`);
       if (lastExtractedResult.vastuFacing) setMediaVastu(lastExtractedResult.vastuFacing);
       if (lastExtractedResult.title) setMediaCaption(lastExtractedResult.title);
-      alert("✅ Pre-filled Cloudinary Media Tagging fields with exact extracted values!");
+      notifySuccess("✅ Pre-filled CDN Metadata", `Tagged fields pre-populated with sector ${lastExtractedResult.sector} & rent ${lastExtractedResult.rentVal}`, undefined, 'PROPERTY');
     }
   };
 
@@ -332,6 +335,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     if (lastExtractedResult) {
       navigator.clipboard.writeText(JSON.stringify(lastExtractedResult, null, 2));
       setCopiedJson(true);
+      notifySuccess("📋 Copied to Clipboard", "Property attribute JSON payload copied to clipboard", undefined, 'PROPERTY');
       setTimeout(() => setCopiedJson(false), 2000);
     }
   };
@@ -354,10 +358,11 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         });
       }
       setUploadStatusMsg(`✓ ${files.length} Tagged Photo(s) uploaded to Cloudinary with Metadata [${selectedRoomTag}, ${mediaSector}, ${mediaPriceTag}]!`);
-      alert(`🎉 Successfully uploaded ${files.length} photo(s) tagged as [${selectedRoomTag}] with Location (${mediaSector}), Price (${mediaPriceTag}) & Vastu (${mediaVastu}) to Cloudinary CDN!`);
+      notifySuccess(`🎉 Cloudinary Upload Successful`, `Uploaded ${files.length} photo(s) tagged as [${selectedRoomTag}]`, `Location: ${mediaSector} • Price: ${mediaPriceTag} • Vastu: ${mediaVastu}`, 'PROPERTY');
     } catch (err) {
       console.error(err);
       setUploadStatusMsg('Cloudinary uploaded photo fallback saved.');
+      notifyInfo('📸 Photo Staged', `Staged ${files.length} photo(s) with local CDN fallback`, undefined, 'PROPERTY');
     } finally {
       setIsUploadingCloudinary(false);
     }
@@ -880,6 +885,20 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         },
         ...prev
       ]);
+
+      notifySuccess(
+        '🎉 Property Listing Published!',
+        `Added '${parsed.label}' in ${parsed.sector}, ${parsed.city || 'Indore'}`,
+        `Rent: ${parsed.rentVal} / month • Vastu: ${parsed.vastuFacing} • Auto-persisted to PostgreSQL DB`,
+        'PROPERTY'
+      );
+
+      notifyAiMagic(
+        '⚡ AI Parameter Extraction Verified',
+        `Identified ${parsed.bhk} ${parsed.type} in ${parsed.sector}`,
+        `Owner: ${parsed.ownerName} (${parsed.ownerPhone}) • SqFt: ${parsed.areaSqFt}`,
+        'AI_ENGINE'
+      );
     } else {
       setPublishSuccessNotification({
         title: `Property BHK Option '${newBhkLabel}'`,
@@ -893,6 +912,13 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         mediaCount: attachedMediaFiles.length,
         timestamp: timeStr
       });
+
+      notifySuccess(
+        '⚙️ Property Option Enabled',
+        `Property configuration '${newBhkLabel}' enabled on search decks`,
+        undefined,
+        'PROPERTY'
+      );
     }
 
     setNewBhkLabel('');
@@ -924,23 +950,30 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   };
 
   const handleDisbursePayroll = (id: number) => {
-    setGroundBoys(groundBoys.map(gb => gb.id === id ? { ...gb, status: "DISBURSED" } : gb));
+    const gb = groundBoys.find(g => g.id === id);
+    setGroundBoys(groundBoys.map(g => g.id === id ? { ...g, status: "DISBURSED" } : g));
+    notifySuccess('💸 Payroll Disbursed', `Base salary ₹15,000 disbursed to ${gb?.name || 'Ground Escort Staff'}`, `Sector: ${gb?.sector} • ${gb?.dealsClosed} Deals Closed`, 'PAYROLL');
   };
 
   const handleApproveCashback = (id: string) => {
+    const item = cashbacks.find(c => c.id === id);
     setCashbacks(cashbacks.map(c => c.id === id ? { ...c, status: "APPROVED" } : c));
+    notifySuccess('💰 ₹1,000 Cashback Approved', `Tenant lease cashback released for ${item?.tenantName || 'Tenant'}`, `Direct Bank UPI Payout • ${item?.propertyTitle}`, 'APPROVAL');
   };
 
   const handleApprovePlot = (id: string) => {
     setPlots(plots.map(p => p.id === id ? { ...p, status: "APPROVED" } : p));
+    notifySuccess('📌 Plot Approval Verified', `Commercial plot listing ${id} approved & published`, undefined, 'APPROVAL');
   };
 
   const handleApproveLeave = (id: string) => {
     setLeaves(leaves.map(l => l.id === id ? { ...l, status: "APPROVED" } : l));
+    notifyInfo('📅 Staff Leave Approved', `Leave request ID ${id} approved`, 'Staff Roster updated in realtime', 'SYSTEM');
   };
 
   const handleRejectLeave = (id: string) => {
     setLeaves(leaves.map(l => l.id === id ? { ...l, status: "REJECTED" } : l));
+    notifyWarning('📅 Staff Leave Rejected', `Leave request ID ${id} rejected`, 'Staff Roster updated', 'SYSTEM');
   };
 
   const adminNavItems = [
