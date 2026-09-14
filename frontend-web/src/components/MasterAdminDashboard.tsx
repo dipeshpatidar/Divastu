@@ -1360,7 +1360,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                           </span>
                         </div>
 
-                        {/* 12-Card Dynamic Real-Time Parameter Grid */}
+                        {/* 18-Card Full Real-Time Parameter Inspection Grid */}
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
                           {/* 1. BHK Layout */}
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
@@ -1397,7 +1397,15 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                             </span>
                           </div>
 
-                          {/* 4. Monthly Rent */}
+                          {/* 4. City & State */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🏙️ City & State</span>
+                            <span className="text-xs font-black font-['Outfit'] truncate block mt-0.5 text-blue-300">
+                              {liveExtractedPreview.city || 'Indore'}{liveExtractedPreview.state ? `, ${liveExtractedPreview.state}` : ''}
+                            </span>
+                          </div>
+
+                          {/* 5. Monthly Rent */}
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
                             <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">💰 Monthly Rent</span>
                             <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
@@ -1405,7 +1413,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                             }`}>{liveExtractedPreview.rentVal}</span>
                           </div>
 
-                          {/* 5. Brokerage Fee */}
+                          {/* 6. Brokerage Fee */}
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
                             <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">💼 Brokerage Fee</span>
                             <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
@@ -1413,7 +1421,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                             }`}>{liveExtractedPreview.brokerageVal}</span>
                           </div>
 
-                          {/* 6. Security Deposit */}
+                          {/* 7. Security Deposit */}
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
                             <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🛡️ Security Deposit</span>
                             <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
@@ -1421,7 +1429,49 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                             }`}>{liveExtractedPreview.depositVal || 'Unspecified'}</span>
                           </div>
 
-                          {/* 7. Owner Name */}
+                          {/* 8. Carpet Area */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📐 Carpet Area</span>
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              !liveExtractedPreview.areaSqFt || liveExtractedPreview.areaSqFt === 'Unspecified' ? 'text-slate-500 italic' : 'text-orange-300'
+                            }`}>{liveExtractedPreview.areaSqFt || 'Unspecified'}</span>
+                          </div>
+
+                          {/* 9. Bathrooms */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🛁 Bathrooms</span>
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              !liveExtractedPreview.bathrooms ? 'text-slate-500 italic' : 'text-cyan-300'
+                            }`}>{liveExtractedPreview.bathrooms ? `${liveExtractedPreview.bathrooms} Baths` : 'Unspecified'}</span>
+                          </div>
+
+                          {/* 10. Possession Date */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📅 Possession Date</span>
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              !liveExtractedPreview.possessionDate ? 'text-slate-500 italic' : 'text-emerald-400'
+                            }`}>{liveExtractedPreview.possessionDate || 'Unspecified'}</span>
+                          </div>
+
+                          {/* 11. Landmark */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🏢 Landmark</span>
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              !liveExtractedPreview.landmark ? 'text-slate-500 italic' : 'text-yellow-300'
+                            }`} title={liveExtractedPreview.landmark || 'Unspecified'}>
+                              {liveExtractedPreview.landmark || 'Unspecified'}
+                            </span>
+                          </div>
+
+                          {/* 12. Pincode */}
+                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📌 Pincode</span>
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              !liveExtractedPreview.pincode ? 'text-slate-500 italic' : 'text-indigo-400'
+                            }`}>{liveExtractedPreview.pincode || 'Unspecified'}</span>
+                          </div>
+
+                          {/* 13. Owner Name */}
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
                             <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">👤 Owner Name</span>
                             <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
@@ -1431,7 +1481,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                             </span>
                           </div>
 
-                          {/* 8. Owner Phone */}
+                          {/* 14. Owner Phone */}
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
                             <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📞 Owner Contact</span>
                             <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
@@ -1441,7 +1491,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                             </span>
                           </div>
 
-                          {/* 9. Vastu Facing */}
+                          {/* 15. Vastu Facing */}
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
                             <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🧭 Vastu Facing</span>
                             <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
@@ -1449,7 +1499,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                             }`}>{liveExtractedPreview.vastuFacing}</span>
                           </div>
 
-                          {/* 10. Furnishing Status */}
+                          {/* 16. Furnishing Status */}
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
                             <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🛋️ Furnishing</span>
                             <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
@@ -1462,7 +1512,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                             </span>
                           </div>
 
-                          {/* 11. Listing Status */}
+                          {/* 17. Listing Status */}
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
                             <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">⚡ Listing Status</span>
                             <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
@@ -1472,17 +1522,13 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                             </span>
                           </div>
 
-                          {/* 12. Area / Bathrooms */}
+                          {/* 18. Amenities */}
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📐 Area / Bathrooms</span>
+                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">✨ Key Amenities</span>
                             <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              (!liveExtractedPreview.areaSqFt || liveExtractedPreview.areaSqFt === 'Unspecified') && !liveExtractedPreview.bathrooms
-                                ? 'text-slate-500 italic'
-                                : 'text-orange-300'
-                            }`}>
-                              {liveExtractedPreview.areaSqFt && liveExtractedPreview.areaSqFt !== 'Unspecified'
-                                ? liveExtractedPreview.areaSqFt
-                                : (liveExtractedPreview.bathrooms ? `${liveExtractedPreview.bathrooms} Baths` : 'Unspecified')}
+                              !liveExtractedPreview.amenities || liveExtractedPreview.amenities.length === 0 ? 'text-slate-500 italic' : 'text-violet-300'
+                            }`} title={liveExtractedPreview.amenities?.join(', ') || 'Standard'}>
+                              {liveExtractedPreview.amenities && liveExtractedPreview.amenities.length > 0 ? liveExtractedPreview.amenities.join(', ') : 'Standard'}
                             </span>
                           </div>
                         </div>
