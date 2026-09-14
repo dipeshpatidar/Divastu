@@ -19,6 +19,7 @@ import { CreditCard } from 'lucide-react';
 import { WfhAdminDashboard } from './WfhAdminDashboard';
 import { MasterAdminDashboard } from './MasterAdminDashboard';
 import { EmployeeCrmDashboard } from './EmployeeCrmDashboard';
+import { propertyService } from '../services/propertyService';
 
 const getInitialSession = (): { role: UserRole; user: UserProfile | null } => {
   try {
@@ -677,21 +678,6 @@ const mockPropertyList: Property[] = [
   }
 ];
 
-const getCombinedProperties = (): Property[] => {
-  try {
-    const customStr = localStorage.getItem('divyavastu_custom_properties');
-    if (customStr) {
-      const customProps = JSON.parse(customStr);
-      if (Array.isArray(customProps) && customProps.length > 0) {
-        return [...customProps, ...mockPropertyList];
-      }
-    }
-  } catch (err) {
-    console.error('Error reading custom properties from storage', err);
-  }
-  return mockPropertyList;
-};
-
 export const Home: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -699,7 +685,7 @@ export const Home: React.FC = () => {
   const initialSession = getInitialSession();
   const [role, setRole] = useState<UserRole>(initialSession.role);
   const [user, setUser] = useState<UserProfile | null>(initialSession.user);
-  const [properties, setProperties] = useState<Property[]>(getCombinedProperties);
+  const [properties, setProperties] = useState<Property[]>(mockPropertyList);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showLeaseModal, setShowLeaseModal] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
@@ -707,10 +693,26 @@ export const Home: React.FC = () => {
   const [filterSector, setFilterSector] = useState<string>('');
   const [guestModalConfig, setGuestModalConfig] = useState<{ property: Property; initialMode?: 'VIDEO' | 'PHOTOS' } | null>(null);
 
-  // Synchronize newly published properties in real time
+  // Fetch live properties from PostgreSQL backend DB on mount & realtime publish events
+  const loadLiveProperties = async () => {
+    try {
+      const liveData = await propertyService.fetchProperties();
+      if (liveData && liveData.length > 0) {
+        setProperties([...liveData, ...mockPropertyList]);
+      } else {
+        setProperties(mockPropertyList);
+      }
+    } catch (err) {
+      console.warn('Backend server offline or unreachable. Displaying fallback properties:', err);
+      setProperties(mockPropertyList);
+    }
+  };
+
   useEffect(() => {
+    loadLiveProperties();
+
     const handlePropertyPublished = () => {
-      setProperties(getCombinedProperties());
+      loadLiveProperties();
     };
     window.addEventListener('divyavastu_property_published', handlePropertyPublished);
     return () => {

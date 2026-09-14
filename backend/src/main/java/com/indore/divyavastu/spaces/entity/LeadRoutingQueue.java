@@ -5,7 +5,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "lead_routing_queue")
+@Table(name = "lead_routing_queue", indexes = {
+    @Index(name = "idx_lead_status_sector", columnList = "status, targetSector"),
+    @Index(name = "idx_lead_employee", columnList = "assigned_employee_id")
+})
 public class LeadRoutingQueue {
 
     @Id

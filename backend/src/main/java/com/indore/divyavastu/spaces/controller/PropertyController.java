@@ -109,17 +109,26 @@ public class PropertyController {
         Objects.requireNonNull(body, "Property payload must not be null");
 
         RentalDetails rental = new RentalDetails();
-        rental.setTitle((String) body.getOrDefault("title", "New Indore Property"));
-        rental.setDescription((String) body.getOrDefault("description", "Vetted zero brokerage home"));
+        rental.setTitle((String) body.getOrDefault("title", "New Property Listing"));
+        rental.setDescription((String) body.getOrDefault("description", "Vetted zero brokerage home in Indore"));
         rental.setAddress((String) body.getOrDefault("address", "Vijay Nagar Main Road"));
         rental.setSector((String) body.getOrDefault("sector", "Vijay Nagar"));
+        rental.setCity((String) body.getOrDefault("city", "Indore"));
+        rental.setBhkCount((String) body.getOrDefault("bhkCount", body.getOrDefault("bhk", "2 BHK")));
+        rental.setFurnishingStatus((String) body.getOrDefault("furnishingStatus", "Semi-Furnished"));
+        rental.setVastuFacing((String) body.getOrDefault("vastuFacing", "North-East Facing"));
+        if (body.containsKey("amenities")) {
+            Object am = body.get("amenities");
+            rental.setAmenities(am instanceof List ? String.join(", ", (List<String>) am) : am.toString());
+        }
         rental.setOwnerPhoneNumber((String) body.getOrDefault("ownerPhoneNumber", "+91 98260 00000"));
         rental.setLatitude(Double.valueOf(body.getOrDefault("latitude", 22.7533).toString()));
         rental.setLongitude(Double.valueOf(body.getOrDefault("longitude", 75.8937).toString()));
         rental.setTotalAreaSqFt(Double.valueOf(body.getOrDefault("totalAreaSqFt", 1500).toString()));
-        rental.setMonthlyRent(new BigDecimal(body.getOrDefault("monthlyRent", "20000").toString()));
+        rental.setMonthlyRent(new BigDecimal(body.getOrDefault("monthlyRent", body.getOrDefault("price", "20000")).toString()));
         rental.setSecurityDeposit(new BigDecimal(body.getOrDefault("securityDeposit", "40000").toString()));
         rental.setStatus(ListingStatus.ACTIVE);
+        rental.setPropertyType(PropertyType.APARTMENT);
 
         Listing saved = listingRepository.save(rental);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
@@ -290,12 +299,20 @@ public class PropertyController {
         listing.setDescription(dto.getDescription());
         listing.setSector(dto.getSector() != null ? dto.getSector() : "Vijay Nagar");
         listing.setAddress(dto.getAddress() != null ? dto.getAddress() : dto.getSector());
+        listing.setCity(dto.getCity() != null ? dto.getCity() : "Indore");
+        listing.setBhkCount(dto.getBhk() != null ? dto.getBhk() : "2 BHK");
+        listing.setFurnishingStatus(dto.getFurnishingStatus() != null ? dto.getFurnishingStatus() : "Semi-Furnished");
+        listing.setVastuFacing(dto.getVastuFacing() != null ? dto.getVastuFacing() : "North-East Facing");
+        if (dto.getAmenities() != null && !dto.getAmenities().isEmpty()) {
+            listing.setAmenities(String.join(", ", dto.getAmenities()));
+        }
         listing.setMonthlyRent(BigDecimal.valueOf(dto.getRentAmount() != null ? dto.getRentAmount() : 18000.0));
         listing.setSecurityDeposit(BigDecimal.valueOf((dto.getRentAmount() != null ? dto.getRentAmount() : 18000.0) * 2));
         listing.setOwnerPhoneNumber(dto.getOwnerPhone() != null ? dto.getOwnerPhone() : "+91 98765 43210");
         listing.setLatitude(22.7533);
         listing.setLongitude(75.8937);
         listing.setStatus(ListingStatus.ACTIVE);
+        listing.setPropertyType(PropertyType.APARTMENT);
         return listing;
     }
 }

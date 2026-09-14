@@ -4,7 +4,12 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "listings")
+@Table(name = "listings", indexes = {
+    @Index(name = "idx_listing_status_sector", columnList = "status, sector"),
+    @Index(name = "idx_listing_status_type", columnList = "status, listing_type"),
+    @Index(name = "idx_listing_bhk", columnList = "status, bhk_count"),
+    @Index(name = "idx_listing_owner_phone", columnList = "owner_phone_number")
+})
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "listing_category", discriminatorType = DiscriminatorType.STRING)
 public abstract class Listing {
@@ -42,6 +47,21 @@ public abstract class Listing {
 
     @Column(nullable = false)
     private String sector; // e.g. Vijay Nagar, Bhawarkua
+
+    @Column(nullable = false)
+    private String city = "Indore";
+
+    @Column(name = "bhk_count")
+    private String bhkCount;
+
+    @Column(name = "furnishing_status")
+    private String furnishingStatus;
+
+    @Column(name = "vastu_facing")
+    private String vastuFacing;
+
+    @Column(columnDefinition = "TEXT")
+    private String amenities;
 
     @Column(name = "total_area_sq_ft")
     private Double totalAreaSqFt;
@@ -89,6 +109,21 @@ public abstract class Listing {
 
     public String getSector() { return sector; }
     public void setSector(String sector) { this.sector = sector; }
+
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
+
+    public String getBhkCount() { return bhkCount; }
+    public void setBhkCount(String bhkCount) { this.bhkCount = bhkCount; }
+
+    public String getFurnishingStatus() { return furnishingStatus; }
+    public void setFurnishingStatus(String furnishingStatus) { this.furnishingStatus = furnishingStatus; }
+
+    public String getVastuFacing() { return vastuFacing; }
+    public void setVastuFacing(String vastuFacing) { this.vastuFacing = vastuFacing; }
+
+    public String getAmenities() { return amenities; }
+    public void setAmenities(String amenities) { this.amenities = amenities; }
 
     public Double getTotalAreaSqFt() { return totalAreaSqFt; }
     public void setTotalAreaSqFt(Double totalAreaSqFt) { this.totalAreaSqFt = totalAreaSqFt; }

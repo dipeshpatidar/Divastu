@@ -800,36 +800,46 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     setIsSubmittingListing(true);
     setPublishSuccessNotification(null);
 
-    let parsed: any = null;
     try {
-      // 1. Primary: Call Spring Boot Backend REST API & Save Locality to PostgreSQL DB
-      parsed = await propertyService.parsePropertyPrompt(newBhkLabel);
-    } catch (backendErr) {
-      console.warn('Backend prompt parser endpoint unreachable, using client-side fallback:', backendErr);
-      // 2. Client-side fallback parsing
-      parsed = parseNaturalLanguageProperty(newBhkLabel);
-    } finally {
-      setIsSubmittingListing(false);
-    }
+      // 1. Primary: Call Spring Boot Backend REST API & Auto-Save Locality / Property to PostgreSQL DB
+      const parsed = await propertyService.parsePropertyPrompt(newBhkLabel);
+      const createdRecord = await propertyService.createPropertyFromParsed(parsed);
+      const propertyId = createdRecord.propertyId;
 
-    const cleanId = (parsed ? `${parsed.bhk}-${parsed.sector}` : newBhkLabel).toUpperCase().replace(/\s+/g, '-');
-    const displayLabel = parsed ? parsed.label : newBhkLabel;
-    const avgRent = parsed ? parsed.rentVal : '₹18,000';
+      // 2. Stream attached media files (photos/videos) directly to Cloudinary CDN via Spring Boot
+      if (attachedMediaFiles.length > 0 && propertyId) {
+        for (let i = 0; i < attachedMediaFiles.length; i++) {
+          const file = attachedMediaFiles[i];
+          const isVideo = file.type.startsWith('video/');
+          await propertyService.uploadTaggedMedia(propertyId, file, {
+            roomTag: 'LIVING_ROOM',
+            mediaType: isVideo ? 'VIDEO_WALKTHROUGH' : 'IMAGE',
+            caption: parsed.title || 'Property Media Asset',
+            isPrimaryCover: i === 0,
+            sector: parsed.sector,
+            priceTag: `${parsed.rentVal} / month`,
+            vastuFacing: parsed.vastuFacing
+          });
+        }
+      }
 
-    setBhkConfigs((prev: any[]) => [...prev, {
-      id: cleanId,
-      label: displayLabel,
-      enabled: true,
-      demandScore: '94%',
-      avgRent: avgRent,
-      sector: parsed?.sector,
-      vastuFacing: parsed?.vastuFacing,
-      amenities: parsed?.amenities
-    }]);
+      const cleanId = (parsed ? `${parsed.bhk}-${parsed.sector}` : newBhkLabel).toUpperCase().replace(/\s+/g, '-');
+      const displayLabel = parsed ? parsed.label : newBhkLabel;
+      const avgRent = parsed ? parsed.rentVal : '₹18,000';
 
-    const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setBhkConfigs((prev: any[]) => [...prev, {
+        id: cleanId,
+        label: displayLabel,
+        enabled: true,
+        demandScore: '94%',
+        avgRent: avgRent,
+        sector: parsed?.sector,
+        vastuFacing: parsed?.vastuFacing,
+        amenities: parsed?.amenities
+      }]);
 
-    if (parsed) {
+      const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
       const extractedObj = {
         rawInput: newBhkLabel,
         bhk: parsed.bhk,
@@ -848,7 +858,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         amenities: parsed.amenities || [],
         title: parsed.title,
         label: parsed.label,
-        savedToDatabase: parsed.savedToDatabase !== undefined ? parsed.savedToDatabase : true,
+        savedToDatabase: true,
         extractedAt: timeStr
       };
       setLastExtractedResult(extractedObj);
@@ -857,7 +867,6 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       setMediaVastu(parsed.vastuFacing);
       setMediaCaption(parsed.title);
 
-      const isSavedDb = parsed.savedToDatabase !== undefined ? parsed.savedToDatabase : true;
       const mediaCount = attachedMediaFiles.length;
 
       setPublishSuccessNotification({
@@ -868,7 +877,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         rentVal: parsed.rentVal,
         vastuFacing: parsed.vastuFacing,
         amenities: parsed.amenities || [],
-        savedToDatabase: isSavedDb,
+        savedToDatabase: true,
         mediaCount: mediaCount,
         timestamp: timeStr
       });
@@ -880,45 +889,19 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
           sector: parsed.sector,
           rentVal: parsed.rentVal,
           mediaCount: mediaCount,
-          savedToDatabase: isSavedDb,
+          savedToDatabase: true,
           timestamp: timeStr
         },
         ...prev
       ]);
 
-      const newPropertyObj: Property = {
-        id: Date.now(),
-        title: parsed.title,
-        listingType: 'RENT',
-        propertyType: parsed.type === 'HOUSE' ? 'HOUSE' : parsed.type === 'PLOT' ? 'PLOT' : 'FLAT',
-        city: parsed.city || 'Indore',
-        sector: parsed.sector,
-        bhk: parsed.bhk,
-        monthlyRent: parsed.rentAmount || (parsed.rentVal ? parseInt(parsed.rentVal.replace(/[^0-9]/g, '')) : 18000),
-        securityDeposit: parsed.rentAmount ? parsed.rentAmount * 2 : 36000,
-        totalAreaSqFt: parsed.areaSqFt ? parseInt(parsed.areaSqFt) || 1250 : 1250,
-        images: attachedMediaFiles.length > 0
-          ? attachedMediaFiles.map(f => URL.createObjectURL(f))
-          : ["/assets/hero_luxury.jpg", "/assets/interior_living.jpg"],
-        verified: true,
-        ownerPhone: parsed.ownerPhone || "+91 98260 *****",
-        latitude: 22.7500,
-        longitude: 75.8900
-      };
-
-      try {
-        const existingCustom = JSON.parse(localStorage.getItem('divyavastu_custom_properties') || '[]');
-        const updatedCustom = [newPropertyObj, ...existingCustom];
-        localStorage.setItem('divyavastu_custom_properties', JSON.stringify(updatedCustom));
-        window.dispatchEvent(new Event('divyavastu_property_published'));
-      } catch (err) {
-        console.error('Failed to sync published property to storage', err);
-      }
+      // Notify application of live published property in PostgreSQL DB
+      window.dispatchEvent(new Event('divyavastu_property_published'));
 
       notifySuccess(
         '🎉 Property Listing Published!',
         `Added '${parsed.label}' in ${parsed.sector}, ${parsed.city || 'Indore'}`,
-        `Rent: ${parsed.rentVal} / month • Vastu: ${parsed.vastuFacing} • Auto-persisted to PostgreSQL DB`,
+        `Rent: ${parsed.rentVal} / month • Vastu: ${parsed.vastuFacing} • Saved to PostgreSQL DB & Cloudinary CDN`,
         'PROPERTY'
       );
 
@@ -928,26 +911,16 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         `Owner: ${parsed.ownerName} (${parsed.ownerPhone}) • SqFt: ${parsed.areaSqFt}`,
         'AI_ENGINE'
       );
-    } else {
-      setPublishSuccessNotification({
-        title: `Property BHK Option '${newBhkLabel}'`,
-        label: newBhkLabel,
-        sector: 'Indore Region',
-        city: 'Indore',
-        rentVal: '₹18,000 / month',
-        vastuFacing: 'East',
-        amenities: ['Standard'],
-        savedToDatabase: true,
-        mediaCount: attachedMediaFiles.length,
-        timestamp: timeStr
-      });
-
-      notifySuccess(
-        '⚙️ Property Option Enabled',
-        `Property configuration '${newBhkLabel}' enabled on search decks`,
-        undefined,
-        'PROPERTY'
+    } catch (err: any) {
+      console.error('Failed to publish property listing to backend PostgreSQL / Cloudinary:', err);
+      notifyError(
+        '🚨 Property Upload Failed',
+        'Backend Spring Boot server is unreachable or returned an error.',
+        err.message || 'Internal Server Error (500)',
+        'SYSTEM'
       );
+    } finally {
+      setIsSubmittingListing(false);
     }
 
     setNewBhkLabel('');

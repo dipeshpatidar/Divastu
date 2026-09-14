@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "employee_profiles")
+@Table(name = "employee_profiles", indexes = {
+    @Index(name = "idx_emp_assigned_sector", columnList = "assignedSector")
+})
 public class EmployeeProfile {
 
     @Id
