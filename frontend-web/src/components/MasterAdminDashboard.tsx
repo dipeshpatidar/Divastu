@@ -195,11 +195,27 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       rentVal = `₹${(parseInt(kMatch[1]) * 1000).toLocaleString('en-IN')}`;
     }
 
-    // 4. Zero-Maintenance Dynamic Locality & Sector Extraction
+    // 3.5. Multi-City Pan-India Extractor (Indore, Bhopal, Pune, Bangalore, Mumbai, Delhi, Hyderabad, etc.)
+    let city = '';
+    const PAN_INDIA_CITIES = [
+      'Indore', 'Bhopal', 'Pune', 'Bangalore', 'Mumbai', 'Delhi', 
+      'Gurgaon', 'Noida', 'Hyderabad', 'Chennai', 'Kolkata', 
+      'Ahmedabad', 'Jaipur', 'Surat', 'Lucknow', 'Chandigarh', 'Goa'
+    ];
+
+    for (const c of PAN_INDIA_CITIES) {
+      if (new RegExp(`\\b${c}\\b`, 'i').test(input)) {
+        city = c;
+        break;
+      }
+    }
+
+    // 4. Multi-City Zero-Maintenance Dynamic Locality & Sector Extraction
     let sector = '';
 
-    // Step 4A: Check Known Gazetteer Micro-Markets
+    // Step 4A: Check Multi-City Known Gazetteer Micro-Markets
     const SECTOR_GAZETTEER = [
+      // Indore
       { canonical: 'Rau Circle', keywords: ['rau circle', 'rau'] },
       { canonical: 'Chhoti Gwaltoli', keywords: ['choti', 'gwaltoli', 'chhoti'] },
       { canonical: 'Nanda Nagar', keywords: ['nanda', 'nandanagar'] },
@@ -211,15 +227,37 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       { canonical: 'AB Road', keywords: ['ab road', 'abroad'] },
       { canonical: 'LIG Circle', keywords: ['lig'] },
       { canonical: 'South Tukoganj', keywords: ['tukoganj'] },
-      { canonical: 'Geeta Bhawan', keywords: ['geeta', 'bhawan'] },
-      { canonical: 'Anand Bazar', keywords: ['anand', 'bazar'] },
-      { canonical: 'Khajrana', keywords: ['khajrana'] },
-      { canonical: 'Rajendra Nagar', keywords: ['rajendra'] },
-      { canonical: 'Navlakha', keywords: ['navlakha'] },
-      { canonical: 'Sudama Nagar', keywords: ['sudama'] },
-      { canonical: 'Annapurna', keywords: ['annapurna'] },
-      { canonical: 'Mahalaxmi Nagar', keywords: ['mahalaxmi'] },
-      { canonical: 'Kanadia Road', keywords: ['kanadia'] }
+
+      // Bhopal
+      { canonical: 'MP Nagar', keywords: ['mp nagar', 'mpnagar'] },
+      { canonical: 'Arera Colony', keywords: ['arera colony', 'arera'] },
+      { canonical: 'Kolar Road', keywords: ['kolar road', 'kolar'] },
+      { canonical: 'Hoshangabad Road', keywords: ['hoshangabad'] },
+
+      // Pune
+      { canonical: 'Hinjewadi', keywords: ['hinjewadi', 'hinjawadi'] },
+      { canonical: 'Baner', keywords: ['baner'] },
+      { canonical: 'Wakad', keywords: ['wakad'] },
+      { canonical: 'Kharadi', keywords: ['kharadi'] },
+      { canonical: 'Viman Nagar', keywords: ['viman nagar', 'viman'] },
+
+      // Bangalore
+      { canonical: 'Indiranagar', keywords: ['indiranagar', 'indira nagar'] },
+      { canonical: 'Koramangala', keywords: ['koramangala'] },
+      { canonical: 'HSR Layout', keywords: ['hsr layout', 'hsr'] },
+      { canonical: 'Whitefield', keywords: ['whitefield'] },
+      { canonical: 'Electronic City', keywords: ['electronic city'] },
+
+      // Mumbai
+      { canonical: 'Andheri', keywords: ['andheri'] },
+      { canonical: 'Bandra', keywords: ['bandra'] },
+      { canonical: 'Powai', keywords: ['powai'] },
+      { canonical: 'Thane', keywords: ['thane'] },
+
+      // Delhi / NCR
+      { canonical: 'Gurgaon', keywords: ['gurgaon', 'gurugram'] },
+      { canonical: 'Noida', keywords: ['noida'] },
+      { canonical: 'Dwarka', keywords: ['dwarka'] }
     ];
 
     for (const secObj of SECTOR_GAZETTEER) {
@@ -229,14 +267,15 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       }
     }
 
-    // Step 4B: Dynamic Named Entity Recognition (NER) Heuristic for BRAND NEW / Un-fed Localities!
+    // Step 4B: Dynamic Named Entity Recognition (NER) Heuristic for ANY NEW CITY / LOCALITY!
     if (!sector) {
-      // Look for prepositions: "in <Locality>", "near <Locality>", "at <Locality>"
       let prepMatch = input.match(/\b(?:in|at|near|around|sector)\s+([A-Za-z0-9\s]{2,30}?)(?=\s+(?:with|having|facing|for|rent|per|\d|rs|rupees|\$|$))/i);
       if (prepMatch && prepMatch[1].trim()) {
         const extracted = prepMatch[1].trim();
-        // Capitalize words
-        sector = extracted.replace(/\b\w/g, l => l.toUpperCase());
+        // Ignore extracted city name if matched
+        if (!PAN_INDIA_CITIES.some(c => c.toLowerCase() === extracted.toLowerCase())) {
+          sector = extracted.replace(/\b\w/g, l => l.toUpperCase());
+        }
       }
     }
 
@@ -249,10 +288,10 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     }
 
     if (!sector) {
-      sector = 'Indore Sector';
+      sector = city ? `${city} Central` : 'Indore Region';
     }
 
-    // 4.5. Society / Colony Landmark Detection (e.g. Shiva Vatika, Singapore City, Apollo DB City)
+    // 4.5. Society / Colony Landmark Detection
     let colony = '';
     const KNOWN_COLONIES = [
       { canonical: 'Shiva Vatika', keywords: ['shiva vatika', 'shiva', 'vatika'] },
@@ -298,13 +337,15 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     if (/parking/i.test(input)) amenities.push('Covered Parking');
     if (/gated/i.test(input)) amenities.push('Gated Security');
 
-    const fullLocation = colony ? `${sector} (${colony})` : sector;
-    const title = `${bhk} ${type} in ${colony ? colony + ', ' : ''}${sector} (${vastuFacing})${amenities.length > 0 ? ' with ' + amenities.join(', ') : ''}`;
+    const locationPart = city ? `${sector}, ${city}` : sector;
+    const fullLocation = colony ? `${locationPart} (${colony})` : locationPart;
+    const title = `${bhk} ${type} in ${colony ? colony + ', ' : ''}${locationPart} (${vastuFacing})${amenities.length > 0 ? ' with ' + amenities.join(', ') : ''}`;
     const label = `${bhk} ${type} (${fullLocation})`;
 
     return {
       bhk,
       type,
+      city: city || 'Indore',
       sector,
       colony,
       rentVal,
