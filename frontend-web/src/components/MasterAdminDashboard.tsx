@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  BarChart3, Users, CheckSquare, ShieldCheck, TrendingUp, DollarSign, 
+import {
+  BarChart3, Users, CheckSquare, ShieldCheck, TrendingUp, DollarSign,
   CheckCircle2, XCircle, ArrowUpRight, Award, FileText, Zap, ChevronRight, ChevronLeft,
   SlidersHorizontal, Plus, ToggleLeft, ToggleRight, Settings, UploadCloud, Camera, Video, MapPin, Sparkles, AlertCircle, Menu,
   Database, Copy, Check, Compass, Tag, Layers, Home, Info
@@ -81,7 +81,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   const [plots, setPlots] = useState(mockPlotApprovals);
   const [employees, setEmployees] = useState(mockEmployeeRoster);
   const [leaves, setLeaves] = useState(mockLeaveRequests);
-  
+
   const [bhkConfigs, setBhkConfigs] = useState(() => {
     try {
       const saved = localStorage.getItem('divyavastu_bhk_configs');
@@ -98,7 +98,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
   // Extracted Property Parameters Inspection State
   const [lastExtractedResult, setLastExtractedResult] = useState<any>({
-    rawInput: "Premium 2bhk flat 525 sqft 15000 brokerage 30000 rent 1+1 security deposit owner name Rajesh Agrawal 9826000000 status live in Nanda Nagar Indore facing east fully furnished ready to move",
+    rawInput: "Premium 2bhk flat 525 sqft 15000 brokerage 30000 rent 1+1 security deposit owner name Piyushi Saha 9876543210 status live in Nanda Nagar Indore facing east fully furnished ready to move",
     bhk: "2 BHK",
     type: "FLAT",
     city: "Indore",
@@ -112,8 +112,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     bathrooms: 2,
     areaSqFt: "525 sqft",
     depositVal: "1+1 Security Deposit",
-    ownerName: "Rajesh Agrawal",
-    ownerPhone: "+91 98260 00000",
+    ownerName: "Piyushi Saha",
+    ownerPhone: "9876543210",
     vastuFacing: "East Facing",
     furnishingStatus: "FULLY_FURNISHED",
     possessionDate: "Ready to Move (Immediate)",
@@ -124,7 +124,6 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     amenities: ["Balcony & City View", "Fully Furnished"],
     title: "2 BHK FLAT in Nanda Nagar, Indore (East Facing) with Balcony & City View, Fully Furnished",
     label: "2 BHK FLAT (Nanda Nagar, Indore)",
-    description: "Spacious 2 BHK FLAT available for rent in Nanda Nagar, Indore, Madhya Pradesh (Pincode: 452010, Landmark: Near Main Square). Total area: 525 sqft featuring 3 Bathrooms, East Facing Vastu compliance, and Fully Furnished interiors. Monthly Rent: ₹30,000, Security Deposit: 1+1 Security Deposit, Brokerage Fee: ₹15,000. Possession: Ready to Move (Immediate). Key Amenities: Balcony & City View, Fully Furnished. Contact Owner: Rajesh Agrawal (+91 98260 00000). Listing Status: LIVE.",
     missingFields: [],
     savedToDatabase: true,
     extractedAt: "Just now (PostgreSQL Persisted)"
@@ -134,35 +133,6 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   const [isSavingDb, setIsSavingDb] = useState<boolean>(false);
   const [dbSaveSuccessMsg, setDbSaveSuccessMsg] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<any>(null);
-
-  // Integrated Prompt Media Attachment & Drag-and-Drop State
-  const [attachedFiles, setAttachedFiles] = useState<Array<{ id: string; file: File; roomTag: RoomTag; isVideo: boolean; previewUrl: string }>>([]);
-  const [isDraggingOver, setIsDraggingOver] = useState<boolean>(false);
-  const [mediaValidationErrorMsg, setMediaValidationErrorMsg] = useState<string | null>(null);
-
-  const handleFilesAdded = (files: FileList | File[]) => {
-    const fileArray = Array.from(files);
-    const tags: RoomTag[] = ['LIVING_ROOM', 'BEDROOM', 'KITCHEN', 'BALCONY', 'EXTERIOR', 'AMENITIES', 'FLOOR_PLAN'];
-    const newAttachments = fileArray.map((file, idx) => {
-      const isVid = file.type.startsWith('video/') || file.name.endsWith('.mp4');
-      return {
-        id: Math.random().toString(36).substring(7),
-        file,
-        roomTag: tags[idx % tags.length],
-        isVideo: isVid,
-        previewUrl: URL.createObjectURL(file)
-      };
-    });
-    setAttachedFiles(prev => [...prev, ...newAttachments]);
-  };
-
-  const handleRemoveAttachment = (id: string) => {
-    setAttachedFiles(prev => prev.filter(item => item.id !== id));
-  };
-
-  const handleTagChange = (id: string, newTag: RoomTag) => {
-    setAttachedFiles(prev => prev.map(item => item.id === id ? { ...item, roomTag: newTag } : item));
-  };
 
   const handleOpenInlineEdit = () => {
     setEditForm({ ...lastExtractedResult });
@@ -454,8 +424,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     // 3.5. Multi-City Pan-India Extractor
     let city = '';
     const PAN_INDIA_CITIES = [
-      'Indore', 'Bhopal', 'Pune', 'Bangalore', 'Mumbai', 'Delhi', 
-      'Gurgaon', 'Noida', 'Hyderabad', 'Chennai', 'Kolkata', 
+      'Indore', 'Bhopal', 'Pune', 'Bangalore', 'Mumbai', 'Delhi',
+      'Gurgaon', 'Noida', 'Hyderabad', 'Chennai', 'Kolkata',
       'Ahmedabad', 'Jaipur', 'Surat', 'Lucknow', 'Chandigarh', 'Goa'
     ];
 
@@ -620,23 +590,6 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     const title = `${bhk} ${type} in ${colony ? colony + ', ' : ''}${locationPart}${vastuFacing !== 'Not Specified' ? ' (' + vastuFacing + ')' : ''}${amenities.length > 0 ? ' with ' + amenities.join(', ') : ''}`;
     const label = `${bhk} ${type} (${fullLocation})`;
 
-    const descriptionParts = [
-      `Spacious ${bhk} ${type} available for rent in ${sector}${city ? ', ' + city : ''}${state ? ', ' + state : ''}${pincode ? ' (Pincode: ' + pincode + ')' : ''}.`,
-      colony ? `Located in ${colony}.` : '',
-      landmark ? `Landmark: ${landmark}.` : '',
-      areaSqFt ? `Carpet Area: ${areaSqFt}.` : '',
-      bathrooms ? `Bathrooms: ${bathrooms} Baths.` : '',
-      vastuFacing !== 'Not Specified' ? `Vastu Facing: ${vastuFacing}.` : '',
-      furnishingStatus !== 'UNSPECIFIED' ? `Furnishing: ${furnishingStatus.replace('_', ' ')}.` : '',
-      `Monthly Rent: ${rentVal}.`,
-      depositVal ? `Security Deposit: ${depositVal}.` : '',
-      brokerageVal ? `Brokerage Fee: ${brokerageVal}.` : '',
-      possessionDate ? `Possession: ${possessionDate}.` : '',
-      amenities.length > 0 ? `Key Amenities: ${amenities.join(', ')}.` : '',
-      ownerName !== 'Not Specified' ? `Contact Owner: ${ownerName}${ownerPhone !== 'Not Specified' ? ' (' + ownerPhone + ')' : ''}.` : '',
-      `Listing Status: ${status}.`
-    ].filter(Boolean).join(' ');
-
     return {
       bhk,
       type,
@@ -663,7 +616,6 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       amenities,
       title,
       label,
-      description: descriptionParts,
       missingFields
     };
   };
@@ -671,13 +623,6 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   const handleAddCustomBhk = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBhkLabel.trim()) return;
-
-    // MANDATORY MEDIA VALIDATION (Photos or MP4 Videos required)
-    if (attachedFiles.length === 0) {
-      setMediaValidationErrorMsg("❌ Mandatory Media Upload Required: You must attach at least 1 property photo or video walkthrough (using the '➕ Attach Media' button or by Dragging & Dropping files into the console) before uploading the property!");
-      return;
-    }
-    setMediaValidationErrorMsg(null);
 
     let parsed: any = null;
     try {
@@ -721,16 +666,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         ownerName: parsed.ownerName || 'Not Specified',
         ownerPhone: parsed.ownerPhone || 'Not Specified',
         vastuFacing: parsed.vastuFacing,
-        furnishingStatus: parsed.furnishingStatus || 'UNSPECIFIED',
-        possessionDate: parsed.possessionDate || 'Immediate',
-        state: parsed.state || 'Madhya Pradesh',
-        pincode: parsed.pincode || '452010',
-        landmark: parsed.landmark || 'Near Main Square',
-        status: parsed.status || 'LIVE',
         amenities: parsed.amenities || [],
         title: parsed.title,
         label: parsed.label,
-        description: parsed.description,
         savedToDatabase: parsed.savedToDatabase !== undefined ? parsed.savedToDatabase : true,
         extractedAt: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       };
@@ -740,13 +678,12 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       setMediaVastu(parsed.vastuFacing);
       setMediaCaption(parsed.title);
       const dbStatusMsg = parsed.savedToDatabase ? '\n⚡ Locality & City automatically persisted to PostgreSQL Database!' : '';
-      alert(`🎉 Property Successfully Uploaded with ${attachedFiles.length} Media Attachment(s)!\n\nAdded: '${parsed.label}'\nCity: ${parsed.city || 'Indore'}\nSector/Locality: ${parsed.sector}\nRent: ${parsed.rentVal} / month\nVastu: ${parsed.vastuFacing}\nAmenities: ${parsed.amenities?.join(', ') || 'Standard'}${dbStatusMsg}`);
+      alert(`🎉 AI Backend Property Auto-Parse Successful!\n\nAdded: '${parsed.label}'\nCity: ${parsed.city || 'Indore'}\nSector/Locality: ${parsed.sector}\nRent: ${parsed.rentVal} / month\nVastu: ${parsed.vastuFacing}\nAmenities: ${parsed.amenities?.join(', ') || 'Standard'}${dbStatusMsg}\n\nPre-populated Media CDN upload fields below!`);
     } else {
       alert(`🎉 Property BHK configuration '${newBhkLabel}' enabled on Tenant search decks!`);
     }
 
     setNewBhkLabel('');
-    setAttachedFiles([]);
   };
 
   const handleDisbursePayroll = (id: number) => {
@@ -779,7 +716,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row">
-      
+
       {/* 1. COLLAPSIBLE LEFT SIDEBAR NAVIGATION */}
       <motion.aside
         animate={{ width: isSidebarCollapsed ? 80 : 280 }}
@@ -798,13 +735,13 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         </button>
 
         <div className="p-4 space-y-6 overflow-y-auto no-scrollbar">
-          
+
           {/* SIDEBAR TITLE */}
           <div className="flex items-center gap-3 pb-3 border-b border-slate-100 min-h-[44px]">
             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold border border-emerald-200/80 shrink-0 shadow-xs">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            
+
             {!isSidebarCollapsed && (
               <motion.div
                 initial={{ opacity: 0, x: -6 }}
@@ -830,11 +767,10 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                 <button
                   key={item.id}
                   onClick={() => handleTabSelect(item.id)}
-                  className={`w-full relative px-3.5 py-3 rounded-2xl text-xs font-bold flex items-center justify-between transition-all duration-200 group cursor-pointer ${
-                    isActive
+                  className={`w-full relative px-3.5 py-3 rounded-2xl text-xs font-bold flex items-center justify-between transition-all duration-200 group cursor-pointer ${isActive
                       ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
                       : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
-                  }`}
+                    }`}
                   title={isSidebarCollapsed ? item.label : undefined}
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -852,15 +788,14 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                   </div>
 
                   {!isSidebarCollapsed && (
-                    <motion.span 
+                    <motion.span
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.2 }}
-                      className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold font-mono border shrink-0 ${
-                        isActive 
-                          ? 'bg-emerald-700 text-emerald-100 border-emerald-500/40' 
+                      className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold font-mono border shrink-0 ${isActive
+                          ? 'bg-emerald-700 text-emerald-100 border-emerald-500/40'
                           : 'bg-slate-100 text-slate-600 border-slate-200'
-                      }`}
+                        }`}
                     >
                       {item.badge}
                     </motion.span>
@@ -881,7 +816,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
         {/* SIDEBAR FOOTER CARD */}
         {!isSidebarCollapsed && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
@@ -902,7 +837,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
       {/* 2. MAIN ADMIN CONTENT CONTAINER */}
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 w-full">
-        
+
         {/* EXECUTIVE PORTAL HEADER */}
         <div className="bg-white text-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm relative overflow-hidden">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
@@ -957,7 +892,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
         {/* 3. DYNAMIC TAB VIEW DISPLAY */}
         <AnimatePresence mode="wait">
-          
+
           {/* TAB 1: FUNNEL HUB & GOOGLE VISUAL ANALYTICS GRAPH */}
           {(activeTab === 'funnel' || activeTab === 'overview') && (
             <motion.div
@@ -1010,7 +945,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     </h3>
                   </div>
 
-                  <button 
+                  <button
                     onClick={() => alert("📡 Live GPS Signal Refreshed! Escort coordinates updated across Indore sector geofences.")}
                     className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold rounded-xl transition-all shadow-md shadow-emerald-600/20 flex items-center gap-1.5"
                   >
@@ -1107,9 +1042,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                         </p>
                       </div>
 
-                      <span className={`px-3 py-1 rounded-xl text-xs font-extrabold font-mono border ${
-                        emp.status === 'ONLINE' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-200 text-slate-600 border-slate-300'
-                      }`}>
+                      <span className={`px-3 py-1 rounded-xl text-xs font-extrabold font-mono border ${emp.status === 'ONLINE' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-200 text-slate-600 border-slate-300'
+                        }`}>
                         {emp.status === 'ONLINE' ? '● Online' : '○ On Leave'}
                       </span>
                     </div>
@@ -1205,11 +1139,10 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                           Exact AI Extracted Values
                         </span>
 
-                        <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase font-mono border ${
-                          lastExtractedResult.savedToDatabase 
-                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' 
+                        <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase font-mono border ${lastExtractedResult.savedToDatabase
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                             : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                        }`}>
+                          }`}>
                           {lastExtractedResult.savedToDatabase ? '⚡ PostgreSQL DB Auto-Persisted' : '⚡ Loaded from L1 Cache'}
                         </span>
 
@@ -1333,12 +1266,12 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     </p>
                   </div>
 
-                  {/* 18+ EXTRACTED PARAMETERS COMPLETE GRID */}
+                  {/* 12 EXTRACTED PARAMETERS GRID */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 relative z-10 mb-6">
                     {/* 1. BHK */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">1. BHK Layout</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">BHK Layout</span>
                         <Home className="w-4 h-4 text-emerald-400" />
                       </div>
                       <div className="text-lg font-black text-white font-['Outfit']">{lastExtractedResult.bhk || 'N/A'}</div>
@@ -1348,7 +1281,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     {/* 2. Type */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">2. Property Type</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">Property Type</span>
                         <Layers className="w-4 h-4 text-indigo-400" />
                       </div>
                       <div className="text-lg font-black text-indigo-300 font-['Outfit']">{lastExtractedResult.type || 'Flat'}</div>
@@ -1358,7 +1291,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     {/* 3. City */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">3. Target City</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">Target City</span>
                         <MapPin className="w-4 h-4 text-cyan-400" />
                       </div>
                       <div className="text-lg font-black text-cyan-300 font-['Outfit']">{lastExtractedResult.city || 'Indore'}</div>
@@ -1368,43 +1301,43 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     {/* 4. Locality / Sector */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">4. Locality / Sector</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">Locality / Sector</span>
                         <Compass className="w-4 h-4 text-emerald-400" />
                       </div>
                       <div className="text-base font-extrabold text-emerald-300 font-['Outfit'] truncate" title={lastExtractedResult.sector}>
                         {lastExtractedResult.sector || 'Not Specified'}
                       </div>
                       <span className="text-[10px] text-emerald-400 font-mono font-bold">
-                        {lastExtractedResult.sector !== 'Not Specified' ? '✓ PostgreSQL Locality' : 'Unspecified'}
+                        {lastExtractedResult.sector !== 'Not Specified' ? '✓ Saved to PostgreSQL' : 'Unspecified'}
                       </span>
                     </div>
 
                     {/* 5. Monthly Rent */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-amber-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">5. Monthly Rent</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">Monthly Rent</span>
                         <DollarSign className="w-4 h-4 text-amber-400" />
                       </div>
-                      <div className="text-lg font-black text-amber-300 font-['Outfit']">{lastExtractedResult.rentVal || '₹30,000'}</div>
-                      <span className="text-[10px] text-slate-400 font-mono">Rent Amount</span>
+                      <div className="text-lg font-black text-amber-300 font-['Outfit']">{lastExtractedResult.rentVal || '₹18,000'}</div>
+                      <span className="text-[10px] text-slate-400 font-mono">Extracted Rent Amount</span>
                     </div>
 
                     {/* 6. Brokerage Fee */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-purple-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">6. Brokerage Fee</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">Brokerage Fee</span>
                         <Tag className="w-4 h-4 text-purple-400" />
                       </div>
                       <div className="text-base font-extrabold text-purple-300 font-['Outfit'] truncate">
                         {lastExtractedResult.brokerageVal || 'None / Direct Owner'}
                       </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Broker Commission</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Extracted Brokerage</span>
                     </div>
 
                     {/* 7. Carpet Area (Sq Ft) */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-teal-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">7. Carpet Area</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">Carpet Area</span>
                         <SlidersHorizontal className="w-4 h-4 text-teal-400" />
                       </div>
                       <div className="text-base font-extrabold text-teal-300 font-['Outfit']">
@@ -1416,7 +1349,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     {/* 8. Security Deposit */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-blue-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">8. Security Deposit</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">Security Deposit</span>
                         <ShieldCheck className="w-4 h-4 text-blue-400" />
                       </div>
                       <div className="text-sm font-extrabold text-blue-300 font-['Outfit'] truncate">
@@ -1425,22 +1358,24 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                       <span className="text-[10px] text-slate-400 font-mono">Lease Security Terms</span>
                     </div>
 
-                    {/* 9. Bathrooms Count */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition-all">
+                    {/* 9. Owner Contact Details */}
+                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-pink-500/40 transition-all sm:col-span-2">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">9. Bathrooms</span>
-                        <Info className="w-4 h-4 text-indigo-400" />
+                        <span className="text-[10px] font-mono uppercase font-extrabold">Owner Contact Details</span>
+                        <Users className="w-4 h-4 text-pink-400" />
                       </div>
-                      <div className="text-base font-extrabold text-indigo-300 font-['Outfit']">
-                        {lastExtractedResult.bathrooms ? `${lastExtractedResult.bathrooms} Baths` : '2 Baths'}
+                      <div className="text-sm font-extrabold text-pink-300 font-['Outfit'] truncate">
+                        {lastExtractedResult.ownerName && lastExtractedResult.ownerName !== 'Not Specified'
+                          ? `${lastExtractedResult.ownerName} (${lastExtractedResult.ownerPhone || 'No Phone'})`
+                          : (lastExtractedResult.ownerPhone || 'Not Specified')}
                       </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Washrooms Count</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Owner / Lead Seller Info</span>
                     </div>
 
                     {/* 10. Vastu Facing */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">10. Vastu Facing</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">Vastu Facing</span>
                         <Sparkles className="w-4 h-4 text-cyan-400" />
                       </div>
                       <div className="text-sm font-extrabold text-cyan-300 font-['Outfit']">
@@ -1449,94 +1384,10 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                       <span className="text-[10px] text-slate-400 font-mono">Solar Direction</span>
                     </div>
 
-                    {/* 11. Furnishing Status */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-purple-500/40 transition-all">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">11. Furnishing</span>
-                        <Home className="w-4 h-4 text-purple-400" />
-                      </div>
-                      <div className="text-sm font-extrabold text-purple-300 font-['Outfit']">
-                        {lastExtractedResult.furnishingStatus || 'UNSPECIFIED'}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Interior Furnishing</span>
-                    </div>
-
-                    {/* 12. Possession Readiness */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition-all">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">12. Possession Date</span>
-                        <Zap className="w-4 h-4 text-emerald-400" />
-                      </div>
-                      <div className="text-xs font-extrabold text-emerald-300 font-['Outfit'] truncate">
-                        {lastExtractedResult.possessionDate || 'Immediate'}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Move-In Readiness</span>
-                    </div>
-
-                    {/* 13. State */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-pink-500/40 transition-all">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">13. State</span>
-                        <MapPin className="w-4 h-4 text-pink-400" />
-                      </div>
-                      <div className="text-sm font-extrabold text-pink-300 font-['Outfit'] truncate">
-                        {lastExtractedResult.state || 'Madhya Pradesh'}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Territory State</span>
-                    </div>
-
-                    {/* 14. Pincode */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-amber-500/40 transition-all">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">14. Pincode</span>
-                        <Compass className="w-4 h-4 text-amber-400" />
-                      </div>
-                      <div className="text-base font-extrabold text-amber-300 font-['Outfit']">
-                        {lastExtractedResult.pincode || '452010'}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Postal Code</span>
-                    </div>
-
-                    {/* 15. Landmark */}
+                    {/* 11. Extracted Amenities */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-teal-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">15. Landmark</span>
-                        <FileText className="w-4 h-4 text-teal-400" />
-                      </div>
-                      <div className="text-xs font-extrabold text-teal-300 font-['Outfit'] truncate">
-                        {lastExtractedResult.landmark || 'Near Main Square'}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Nearby Reference</span>
-                    </div>
-
-                    {/* 16. Listing Status */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition-all">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">16. Listing Status</span>
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      </div>
-                      <div className="text-sm font-black text-emerald-300 font-mono">
-                        {lastExtractedResult.status || 'LIVE'}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Portal State</span>
-                    </div>
-
-                    {/* 17. Owner Contact Details */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-pink-500/40 transition-all sm:col-span-2">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">17 & 18. Owner Name & Phone</span>
-                        <Users className="w-4 h-4 text-pink-400" />
-                      </div>
-                      <div className="text-sm font-extrabold text-pink-300 font-['Outfit'] truncate">
-                        {lastExtractedResult.ownerName || 'Rajesh Agrawal'} ({lastExtractedResult.ownerPhone || '+91 98260 00000'})
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Dummy Contact Placeholder</span>
-                    </div>
-
-                    {/* 19. Extracted Amenities */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-teal-500/40 transition-all sm:col-span-2">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">19. Extracted Amenities</span>
+                        <span className="text-[10px] font-mono uppercase font-extrabold">Extracted Amenities</span>
                         <CheckCircle2 className="w-4 h-4 text-teal-400" />
                       </div>
                       <div className="flex flex-wrap gap-1 mt-1">
@@ -1569,18 +1420,6 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                       </p>
                     </div>
                   </div>
-
-                  {/* AUTO-SYNTHESIZED DESCRIPTION DISPLAY */}
-                  {lastExtractedResult.description && (
-                    <div className="mt-3 bg-slate-950 p-4 rounded-2xl border border-slate-800 relative z-10 font-mono text-xs">
-                      <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">
-                        Synthesized Property Description (Built from Prompt):
-                      </span>
-                      <p className="text-slate-200 text-xs font-sans bg-slate-900/80 p-3 rounded-xl border border-slate-800 leading-relaxed italic">
-                        "{lastExtractedResult.description}"
-                      </p>
-                    </div>
-                  )}
                 </motion.div>
               )}
 
@@ -1608,25 +1447,23 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                   {bhkConfigs.map((config: any) => (
                     <div
                       key={config.id}
-                      className={`p-4 rounded-2xl border transition-all ${
-                        config.enabled
+                      className={`p-4 rounded-2xl border transition-all ${config.enabled
                           ? 'bg-slate-900 text-white border-slate-800 shadow-md'
                           : 'bg-slate-100 text-slate-500 border-slate-200'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[10px] font-mono font-bold uppercase text-slate-400">
                           ID: {config.id}
                         </span>
-                        
+
                         <button
                           type="button"
                           onClick={() => handleToggleBhk(config.id)}
-                          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold transition-all ${
-                            config.enabled
+                          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold transition-all ${config.enabled
                               ? 'bg-emerald-500 text-white shadow-sm'
                               : 'bg-slate-300 text-slate-700'
-                          }`}
+                            }`}
                         >
                           {config.enabled ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
                           {config.enabled ? 'Enabled' : 'Disabled'}
@@ -1709,11 +1546,10 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                             key={tag.id}
                             type="button"
                             onClick={() => setSelectedRoomTag(tag.id as RoomTag)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all border ${
-                              selectedRoomTag === tag.id
+                            className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all border ${selectedRoomTag === tag.id
                                 ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-600/30 scale-105'
                                 : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
-                            }`}
+                              }`}
                           >
                             {tag.label}
                           </button>
@@ -1767,348 +1603,6 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                       />
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Photo Uploader Box */}
-                    <div className="bg-slate-50 border-2 border-dashed border-emerald-300 rounded-2xl p-5 text-center space-y-2 hover:bg-emerald-50/50 transition-colors relative">
-                      <Camera className="w-7 h-7 text-emerald-600 mx-auto" />
-                      <p className="text-xs font-extrabold text-slate-900">Upload Property HD Photos (Tagged)</p>
-                      <p className="text-[10px] text-slate-500">Will attach tag: <strong className="text-emerald-700 font-mono">[{selectedRoomTag}]</strong></p>
-                      <label className="inline-block bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2 rounded-xl cursor-pointer shadow-xs transition-transform active:scale-95">
-                        <span>{isUploadingCloudinary ? 'Uploading...' : `Browse Tagged [${selectedRoomTag}] Photos`}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          disabled={isUploadingCloudinary}
-                          onChange={handleCloudinaryPhotoUpload}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
-
-                    {/* Video Uploader Box */}
-                    <div className="bg-slate-50 border-2 border-dashed border-cyan-300 rounded-2xl p-5 text-center space-y-2 hover:bg-cyan-50/50 transition-colors relative">
-                      <Video className="w-7 h-7 text-cyan-600 mx-auto" />
-                      <p className="text-xs font-extrabold text-slate-900">Upload Video Walkthrough (MP4)</p>
-                      <p className="text-[10px] text-slate-500">Will attach tag: <strong className="text-cyan-700 font-mono">[{selectedRoomTag}]</strong></p>
-                      <label className="inline-block bg-cyan-600 hover:bg-cyan-700 text-white font-extrabold text-xs px-4 py-2 rounded-xl cursor-pointer shadow-xs transition-transform active:scale-95">
-                        <span>{isUploadingCloudinary ? 'Uploading...' : `Browse MP4 Video`}</span>
-                        <input
-                          type="file"
-                          accept="video/mp4,video/*"
-                          disabled={isUploadingCloudinary}
-                          onChange={handleCloudinaryVideoUpload}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ADD CUSTOM BHK FORM WITH AI AUTO-PARSER */}
-                <div className="mt-8 pt-6 border-t border-slate-100 space-y-3">
-                  <div>
-                    <h4 className="text-sm font-extrabold text-slate-900 font-['Outfit'] flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-emerald-600 animate-pulse" /> Add Custom Property Layout / BHK Option (AI Auto-Parse Prompt)
-                    </h4>
-                    <p className="text-xs text-slate-500">
-                      Enter natural language prompts like: <em className="text-emerald-700 font-bold font-mono">"Premium 2bhk flat 525 sqft 15000 brokerage 30000 rent 1+1 security deposit owner name Piyushi Saha 9876543210 status live in Nanda Nagar Indore facing east fully furnished ready to move"</em> to automatically extract location, rent, Vastu facing & amenities!
-                    </p>
-                  </div>
-
-                  {/* PRESET 1-CLICK TEST PROMPTS CHIPS BAR WITH DUMMY PLACEHOLDERS */}
-                  <div className="space-y-1.5 max-w-3xl">
-                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">
-                      💡 Preset 1-Click Test Prompts (With Dummy Contacts):
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        {
-                          label: "🌟 Full 18+ Field Prompt (Complete)",
-                          prompt: "Premium 2bhk flat 525 sqft 15000 brokerage 30000 rent 1+1 security deposit owner name Rajesh Agrawal 9826000000 status live in Nanda Nagar Indore facing east fully furnished ready to move near Main Square 452010 3 bathrooms"
-                        },
-                        {
-                          label: "🏢 Luxury 3BHK Penthouse",
-                          prompt: "Luxury 3BHK Penthouse 1800 sqft 45000 rent Vijay Nagar Indore 3 bathrooms 15 days brokerage 2+1 deposit north-east facing gated security covered parking owner Sunil Jain 9826012345 status live"
-                        },
-                        {
-                          label: "🏡 Independent Villa",
-                          prompt: "Independent 4BHK Villa 2500 sqft 60000 rent Rau Circle Indore south facing 4 bathrooms private garden covered parking 01-10-2026 possession owner Vikram Singh 9893011223"
-                        },
-                        {
-                          label: "⚡ Short Prompt (Triggers Missing Fields Deck)",
-                          prompt: "2bhk flat in Nanda Nagar"
-                        }
-                      ].map((preset, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => setNewBhkLabel(preset.prompt)}
-                          className="px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 border border-slate-200 hover:border-emerald-300 rounded-xl text-xs font-bold transition-all cursor-pointer text-left shadow-xs"
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* UNIFIED DRAG & DROP AI PROMPT & MEDIA ATTACHMENT CONSOLE */}
-                  <form onSubmit={handleAddCustomBhk} className="space-y-3 max-w-3xl">
-                    
-                    {/* MANDATORY MEDIA VALIDATION ERROR ALERT BANNER */}
-                    {mediaValidationErrorMsg && (
-                      <div className="p-4 bg-red-950/90 border-2 border-red-500 rounded-2xl text-red-200 text-xs font-mono font-bold shadow-xl flex items-center justify-between animate-pulse">
-                        <span className="flex items-center gap-2">
-                          <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-                          {mediaValidationErrorMsg}
-                        </span>
-                        <button type="button" onClick={() => setMediaValidationErrorMsg(null)} className="text-red-400 hover:text-white font-black text-sm">✕</button>
-                      </div>
-                    )}
-
-                    <div
-                      onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }}
-                      onDragLeave={() => setIsDraggingOver(false)}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        setIsDraggingOver(false);
-                        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                          handleFilesAdded(e.dataTransfer.files);
-                          setMediaValidationErrorMsg(null);
-                        }
-                      }}
-                      className={`p-4.5 rounded-3xl border-2 transition-all space-y-3 ${
-                        mediaValidationErrorMsg
-                          ? 'bg-red-950/30 border-red-500 shadow-2xl animate-shake'
-                          : isDraggingOver
-                          ? 'bg-emerald-950/90 border-emerald-400 shadow-2xl scale-[1.01]'
-                          : 'bg-slate-900 border-slate-800 text-white shadow-xl'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" />
-                          AI Property Prompt & Drag-and-Drop Media Console
-                        </span>
-                        <span className="text-[10px] font-mono text-slate-400 bg-slate-950 px-2.5 py-1 rounded-full border border-slate-800">
-                          💡 Drag & Drop Photos or Video MP4 Here
-                        </span>
-                      </div>
-
-                      <textarea
-                        rows={3}
-                        value={newBhkLabel}
-                        onChange={(e) => setNewBhkLabel(e.target.value)}
-                        placeholder='Paste raw WhatsApp property prompt here... e.g. "Premium 2bhk flat 525 sqft 15000 brokerage 30000 rent 1+1 security deposit owner name Rajesh Agrawal 9826000000 status live in Nanda Nagar Indore facing east fully furnished ready to move near Main Square 452010 3 bathrooms"'
-                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-xs font-bold text-slate-100 focus:outline-none focus:border-emerald-500 font-mono shadow-inner"
-                      />
-
-                      {/* ATTACHED MEDIA PREVIEW CHIPS ROW */}
-                      {attachedFiles.length > 0 && (
-                        <div className="p-3.5 bg-slate-950 rounded-2xl border border-emerald-500/40 space-y-2">
-                          <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase block">
-                            📎 Attached Media ({attachedFiles.length} File(s) Ready to Upload):
-                          </span>
-                          <div className="flex flex-wrap gap-2">
-                            {attachedFiles.map((item) => (
-                              <div key={item.id} className="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
-                                <span className="text-xs">{item.isVideo ? '🎥' : '📷'}</span>
-                                <span className="font-mono text-[11px] text-slate-200 max-w-[130px] truncate">{item.file.name}</span>
-                                <select
-                                  value={item.roomTag}
-                                  onChange={(e) => handleTagChange(item.id, e.target.value as RoomTag)}
-                                  className="bg-slate-950 text-emerald-400 text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-slate-800 focus:outline-none"
-                                >
-                                  <option value="LIVING_ROOM">🛋️ Living Room</option>
-                                  <option value="BEDROOM">🛏️ Bedroom</option>
-                                  <option value="KITCHEN">🍳 Kitchen</option>
-                                  <option value="BALCONY">🌳 Balcony View</option>
-                                  <option value="EXTERIOR">🏢 Exterior</option>
-                                  <option value="AMENITIES">🏊 Amenities</option>
-                                  <option value="FLOOR_PLAN">📐 Floor Plan</option>
-                                </select>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveAttachment(item.id)}
-                                  className="text-red-400 hover:text-red-300 font-bold ml-1 text-xs"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* ACTION BUTTONS ROW */}
-                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-                        <label className={`font-extrabold text-xs px-4 py-2.5 rounded-xl border cursor-pointer transition-all flex items-center gap-1.5 shadow-xs ${
-                          attachedFiles.length === 0 
-                            ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/50 animate-bounce'
-                            : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700'
-                        }`}>
-                          <Plus className="w-4 h-4 text-emerald-400" />
-                          <span>➕ Attach Media / Upload Photos / Video {attachedFiles.length === 0 ? '(Required)' : ''}</span>
-                          <input
-                            type="file"
-                            accept="image/*,video/mp4,video/*"
-                            multiple
-                            onChange={(e) => {
-                              if (e.target.files) {
-                                handleFilesAdded(e.target.files);
-                                setMediaValidationErrorMsg(null);
-                              }
-                            }}
-                            className="hidden"
-                          />
-                        </label>
-
-                        <button
-                          type="submit"
-                          className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs px-7 py-3 rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all uppercase tracking-wider"
-                        >
-                          <Sparkles className="w-4 h-4" />
-                          <span>🚀 Upload Property</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* LIVE AI AUTO-PARSE EXTRACTION CHIP PREVIEW CARD (SHOWS ALL EXTRACTED FIELDS) */}
-                    {newBhkLabel.trim() && (() => {
-                      const liveParsed = parseNaturalLanguageProperty(newBhkLabel);
-                      if (!liveParsed) return null;
-                      return (
-                        <motion.div
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="p-5 bg-slate-950 text-white rounded-3xl border border-slate-800 space-y-3.5 max-w-3xl shadow-2xl font-mono text-xs relative overflow-hidden"
-                        >
-                          <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
-                            <div>
-                              <span className="text-emerald-400 font-bold font-['Outfit'] text-sm flex items-center gap-1.5">
-                                <Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" />
-                                AI Prompt Auto-Extraction Live Preview (Showing All Extracted Fields)
-                              </span>
-                              <p className="text-[10px] text-slate-400 font-sans mt-0.5">
-                                Real-time dynamic parsing preview of prompt input text.
-                              </p>
-                            </div>
-                            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full font-bold border border-emerald-500/40">
-                              ⚡ Parsed Live
-                            </span>
-                          </div>
-
-                          {/* 20+ EXTRACTED PARAMETERS FULL GRID CARDS */}
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">1. BHK Layout</span>
-                              <strong className="text-white font-['Outfit'] text-xs">{liveParsed.bhk}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">2. Property Type</span>
-                              <strong className="text-indigo-300 font-['Outfit'] text-xs">{liveParsed.type}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">3. Target City</span>
-                              <strong className="text-cyan-300 font-['Outfit'] text-xs">{liveParsed.city || 'Indore'}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">4. Locality / Sector</span>
-                              <strong className="text-emerald-300 font-['Outfit'] text-xs truncate block" title={liveParsed.sector}>{liveParsed.sector}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">5. Society / Colony</span>
-                              <strong className="text-purple-300 font-['Outfit'] text-xs truncate block">{liveParsed.colony || 'Unspecified'}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">6. Monthly Rent</span>
-                              <strong className="text-amber-300 font-['Outfit'] text-xs">{liveParsed.rentVal}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">7. Brokerage Fee</span>
-                              <strong className="text-purple-300 font-['Outfit'] text-xs truncate block">{liveParsed.brokerageVal}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">8. Carpet Area</span>
-                              <strong className="text-teal-300 font-['Outfit'] text-xs block">{liveParsed.areaSqFt || 'Not Specified'}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">9. Security Deposit</span>
-                              <strong className="text-blue-300 font-['Outfit'] text-xs truncate block">{liveParsed.depositVal || 'Not Specified'}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">10. Bathrooms</span>
-                              <strong className="text-indigo-300 font-['Outfit'] text-xs block">{liveParsed.bathrooms ? `${liveParsed.bathrooms} Baths` : '2 Baths'}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">11. Vastu Facing</span>
-                              <strong className="text-cyan-300 font-['Outfit'] text-xs block">{liveParsed.vastuFacing}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">12. Furnishing</span>
-                              <strong className="text-purple-300 font-['Outfit'] text-xs block">{liveParsed.furnishingStatus || 'UNSPECIFIED'}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">13. Possession</span>
-                              <strong className="text-emerald-300 font-['Outfit'] text-xs truncate block">{liveParsed.possessionDate || 'Immediate'}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">14. State</span>
-                              <strong className="text-pink-300 font-['Outfit'] text-xs truncate block">{liveParsed.state || 'Madhya Pradesh'}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">15. Pincode</span>
-                              <strong className="text-amber-300 font-['Outfit'] text-xs block">{liveParsed.pincode || '452010'}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">16. Landmark</span>
-                              <strong className="text-teal-300 font-['Outfit'] text-xs truncate block">{liveParsed.landmark || 'Near Main Square'}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">17. Listing Status</span>
-                              <strong className="text-emerald-300 font-mono text-xs block">{liveParsed.status || 'LIVE'}</strong>
-                            </div>
-                            <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 sm:col-span-3">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold">18 & 19. Owner Name & Phone</span>
-                              <strong className="text-pink-300 font-['Outfit'] text-xs truncate block">{liveParsed.ownerName || 'Rajesh Agrawal'} ({liveParsed.ownerPhone || '+91 98260 00000'})</strong>
-                            </div>
-                          </div>
-
-                          {/* AMENITIES */}
-                          {liveParsed.amenities && liveParsed.amenities.length > 0 && (
-                            <div className="pt-2 border-t border-slate-800/80">
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold mb-1">20. Extracted Amenities:</span>
-                              <div className="flex flex-wrap gap-1">
-                                {liveParsed.amenities.map((am: string, idx: number) => (
-                                  <span key={idx} className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded font-bold">
-                                    ✓ {am}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* AUTO-GENERATED TITLE & SYNTHESIZED DESCRIPTION */}
-                          <div className="pt-2 border-t border-slate-800/80 space-y-2">
-                            <div>
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold mb-0.5">Auto-Generated Title:</span>
-                              <p className="text-emerald-300 font-bold font-['Outfit'] text-xs">
-                                {liveParsed.title}
-                              </p>
-                            </div>
-
-                            <div>
-                              <span className="text-slate-400 block uppercase text-[9px] font-extrabold mb-0.5">Synthesized Property Description (Built from Prompt):</span>
-                              <p className="text-slate-200 text-[11px] font-sans bg-slate-900 p-2.5 rounded-xl border border-slate-800 leading-relaxed italic">
-                                "{liveParsed.description}"
-                              </p>
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })()}
-                  </form>
                 </div>
               </motion.div>
             </motion.div>
@@ -2127,7 +1621,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                   </h3>
                   <p className="text-xs text-slate-400">Modify extracted property fields directly before persisting to PostgreSQL</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsInlineEditOpen(false)}
                   className="text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800 font-bold"
                 >
@@ -2139,9 +1633,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <div>
                     <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Listing Title:</label>
-                    <input 
-                      type="text" 
-                      value={editForm.title || ''} 
+                    <input
+                      type="text"
+                      value={editForm.title || ''}
                       onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
                     />
@@ -2149,8 +1643,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                   <div>
                     <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Property Type:</label>
-                    <select 
-                      value={editForm.type || 'FLAT'} 
+                    <select
+                      value={editForm.type || 'FLAT'}
                       onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
                     >
@@ -2165,9 +1659,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                   <div>
                     <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">BHK Configuration:</label>
-                    <input 
-                      type="text" 
-                      value={editForm.bhk || ''} 
+                    <input
+                      type="text"
+                      value={editForm.bhk || ''}
                       onChange={(e) => setEditForm({ ...editForm, bhk: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
                     />
@@ -2175,9 +1669,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                   <div>
                     <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Bathrooms Count:</label>
-                    <input 
-                      type="number" 
-                      value={editForm.bathrooms || 2} 
+                    <input
+                      type="number"
+                      value={editForm.bathrooms || 2}
                       onChange={(e) => setEditForm({ ...editForm, bathrooms: Number(e.target.value) })}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
                     />
@@ -2185,9 +1679,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                   <div>
                     <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Monthly Rent Amount (₹):</label>
-                    <input 
-                      type="number" 
-                      value={editForm.rentAmount || 18000} 
+                    <input
+                      type="number"
+                      value={editForm.rentAmount || 18000}
                       onChange={(e) => setEditForm({ ...editForm, rentAmount: Number(e.target.value), rentVal: `₹${Number(e.target.value).toLocaleString('en-IN')}` })}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-amber-400 font-bold focus:outline-none focus:border-emerald-500"
                     />
@@ -2195,9 +1689,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                   <div>
                     <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Brokerage Fee / Terms:</label>
-                    <input 
-                      type="text" 
-                      value={editForm.brokerageVal || ''} 
+                    <input
+                      type="text"
+                      value={editForm.brokerageVal || ''}
                       onChange={(e) => setEditForm({ ...editForm, brokerageVal: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-purple-300 font-bold focus:outline-none focus:border-emerald-500"
                     />
@@ -2205,9 +1699,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                   <div>
                     <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Security Deposit Terms:</label>
-                    <input 
-                      type="text" 
-                      value={editForm.depositVal || ''} 
+                    <input
+                      type="text"
+                      value={editForm.depositVal || ''}
                       onChange={(e) => setEditForm({ ...editForm, depositVal: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-blue-300 font-bold focus:outline-none focus:border-emerald-500"
                     />
@@ -2215,9 +1709,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                   <div>
                     <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Carpet Area (SqFt):</label>
-                    <input 
-                      type="text" 
-                      value={editForm.areaSqFt || ''} 
+                    <input
+                      type="text"
+                      value={editForm.areaSqFt || ''}
                       onChange={(e) => setEditForm({ ...editForm, areaSqFt: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-teal-300 font-bold focus:outline-none focus:border-emerald-500"
                     />
@@ -2225,8 +1719,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                   <div>
                     <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Vastu Facing Direction:</label>
-                    <select 
-                      value={editForm.vastuFacing || 'Not Specified'} 
+                    <select
+                      value={editForm.vastuFacing || 'Not Specified'}
                       onChange={(e) => setEditForm({ ...editForm, vastuFacing: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-cyan-300 font-bold focus:outline-none focus:border-emerald-500"
                     >
@@ -2241,8 +1735,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                   <div>
                     <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Furnishing Status:</label>
-                    <select 
-                      value={editForm.furnishingStatus || 'UNSPECIFIED'} 
+                    <select
+                      value={editForm.furnishingStatus || 'UNSPECIFIED'}
                       onChange={(e) => setEditForm({ ...editForm, furnishingStatus: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-indigo-300 font-bold focus:outline-none focus:border-emerald-500"
                     >
@@ -2255,9 +1749,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                   <div>
                     <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Locality / Sector:</label>
-                    <input 
-                      type="text" 
-                      value={editForm.sector || ''} 
+                    <input
+                      type="text"
+                      value={editForm.sector || ''}
                       onChange={(e) => setEditForm({ ...editForm, sector: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-emerald-300 font-bold focus:outline-none focus:border-emerald-500"
                     />
@@ -2265,9 +1759,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                   <div>
                     <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Target City:</label>
-                    <input 
-                      type="text" 
-                      value={editForm.city || ''} 
+                    <input
+                      type="text"
+                      value={editForm.city || ''}
                       onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
                     />
@@ -2275,9 +1769,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                   <div>
                     <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Owner Name:</label>
-                    <input 
-                      type="text" 
-                      value={editForm.ownerName || ''} 
+                    <input
+                      type="text"
+                      value={editForm.ownerName || ''}
                       onChange={(e) => setEditForm({ ...editForm, ownerName: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-pink-300 font-bold focus:outline-none focus:border-emerald-500"
                     />
@@ -2285,9 +1779,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                   <div>
                     <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Owner Phone Number:</label>
-                    <input 
-                      type="text" 
-                      value={editForm.ownerPhone || ''} 
+                    <input
+                      type="text"
+                      value={editForm.ownerPhone || ''}
                       onChange={(e) => setEditForm({ ...editForm, ownerPhone: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-pink-300 font-bold focus:outline-none focus:border-emerald-500"
                     />
@@ -2295,15 +1789,15 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                 </div>
 
                 <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setIsInlineEditOpen(false)}
                     className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold text-xs"
                   >
                     Cancel
                   </button>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs shadow-md shadow-emerald-600/30 flex items-center gap-1.5 cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4" />
