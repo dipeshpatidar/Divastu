@@ -693,12 +693,12 @@ export const Home: React.FC = () => {
   const [filterSector, setFilterSector] = useState<string>('');
   const [guestModalConfig, setGuestModalConfig] = useState<{ property: Property; initialMode?: 'VIDEO' | 'PHOTOS' } | null>(null);
 
-  // Fetch live properties from PostgreSQL backend DB on mount & realtime publish events
+  // Fetch live properties strictly from PostgreSQL backend DB on mount & realtime publish events
   const loadLiveProperties = async () => {
     try {
       const liveData = await propertyService.fetchProperties();
       if (liveData && liveData.length > 0) {
-        setProperties([...liveData, ...mockPropertyList]);
+        setProperties(liveData);
       } else {
         setProperties(mockPropertyList);
       }
