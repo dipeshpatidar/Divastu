@@ -43,6 +43,33 @@ const initialBhkConfigs = [
   { id: '4BHK', label: '4 BHK+ Luxury Villa', enabled: true, demandScore: '85%', avgRent: '₹40,000' }
 ];
 
+const PRESET_PROMPTS = [
+  {
+    id: 'complete-18',
+    label: '🌟 Complete 18+ Field Example',
+    badge: 'Recommended',
+    text: 'Premium 2bhk flat 525 sqft 15000 rent brokerage 30000 1+1 security deposit owner name Rajesh Agrawal 9826000000 status live in Nanda Nagar Indore facing east fully furnished ready to move'
+  },
+  {
+    id: 'penthouse',
+    label: '🏢 3 BHK Penthouse',
+    badge: 'Luxury',
+    text: 'Luxury 3 BHK Penthouse 1800 sqft in Vijay Nagar Indore rent 45000 brokerage 22500 security deposit 90000 owner name Rajesh Agrawal 9826000000 north east facing terrace balcony pool fully furnished ready to move status live'
+  },
+  {
+    id: 'villa',
+    label: '🏡 4 BHK Villa',
+    badge: 'Premium',
+    text: 'Spacious 4 BHK Independent Villa 2500 sqft in Nipania Indore rent 60000 brokerage 30000 security deposit 120000 owner name Rajesh Agrawal 9826000000 east facing private garden gym semi furnished ready to move status live'
+  },
+  {
+    id: 'quick',
+    label: '⚡ Quick 2 BHK',
+    badge: 'Fast',
+    text: '2bhk flat in Saket Nagar 22000 rent owner Rajesh Agrawal 9826000000 east facing semi furnished status live'
+  }
+];
+
 const containerVariants = {
   hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0, transition: { staggerChildren: 0.08, duration: 0.35, ease: [0.16, 1, 0.3, 1] as const } }
@@ -92,6 +119,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     return initialBhkConfigs;
   });
   const [newBhkLabel, setNewBhkLabel] = useState('');
+  const [attachedMediaFiles, setAttachedMediaFiles] = useState<File[]>([]);
+  const [isDragOverMedia, setIsDragOverMedia] = useState<boolean>(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<number>(1);
   const [isUploadingCloudinary, setIsUploadingCloudinary] = useState<boolean>(false);
   const [uploadStatusMsg, setUploadStatusMsg] = useState<string | null>(null);
@@ -622,7 +651,10 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
   const handleAddCustomBhk = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newBhkLabel.trim()) return;
+    if (!newBhkLabel.trim()) {
+      alert("⚠️ Please enter or click an example prompt before uploading!");
+      return;
+    }
 
     let parsed: any = null;
     try {
@@ -639,7 +671,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     const displayLabel = parsed ? parsed.label : newBhkLabel;
     const avgRent = parsed ? parsed.rentVal : '₹18,000';
 
-    setBhkConfigs([...bhkConfigs, {
+    setBhkConfigs((prev: any[]) => [...prev, {
       id: cleanId,
       label: displayLabel,
       enabled: true,
@@ -678,12 +710,39 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       setMediaVastu(parsed.vastuFacing);
       setMediaCaption(parsed.title);
       const dbStatusMsg = parsed.savedToDatabase ? '\n⚡ Locality & City automatically persisted to PostgreSQL Database!' : '';
-      alert(`🎉 AI Backend Property Auto-Parse Successful!\n\nAdded: '${parsed.label}'\nCity: ${parsed.city || 'Indore'}\nSector/Locality: ${parsed.sector}\nRent: ${parsed.rentVal} / month\nVastu: ${parsed.vastuFacing}\nAmenities: ${parsed.amenities?.join(', ') || 'Standard'}${dbStatusMsg}\n\nPre-populated Media CDN upload fields below!`);
+      const mediaMsg = attachedMediaFiles.length > 0 ? `\n📸 ${attachedMediaFiles.length} Media asset(s) attached for Cloudinary upload!` : '';
+
+      alert(`🎉 AI Backend Property Auto-Parse Successful!\n\nAdded: '${parsed.label}'\nCity: ${parsed.city || 'Indore'}\nSector/Locality: ${parsed.sector}\nRent: ${parsed.rentVal} / month\nVastu: ${parsed.vastuFacing}\nAmenities: ${parsed.amenities?.join(', ') || 'Standard'}${dbStatusMsg}${mediaMsg}\n\nPre-populated Media CDN upload fields below!`);
     } else {
       alert(`🎉 Property BHK configuration '${newBhkLabel}' enabled on Tenant search decks!`);
     }
 
     setNewBhkLabel('');
+    setAttachedMediaFiles([]);
+  };
+
+  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files).filter(
+        f => f.type.startsWith('image/') || f.type.startsWith('video/')
+      );
+      setAttachedMediaFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const handleMediaDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOverMedia(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const newFiles = Array.from(e.dataTransfer.files).filter(
+        f => f.type.startsWith('image/') || f.type.startsWith('video/')
+      );
+      setAttachedMediaFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const handleRemoveAttachedMedia = (index: number) => {
+    setAttachedMediaFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleDisbursePayroll = (id: number) => {
@@ -1117,6 +1176,197 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
               exit="hidden"
               className="space-y-6"
             >
+              {/* PRIMARY AI PROPERTY UPLOAD & PROMPT MEDIA CONSOLE */}
+              <motion.div variants={cardVariants} className="bg-slate-900 text-white rounded-3xl p-6 sm:p-7 border border-slate-800 shadow-2xl relative overflow-hidden">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 mb-5 border-b border-slate-800">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-emerald-400 bg-emerald-950 px-3 py-1 rounded-full border border-emerald-800 uppercase font-mono tracking-wider flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Divyavastu AI Property Engine v2.0
+                      </span>
+                      <span className="text-[10px] font-black text-cyan-400 bg-cyan-950 px-3 py-1 rounded-full border border-cyan-800 uppercase font-mono tracking-wider">
+                        PostgreSQL Live Gazetteer
+                      </span>
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-black text-white font-['Outfit'] flex items-center gap-2">
+                      <UploadCloud className="w-6 h-6 text-emerald-400" /> AI Property Upload & Prompt Media Console
+                    </h2>
+                    <p className="text-xs text-slate-400">
+                      Type or paste natural language property prompt & attach property photos/videos. AI auto-parses 18+ fields, generates title/description, and persists to PostgreSQL.
+                    </p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleAddCustomBhk} className="space-y-5">
+                  {/* 1-CLICK PRESET EXAMPLE PROMPT BUTTONS */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-extrabold text-slate-300 flex items-center gap-1.5 uppercase font-mono tracking-wide">
+                        <Zap className="w-3.5 h-3.5 text-amber-400 fill-current" />
+                        Click to Load Example Prompt (1-Click Presets):
+                      </label>
+                      {newBhkLabel && (
+                        <button
+                          type="button"
+                          onClick={() => setNewBhkLabel('')}
+                          className="text-[11px] text-rose-400 hover:text-rose-300 font-bold font-mono transition-colors cursor-pointer"
+                        >
+                          ✕ Clear Prompt
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                      {PRESET_PROMPTS.map((preset) => (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => setNewBhkLabel(preset.text)}
+                          className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${
+                            newBhkLabel === preset.text
+                              ? 'bg-emerald-950/90 border-emerald-400 text-emerald-200 shadow-md shadow-emerald-950/50'
+                              : 'bg-slate-950/80 hover:bg-slate-800/80 border-slate-800 text-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-xs font-bold font-['Outfit'] truncate">{preset.label}</span>
+                            <span className="text-[9px] font-mono font-black text-amber-400 bg-amber-950/80 border border-amber-500/30 px-1.5 py-0.5 rounded">
+                              {preset.badge}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-slate-400 line-clamp-2 font-mono italic">
+                            "{preset.text}"
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* EDITABLE PROMPT TEXTAREA INPUT BOX */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-extrabold text-slate-300 flex items-center gap-1.5 font-mono uppercase tracking-wide">
+                        <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                        Editable Property Prompt / Description Input Box:
+                      </label>
+                      <span className="text-[10px] font-mono font-bold text-slate-400">
+                        {newBhkLabel.length} characters typed
+                      </span>
+                    </div>
+
+                    <div className="relative">
+                      <textarea
+                        rows={4}
+                        value={newBhkLabel}
+                        onChange={(e) => setNewBhkLabel(e.target.value)}
+                        placeholder="Type or edit your property prompt here... (e.g. Premium 2bhk flat 525 sqft 15000 rent brokerage 30000 1+1 security deposit owner name Rajesh Agrawal 9826000000 status live in Nanda Nagar Indore facing east fully furnished ready to move)..."
+                        className="w-full bg-slate-950 text-emerald-300 placeholder-slate-500 text-xs font-mono p-4 rounded-2xl border-2 border-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none leading-relaxed shadow-inner"
+                      />
+                    </div>
+                  </div>
+
+                  {/* PHOTOS AND VIDEOS UPLOAD SECTION (DRAG & DROP + ATTACH MEDIA BUTTON) */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-extrabold text-slate-300 flex items-center justify-between font-mono uppercase tracking-wide">
+                      <span className="flex items-center gap-1.5">
+                        <Camera className="w-3.5 h-3.5 text-cyan-400" />
+                        Property Photos & Walkthrough Video Attachments:
+                      </span>
+                      <span className="text-[10px] font-bold text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800">
+                        Cloudinary CDN Ready
+                      </span>
+                    </label>
+
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); setIsDragOverMedia(true); }}
+                      onDragLeave={() => setIsDragOverMedia(false)}
+                      onDrop={handleMediaDrop}
+                      className={`p-5 rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center text-center gap-3 ${
+                        isDragOverMedia
+                          ? 'bg-cyan-950/70 border-cyan-400 text-cyan-200 scale-[1.01]'
+                          : 'bg-slate-950/70 border-slate-800 hover:border-slate-700 text-slate-400'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-cyan-400 shadow-sm">
+                          <Camera className="w-5 h-5" />
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-indigo-400 shadow-sm">
+                          <Video className="w-5 h-5" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-bold text-slate-200">
+                          Drag & drop property photos or walkthrough videos here
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          Supports JPG, PNG, WEBP images & MP4 property walkthrough videos
+                        </p>
+                      </div>
+
+                      <label className="cursor-pointer px-4 py-2 bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-extrabold rounded-xl border border-cyan-500/30 transition-all shadow-md flex items-center gap-2">
+                        <Plus className="w-4 h-4 text-cyan-400" />
+                        <span>➕ Select / Upload Photos & Videos</span>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*,video/*"
+                          onChange={handleMediaSelect}
+                          className="hidden"
+                        />
+                      </label>
+
+                      {/* ATTACHED FILE PREVIEW CHIPS */}
+                      {attachedMediaFiles.length > 0 && (
+                        <div className="w-full pt-3 border-t border-slate-800/80 flex flex-wrap gap-2 justify-center">
+                          {attachedMediaFiles.map((file, idx) => (
+                            <div
+                              key={idx}
+                              className="bg-slate-900 text-slate-200 text-[11px] font-mono font-bold px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-2 shadow-xs"
+                            >
+                              {file.type.startsWith('video/') ? (
+                                <Video className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                              ) : (
+                                <Camera className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                              )}
+                              <span className="max-w-[150px] truncate">{file.name}</span>
+                              <span className="text-[9px] text-slate-400">
+                                ({(file.size / 1024 / 1024).toFixed(1)} MB)
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveAttachedMedia(idx)}
+                                className="text-rose-400 hover:text-rose-300 ml-1 font-black cursor-pointer"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* SUBMIT BUTTON */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                    <div className="text-xs text-slate-400 flex items-center gap-1.5 font-mono">
+                      <Info className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Submitting will parse prompt parameters, generate description & save to DB</span>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs sm:text-sm rounded-2xl transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+                      <span>🚀 Upload Property & Save to PostgreSQL DB</span>
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+
               {/* BHK DEMAND VISUAL SCORE GAUGES */}
               <motion.div variants={cardVariants}>
                 <BhkDemandGaugeGrid />
