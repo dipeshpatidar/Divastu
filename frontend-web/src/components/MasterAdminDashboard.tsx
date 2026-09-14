@@ -2297,60 +2297,6 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                 </form>
               </motion.div>
 
-              {/* PUBLISHED PROPERTY LISTINGS SESSION HISTORY AUDIT LOG */}
-              {publishedHistory.length > 0 && (
-                <motion.div variants={cardVariants} className="bg-slate-900 text-white rounded-3xl p-6 border border-slate-800 shadow-2xl relative overflow-hidden">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-800">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black text-emerald-400 bg-emerald-950 px-2.5 py-1 rounded-full border border-emerald-800 uppercase font-mono">
-                          Session Audit Log
-                        </span>
-                        <span className="text-xs text-slate-400 font-mono">Live PostgreSQL Records</span>
-                      </div>
-                      <h3 className="text-lg font-black text-white font-['Outfit'] mt-1 flex items-center gap-2">
-                        <Database className="w-5 h-5 text-emerald-400" /> Published Property Listings ({publishedHistory.length})
-                      </h3>
-                    </div>
-
-                    <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-950 px-3 py-1 rounded-full border border-emerald-800">
-                      ● Active & Live on Platform
-                    </span>
-                  </div>
-
-                  <div className="space-y-3">
-                    {publishedHistory.map((item, idx) => (
-                      <div key={idx} className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-emerald-500/40 transition-colors">
-                        <div className="space-y-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs font-black font-['Outfit'] text-emerald-300 truncate">{item.title}</span>
-                            <span className="text-[9px] font-mono font-bold text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                              Published at {item.timestamp}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-400 font-mono">
-                            Sector: <span className="text-white font-bold">{item.sector}</span> • Rent: <span className="text-amber-400 font-bold">{item.rentVal}</span>
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          {item.savedToDatabase && (
-                            <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950 px-2.5 py-1 rounded-xl border border-emerald-800/80 flex items-center gap-1">
-                              <CheckCircle2 className="w-3 h-3" /> PostgreSQL Saved
-                            </span>
-                          )}
-                          {item.mediaCount > 0 && (
-                            <span className="text-[10px] font-mono font-bold text-purple-300 bg-purple-950 px-2.5 py-1 rounded-xl border border-purple-800/80 flex items-center gap-1">
-                              <Camera className="w-3 h-3" /> {item.mediaCount} Media File(s)
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
               {/* BHK DEMAND VISUAL SCORE GAUGES */}
               <motion.div variants={cardVariants}>
                 <BhkDemandGaugeGrid />
