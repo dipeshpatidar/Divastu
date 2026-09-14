@@ -142,7 +142,8 @@ public class PropertyParserService {
         String cleanLower = input.toLowerCase();
 
         // 1. Universal BHK Extractor (Studio/RK checked prior to generic numeric)
-        String bhk = "2 BHK";
+        // 1. Universal BHK Extractor (Studio/RK checked prior to generic numeric)
+        String bhk = "Unspecified";
         if (cleanLower.contains("studio") || cleanLower.contains("1rk") || cleanLower.contains(" rk ")
                 || cleanLower.endsWith(" rk")) {
             bhk = "1 RK Studio";
@@ -211,7 +212,7 @@ public class PropertyParserService {
         }
 
         // 3A. Explicit Brokerage & Brokerage Days Extractor
-        String brokerageVal = null;
+        String brokerageVal = "Unmentioned";
         Matcher brokerageMatcher = BROKERAGE_PATTERN.matcher(input);
         if (brokerageMatcher.find()) {
             String rawVal = brokerageMatcher.group(1) != null ? brokerageMatcher.group(1) : brokerageMatcher.group(2);
@@ -227,7 +228,7 @@ public class PropertyParserService {
         Matcher daysMatcher = BROKERAGE_DAYS_PATTERN.matcher(input);
         if (daysMatcher.find()) {
             brokerageDays = daysMatcher.group(1) + " Days";
-        } else if (brokerageVal != null) {
+        } else if (!"Unmentioned".equals(brokerageVal)) {
             brokerageDays = "15 Days"; // Default brokerage terms
         }
 
@@ -298,7 +299,7 @@ public class PropertyParserService {
         }
 
         // 3G. Price / Rent Extractor (Disambiguated from Brokerage, Pincode & Area)
-        double rentAmount = 18000.0;
+        double rentAmount = 0.0;
         boolean rentFound = false;
         Matcher explicitRentMatcher = RENT_KEYWORD_PATTERN.matcher(input);
         if (explicitRentMatcher.find()) {
@@ -331,10 +332,11 @@ public class PropertyParserService {
             Matcher kMatcher = K_PRICE_PATTERN.matcher(input);
             if (kMatcher.find()) {
                 rentAmount = Double.parseDouble(kMatcher.group(1)) * 1000;
+                rentFound = true;
             }
         }
 
-        String rentVal = String.format("₹%,.0f", rentAmount);
+        String rentVal = rentFound ? String.format("₹%,.0f", rentAmount) : "Unspecified";
 
         // 4. Fast $O(1)$ L1 Cache-Backed Sector & City Resolution
         String sector = "";

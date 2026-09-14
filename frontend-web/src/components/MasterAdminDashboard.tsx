@@ -347,40 +347,48 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     const cleanLower = input.toLowerCase();
 
     // 1. Universal BHK / Layout Extractor
-    let bhk = '';
+    let bhk = 'Unspecified';
+    let bhkFound = false;
     const numBhkMatch = input.match(/\b(\d+(?:\.\d+)?)\s*(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\b/i);
     const wordBhkMatch = input.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\b/i);
 
     if (numBhkMatch) {
       const val = numBhkMatch[1];
       bhk = val.endsWith('.0') ? `${val.substring(0, val.length - 2)} BHK` : `${val} BHK`;
+      bhkFound = true;
     } else if (wordBhkMatch) {
       const wordMap: Record<string, string> = { one: '1', two: '2', three: '3', four: '4', five: '5', six: '6', seven: '7', eight: '8', nine: '9', ten: '10' };
       bhk = `${wordMap[wordBhkMatch[1].toLowerCase()] || '2'} BHK`;
+      bhkFound = true;
     } else if (/studio|1rk|\brk\b/i.test(input)) {
       bhk = '1 RK Studio';
+      bhkFound = true;
     } else if (/triplex/i.test(input)) {
       bhk = 'Triplex Villa';
+      bhkFound = true;
     } else if (/duplex|villa/i.test(input)) {
       bhk = 'Duplex Villa';
+      bhkFound = true;
     } else if (/penthouse/i.test(input)) {
       bhk = 'Luxury Penthouse';
-    } else {
-      bhk = '2 BHK';
+      bhkFound = true;
     }
 
     // 2. Extract Property Type
     let type = 'FLAT';
-    if (/house|villa|bungalow|independent/i.test(input)) type = 'HOUSE';
-    else if (/plot|land|commercial plot/i.test(input)) type = 'PLOT';
-    else if (/penthouse/i.test(input)) type = 'PENTHOUSE';
-    else if (/studio/i.test(input)) type = 'STUDIO';
-    else if (/air\s*bnb|airbnb/i.test(input)) type = 'AIRBNB';
+    let typeFound = false;
+    if (/house|villa|bungalow|independent/i.test(input)) { type = 'HOUSE'; typeFound = true; }
+    else if (/plot|land|commercial plot/i.test(input)) { type = 'PLOT'; typeFound = true; }
+    else if (/penthouse/i.test(input)) { type = 'PENTHOUSE'; typeFound = true; }
+    else if (/studio/i.test(input)) { type = 'STUDIO'; typeFound = true; }
+    else if (/air\s*bnb|airbnb/i.test(input)) { type = 'AIRBNB'; typeFound = true; }
+    else if (/flat|apartment/i.test(input)) { type = 'FLAT'; typeFound = true; }
 
     // 3A. Brokerage Extractor (Days or Amount)
-    let brokerageDays = 15;
-    let brokerageVal = '15 Days Rent';
+    let brokerageDays: number | undefined = undefined;
+    let brokerageVal = 'Unmentioned';
     let brokerageAmount: number | undefined = undefined;
+    let brokerageFound = false;
     const brokerageDaysMatch = input.match(/\b(\d{1,2})\s*(?:days|day)\s*(?:brokerage|broker\s*fee|commission)?\b/i);
     const brokerageMatch = input.match(/(\d{4,6}|\d{1,2}k)\s*(?:brokerage|broker\s*fee|commission)\b|\b(?:brokerage|broker\s*fee|commission)\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{4,6}|\d{1,2}k)\b/i);
     if (brokerageMatch) {
@@ -388,10 +396,12 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       if (rawB) {
         brokerageAmount = rawB.toLowerCase().endsWith('k') ? parseInt(rawB.slice(0, -1)) * 1000 : parseInt(rawB);
         brokerageVal = `₹${brokerageAmount.toLocaleString('en-IN')}`;
+        brokerageFound = true;
       }
     } else if (brokerageDaysMatch) {
       brokerageDays = parseInt(brokerageDaysMatch[1]);
       brokerageVal = `${brokerageDays} Days Rent`;
+      brokerageFound = true;
     }
 
     // 3B. Bathrooms Extractor
@@ -417,30 +427,38 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     }
 
     // 3E. Owner Name & Phone Extractor
-    let ownerName = '';
-    const ownerNameMatch = input.match(/\b(?:owner\s*name|owner)\s*[:\-]?\s*([A-Za-z\s]{2,30}?)(?=\s+\d|\s+phone|\s+mobile|\s+rent|\s+brokerage|$)/i);
+    let ownerName = 'Not Specified';
+    let ownerPhone = 'Not Specified';
+    let ownerFound = false;
+    const ownerNameMatch = input.match(/\b(?:owner\s*name|owner)\s*[:\-]?\s*([A-Za-z\s]{2,30}?)(?=\s+\d|\s+\+?91|\s+phone|\s+mobile|\s+rent|\s+brokerage|$)/i);
     if (ownerNameMatch && ownerNameMatch[1].trim()) {
-      ownerName = ownerNameMatch[1].trim().replace(/\b\w/g, l => l.toUpperCase());
+      const candidate = ownerNameMatch[1].trim();
+      if (!/^(is|live|facing|flat|house|villa|apartment|plot)$/i.test(candidate)) {
+        ownerName = candidate.replace(/\b\w/g, l => l.toUpperCase());
+        ownerFound = true;
+      }
     }
 
-    let ownerPhone = '';
-    const phoneMatch = input.match(/\b(?:\+?91[\-\s]?)?([6-9]\d{9}|\d{8,11})\b/);
+    const phoneMatch = input.match(/\b(?:\+?91[\-\s]?)?([1-9]\d{9}|\d{8,11})\b/);
     if (phoneMatch) {
       const cand = phoneMatch[1];
       if (!areaSqFt?.startsWith(cand) && (!brokerageVal || !brokerageVal.includes(cand))) {
         ownerPhone = cand;
+        ownerFound = true;
       }
     }
 
     // 3F. Extract Rent / Price
-    let rentVal = '₹18,000';
-    let rentAmount = 18000;
+    let rentVal = 'Unspecified';
+    let rentAmount = 0;
+    let rentFound = false;
     const explicitRentMatch = input.match(/(\d{4,6}|\d{1,2}k)\s*(?:rent|per\s*month|\/month|pm)\b|\brent\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{4,6}|\d{1,2}k)\b/i);
     if (explicitRentMatch) {
       const rawR = explicitRentMatch[1] || explicitRentMatch[2];
       if (rawR) {
         rentAmount = rawR.toLowerCase().endsWith('k') ? parseInt(rawR.slice(0, -1)) * 1000 : parseInt(rawR);
         rentVal = `₹${rentAmount.toLocaleString('en-IN')}`;
+        rentFound = true;
       }
     } else {
       let numberMatch = input.match(/\b(\d{4,6})\b/);
@@ -448,9 +466,11 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       if (numberMatch && (!areaSqFt || !areaSqFt.startsWith(numberMatch[1])) && (!brokerageVal || !brokerageVal.includes(numberMatch[1]))) {
         rentAmount = parseInt(numberMatch[1]);
         rentVal = `₹${rentAmount.toLocaleString('en-IN')}`;
+        rentFound = true;
       } else if (kMatch) {
         rentAmount = parseInt(kMatch[1]) * 1000;
         rentVal = `₹${rentAmount.toLocaleString('en-IN')}`;
+        rentFound = true;
       }
     }
 
@@ -602,10 +622,10 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
     // 11. Missing Fields Detection
     const missingFields: string[] = [];
-    if (!numBhkMatch && !wordBhkMatch && !/studio|rk|villa|penthouse/i.test(input)) missingFields.push("BHK Layout");
+    if (!bhkFound) missingFields.push("BHK Layout");
     if (!bathMatch) missingFields.push("Bathrooms");
-    if (!explicitRentMatch && !input.match(/\b\d{4,6}\b/)) missingFields.push("Monthly Rent");
-    if (!brokerageMatch && !brokerageDaysMatch) missingFields.push("Brokerage Fee/Days");
+    if (!rentFound) missingFields.push("Monthly Rent");
+    if (!brokerageFound) missingFields.push("Brokerage Fee/Days");
     if (!depositMatch) missingFields.push("Security Deposit");
     if (!sqftMatch) missingFields.push("Carpet Area (SqFt)");
     if (vastuFacing === 'Not Specified') missingFields.push("Vastu Facing");
@@ -615,13 +635,15 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     if (!state) missingFields.push("State");
     if (!pincode) missingFields.push("Pincode");
     if (!landmark) missingFields.push("Landmark");
-    if (!ownerName) missingFields.push("Owner Name");
-    if (!ownerPhone) missingFields.push("Owner Contact Number");
+    if (ownerName === 'Not Specified') missingFields.push("Owner Name");
+    if (ownerPhone === 'Not Specified') missingFields.push("Owner Contact Number");
+
+    const isGarbageInput = !bhkFound && !rentFound && !ownerFound && (sector === 'Not Specified') && !sqftMatch && (vastuFacing === 'Not Specified') && !typeFound;
 
     const locationPart = city ? `${sector}, ${city}` : sector;
     const fullLocation = colony ? `${locationPart} (${colony})` : locationPart;
-    const title = `${bhk} ${type} in ${colony ? colony + ', ' : ''}${locationPart}${vastuFacing !== 'Not Specified' ? ' (' + vastuFacing + ')' : ''}${amenities.length > 0 ? ' with ' + amenities.join(', ') : ''}`;
-    const label = `${bhk} ${type} (${fullLocation})`;
+    const title = bhkFound ? `${bhk} ${type} in ${colony ? colony + ', ' : ''}${locationPart}${vastuFacing !== 'Not Specified' ? ' (' + vastuFacing + ')' : ''}${amenities.length > 0 ? ' with ' + amenities.join(', ') : ''}` : `Property Listing (${locationPart})`;
+    const label = bhkFound ? `${bhk} ${type} (${fullLocation})` : `Property (${fullLocation})`;
 
     return {
       bhk,
@@ -637,8 +659,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       bathrooms,
       areaSqFt,
       depositVal,
-      ownerName: ownerName || 'Not Specified',
-      ownerPhone: ownerPhone || 'Not Specified',
+      ownerName,
+      ownerPhone,
       vastuFacing,
       furnishingStatus,
       possessionDate,
@@ -649,7 +671,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       amenities,
       title,
       label,
-      missingFields
+      missingFields,
+      isGarbageInput
     };
   };
 
@@ -1279,14 +1302,26 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                     {/* LIVE REAL-TIME AI EXTRACTION PREVIEW DECK */}
                     {liveExtractedPreview && (
-                      <div className="bg-slate-950 p-4 rounded-2xl border border-emerald-500/40 space-y-3 shadow-inner">
+                      <div className={`p-4 rounded-2xl border space-y-3 shadow-inner transition-all ${
+                        liveExtractedPreview.isGarbageInput
+                          ? 'bg-amber-950/40 border-amber-500/40'
+                          : 'bg-slate-950 border-emerald-500/40'
+                      }`}>
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-mono font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                            <Zap className="w-3.5 h-3.5 text-amber-400 fill-current animate-pulse" />
-                            Live Real-Time AI Extracted Values (Updating Live as You Type):
+                          <span className={`text-[10px] font-mono font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                            liveExtractedPreview.isGarbageInput ? 'text-amber-400' : 'text-emerald-400'
+                          }`}>
+                            <Zap className={`w-3.5 h-3.5 fill-current ${liveExtractedPreview.isGarbageInput ? 'text-amber-400' : 'text-emerald-400 animate-pulse'}`} />
+                            {liveExtractedPreview.isGarbageInput
+                              ? '⚠️ Unrecognized Prompt Input - No valid property parameters detected in text'
+                              : 'Live Real-Time AI Extracted Values (Updating Live as You Type):'}
                           </span>
-                          <span className="text-[9px] font-mono font-bold text-emerald-300 bg-emerald-950 px-2.5 py-0.5 rounded-full border border-emerald-800">
-                            ⚡ AI Auto-Parsed
+                          <span className={`text-[9px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
+                            liveExtractedPreview.isGarbageInput
+                              ? 'text-amber-300 bg-amber-950/80 border-amber-700'
+                              : 'text-emerald-300 bg-emerald-950 border-emerald-800'
+                          }`}>
+                            {liveExtractedPreview.isGarbageInput ? '⚠️ Unrecognized' : '⚡ AI Auto-Parsed'}
                           </span>
                         </div>
 
@@ -1294,41 +1329,57 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                           {/* 1. BHK */}
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
                             <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">BHK Layout</span>
-                            <span className="text-xs font-black text-white font-['Outfit'] truncate block mt-0.5">{liveExtractedPreview.bhk || '2 BHK'}</span>
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              liveExtractedPreview.bhk === 'Unspecified' ? 'text-slate-500 italic' : 'text-white'
+                            }`}>{liveExtractedPreview.bhk}</span>
                           </div>
 
                           {/* 2. Sector / Locality */}
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
                             <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">Locality / Sector</span>
-                            <span className="text-xs font-black text-emerald-300 font-['Outfit'] truncate block mt-0.5" title={liveExtractedPreview.sector}>
-                              {liveExtractedPreview.sector || 'Indore'}
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              liveExtractedPreview.sector === 'Not Specified' ? 'text-slate-500 italic' : 'text-emerald-300'
+                            }`} title={liveExtractedPreview.sector}>
+                              {liveExtractedPreview.sector}
                             </span>
                           </div>
 
                           {/* 3. Monthly Rent */}
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
                             <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">Monthly Rent</span>
-                            <span className="text-xs font-black text-amber-300 font-['Outfit'] truncate block mt-0.5">{liveExtractedPreview.rentVal || 'N/A'}</span>
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              liveExtractedPreview.rentVal === 'Unspecified' ? 'text-slate-500 italic' : 'text-amber-300'
+                            }`}>{liveExtractedPreview.rentVal}</span>
                           </div>
 
                           {/* 4. Brokerage Fee */}
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
                             <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">Brokerage Fee</span>
-                            <span className="text-xs font-black text-purple-300 font-['Outfit'] truncate block mt-0.5">{liveExtractedPreview.brokerageVal || 'Direct Owner'}</span>
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              liveExtractedPreview.brokerageVal === 'Unmentioned' ? 'text-slate-500 italic' : 'text-purple-300'
+                            }`}>{liveExtractedPreview.brokerageVal}</span>
                           </div>
 
                           {/* 5. Owner Details */}
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
                             <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">Owner Details</span>
-                            <span className="text-xs font-black text-cyan-300 font-['Outfit'] truncate block mt-0.5" title={`${liveExtractedPreview.ownerName} (${liveExtractedPreview.ownerPhone})`}>
-                              {liveExtractedPreview.ownerName !== 'Not Specified' ? liveExtractedPreview.ownerName : 'John Doe'}
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              liveExtractedPreview.ownerName === 'Not Specified' && liveExtractedPreview.ownerPhone === 'Not Specified'
+                                ? 'text-slate-500 italic'
+                                : 'text-cyan-300'
+                            }`} title={`${liveExtractedPreview.ownerName} (${liveExtractedPreview.ownerPhone})`}>
+                              {liveExtractedPreview.ownerName !== 'Not Specified'
+                                ? liveExtractedPreview.ownerName
+                                : (liveExtractedPreview.ownerPhone !== 'Not Specified' ? liveExtractedPreview.ownerPhone : 'Not Specified')}
                             </span>
                           </div>
 
                           {/* 6. Vastu Facing */}
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
                             <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">Vastu Facing</span>
-                            <span className="text-xs font-black text-teal-300 font-['Outfit'] truncate block mt-0.5">{liveExtractedPreview.vastuFacing || 'East Facing'}</span>
+                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                              liveExtractedPreview.vastuFacing === 'Not Specified' ? 'text-slate-500 italic' : 'text-teal-300'
+                            }`}>{liveExtractedPreview.vastuFacing}</span>
                           </div>
                         </div>
                       </div>
