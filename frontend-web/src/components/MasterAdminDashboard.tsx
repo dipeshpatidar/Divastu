@@ -1257,12 +1257,17 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                   )}
 
                   {/* RAW PROMPT INPUT DISPLAY */}
-                  <div className="mb-6 bg-slate-950 p-4 rounded-2xl border border-slate-800/90 relative z-10">
-                    <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                      Uploaded Property Prompt / Description:
-                    </span>
-                    <p className="text-xs font-mono text-emerald-300 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 italic">
-                      "{lastExtractedResult.rawInput}"
+                  <div className="mb-6 bg-slate-950 p-4 rounded-2xl border border-slate-800/90 relative z-10 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider block">
+                        Uploaded Property Prompt / Description:
+                      </span>
+                      <span className="text-[9px] font-mono font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
+                        ⚡ Live Prompt Input Sync
+                      </span>
+                    </div>
+                    <p className="text-xs font-mono text-emerald-300 bg-slate-900/60 p-3 rounded-xl border border-slate-800 italic leading-relaxed">
+                      "{newBhkLabel.trim() ? newBhkLabel : lastExtractedResult.rawInput}"
                     </p>
                   </div>
 
