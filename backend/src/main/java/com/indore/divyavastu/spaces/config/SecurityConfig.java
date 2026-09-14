@@ -41,6 +41,7 @@ public class SecurityConfig {
                     "/api/v1/auth/**",
                     "/api/v1/webhooks/**",
                     "/api/v1/properties/**",
+                    "/api/v1/notifications/**",
                     "/login/oauth2/**",
                     "/oauth2/**",
                     "/actuator/health",
