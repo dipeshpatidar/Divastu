@@ -95,14 +95,14 @@ public class PropertyParserService {
         }
         String rentVal = String.format("₹%,.0f", rentAmount);
 
-        // 4. Extract Sector & City driven by PostgreSQL Database
+        // 4. Sector & City driven by PostgreSQL Database & Dynamic Address NER Scanner
         String sector = "";
         String city = "";
 
-        // Query database first for existing localities
+        // Phase A: Query PostgreSQL database for existing localities & sectors
         List<Locality> dbLocalities = localityRepository.findAll();
         for (Locality loc : dbLocalities) {
-            if (loc.getSectorName() != null && cleanLower.contains(loc.getSectorName().toLowerCase())) {
+            if (loc.getSectorName() != null && !loc.getSectorName().isBlank() && cleanLower.contains(loc.getSectorName().toLowerCase())) {
                 sector = loc.getSectorName();
                 if (loc.getCity() != null && !loc.getCity().isBlank()) {
                     city = loc.getCity();
@@ -111,7 +111,7 @@ public class PropertyParserService {
             }
         }
 
-        // Query database for distinct existing cities
+        // Phase B: Query PostgreSQL database for distinct registered cities
         List<String> dbCities = localityRepository.findDistinctCities();
         if (city.isBlank()) {
             for (String c : dbCities) {
@@ -122,20 +122,36 @@ public class PropertyParserService {
             }
         }
 
-        // Dynamic City NER extraction (if city not yet in PostgreSQL DB)
+        // Phase C: Dynamic City NER Scanner (for un-fed cities in text e.g., 'in Bhopal', 'at Pune', 'in Jaipur')
         if (city.isBlank()) {
-            Pattern cityPattern = Pattern.compile("\\b(?:in|at|near)\\s+([A-Z][a-z]{2,20})\\b");
+            Pattern cityPattern = Pattern.compile("\\b(?:in|at|near|around)\\s+([a-zA-Z]{3,20})(?:\\s+city)?\\b", Pattern.CASE_INSENSITIVE);
             Matcher cityMatcher = cityPattern.matcher(input);
             if (cityMatcher.find()) {
-                city = capitalizeWords(cityMatcher.group(1));
-            } else {
-                city = "Indore"; // Default baseline fallback
+                String candidateCity = cityMatcher.group(1).trim();
+                // Filter out non-city common prepositions or property words
+                if (!candidateCity.equalsIgnoreCase("the") && !candidateCity.equalsIgnoreCase("flat") && !candidateCity.equalsIgnoreCase("house")) {
+                    city = capitalizeWords(candidateCity);
+                }
             }
         }
 
-        // Dynamic Sector NER extraction (if sector not yet in PostgreSQL DB)
+        if (city.isBlank()) {
+            city = "Indore"; // Baseline fallback
+        }
+
+        // Phase D: Dynamic Locality / Sector / Street / Road / Block Scanner
         if (sector.isBlank()) {
-            Pattern prepPattern = Pattern.compile("\\b(?:in|at|near|around|sector)\\s+([A-Za-z0-9\\s]{2,30}?)(?=\\s+(?:with|having|facing|for|rent|per|\\d|rs|rupees|\\$|$))", Pattern.CASE_INSENSITIVE);
+            // Suffix Pattern matching all standard Indian & International locality suffixes
+            Pattern suffixPattern = Pattern.compile("\\b([A-Za-z0-9\\s]{2,25}\\s+(?:nagar|colony|city|township|road|street|lane|circle|sector|bazar|vihar|enclave|pur|ganj|heights|residency|villa|society|square|chowk|puri|dham|bagh|marg|block|phase|layout|extension|ext|estate|avenue|gali|path|bypass|highway|scheme|drive|park|hills|hill|valley|green|greens|campus))\\b", Pattern.CASE_INSENSITIVE);
+            Matcher suffixMatcher = suffixPattern.matcher(input);
+            if (suffixMatcher.find()) {
+                sector = capitalizeWords(suffixMatcher.group(1).trim());
+            }
+        }
+
+        // Phase E: Preposition-based Locality NER Extraction (e.g. 'in Nanda Nagar', 'near Rau Circle')
+        if (sector.isBlank()) {
+            Pattern prepPattern = Pattern.compile("\\b(?:in|at|near|around|sector|road|street|block|phase)\\s+([A-Za-z0-9\\s]{2,30}?)(?=\\s+(?:with|having|facing|for|rent|per|month|\\d|rs|rupees|\\$|$))", Pattern.CASE_INSENSITIVE);
             Matcher prepMatcher = prepPattern.matcher(input);
             if (prepMatcher.find()) {
                 String candidate = prepMatcher.group(1).trim();
@@ -145,27 +161,16 @@ public class PropertyParserService {
             }
         }
 
-        // Suffix Pattern Fallback (Nagar, Colony, Circle, etc.)
         if (sector.isBlank()) {
-            Pattern suffixPattern = Pattern.compile("\\b([A-Za-z0-9\\s]{2,20}\\s+(?:nagar|colony|city|township|road|circle|sector|bazar|vihar|enclave|pur|ganj|heights|residency|villa|society|square|chowk|puri|dham|bagh|marg))\\b", Pattern.CASE_INSENSITIVE);
-            Matcher suffixMatcher = suffixPattern.matcher(input);
-            if (suffixMatcher.find()) {
-                sector = capitalizeWords(suffixMatcher.group(1).trim());
-            }
+            sector = "Central Locality";
         }
 
-        if (sector.isBlank()) {
-            sector = "Rau Circle";
-        }
-
-        // 6. Colony / Society Detection
+        // 5. Dynamic Colony / Society / Project Name Detection
         String colony = "";
-        if (cleanLower.contains("shiva vatika") || cleanLower.contains("vatika")) {
-            colony = "Shiva Vatika";
-        } else if (cleanLower.contains("singapore city")) {
-            colony = "Singapore City";
-        } else if (cleanLower.contains("apollo db city")) {
-            colony = "Apollo DB City";
+        Pattern colonyPattern = Pattern.compile("\\b([A-Za-z0-9\\s]{2,25}\\s+(?:vatika|apartment|apartments|society|township|gardens|towers|residency|heights|retreat|villas|complex|enclave|palms|greens|vista|view|court|cliffs|paradise|homes|floors|nest|spire))\\b", Pattern.CASE_INSENSITIVE);
+        Matcher colonyMatcher = colonyPattern.matcher(input);
+        if (colonyMatcher.find()) {
+            colony = capitalizeWords(colonyMatcher.group(1).trim());
         }
 
         // 7. Vastu Facing Direction
