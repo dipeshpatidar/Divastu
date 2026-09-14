@@ -150,7 +150,17 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   const [bhkConfigs, setBhkConfigs] = useState(() => {
     try {
       const saved = localStorage.getItem('divyavastu_bhk_configs');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const seen = new Set();
+          return parsed.filter(item => {
+            if (!item || !item.id || seen.has(item.id)) return false;
+            seen.add(item.id);
+            return true;
+          });
+        }
+      }
     } catch (e) {
       console.error('Error loading BHK configs from storage', e);
     }
@@ -828,16 +838,19 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       const displayLabel = parsed ? parsed.label : newBhkLabel;
       const avgRent = parsed ? parsed.rentVal : '₹18,000';
 
-      setBhkConfigs((prev: any[]) => [...prev, {
-        id: cleanId,
-        label: displayLabel,
-        enabled: true,
-        demandScore: '94%',
-        avgRent: avgRent,
-        sector: parsed?.sector,
-        vastuFacing: parsed?.vastuFacing,
-        amenities: parsed?.amenities
-      }]);
+      setBhkConfigs((prev: any[]) => {
+        if (prev.some((c: any) => c.id === cleanId)) return prev;
+        return [...prev, {
+          id: cleanId,
+          label: displayLabel,
+          enabled: true,
+          demandScore: '94%',
+          avgRent: avgRent,
+          sector: parsed?.sector,
+          vastuFacing: parsed?.vastuFacing,
+          amenities: parsed?.amenities
+        }];
+      });
 
       const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
