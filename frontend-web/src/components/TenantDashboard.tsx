@@ -90,7 +90,7 @@ export const TenantDashboard: React.FC<TenantDashboardProps> = ({
   
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Helper to retrieve filter state from URL search params or localStorage
+  // Helper to retrieve filter state from URL search params
   const getInitialFilter = <T,>(key: string, defaultValue: T): T => {
     const paramVal = searchParams.get(key);
     if (paramVal !== null) {
@@ -98,15 +98,6 @@ export const TenantDashboard: React.FC<TenantDashboardProps> = ({
       if (typeof defaultValue === 'boolean') return (paramVal === 'true') as unknown as T;
       if (Array.isArray(defaultValue)) return paramVal.split(',') as unknown as T;
       return paramVal as unknown as T;
-    }
-    try {
-      const saved = localStorage.getItem('divyavastu_tenant_filters');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed[key] !== undefined) return parsed[key];
-      }
-    } catch (e) {
-      console.error('Failed reading tenant filter state', e);
     }
     return defaultValue;
   };
@@ -150,20 +141,8 @@ export const TenantDashboard: React.FC<TenantDashboardProps> = ({
     restDelta: 0.001
   });
 
-  // AUTO-SYNC STATE TO LOCALSTORAGE & URL SEARCH PARAMS
+  // AUTO-SYNC STATE TO URL SEARCH PARAMS
   useEffect(() => {
-    const filters = {
-      city: selectedCityId,
-      sectors: selectedSectors,
-      q: searchQuery,
-      bhk: selectedBhk,
-      budget: maxBudget,
-      verified: verifiedOnly,
-      cat: activeCategory,
-      saved: showSavedOnly
-    };
-    localStorage.setItem('divyavastu_tenant_filters', JSON.stringify(filters));
-
     const params = new URLSearchParams();
     if (selectedCityId !== 'INDORE') params.set('city', selectedCityId);
     if (selectedSectors.length > 0) params.set('sectors', selectedSectors.join(','));
@@ -197,7 +176,6 @@ export const TenantDashboard: React.FC<TenantDashboardProps> = ({
     setVerifiedOnly(true); // DEFAULT ON!
     setActiveCategory('ALL');
     setShowSavedOnly(false);
-    localStorage.removeItem('divyavastu_tenant_filters');
     setSearchParams({}, { replace: true });
   };
 
