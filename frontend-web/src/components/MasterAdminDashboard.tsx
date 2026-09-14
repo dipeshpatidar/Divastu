@@ -1061,7 +1061,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       <motion.aside
         animate={{ width: isSidebarCollapsed ? 80 : 280 }}
         transition={{ type: "spring", stiffness: 350, damping: 32 }}
-        className="bg-white border-r border-slate-200/90 shadow-sm shrink-0 sticky top-18 h-[calc(100vh-4.5rem)] flex flex-col justify-between z-30 select-none hidden md:flex relative"
+        className="bg-white border-r border-slate-200/90 shadow-sm shrink-0 sticky top-[74.5px] h-[calc(100vh-74.5px)] flex flex-col justify-between z-30 select-none hidden md:flex relative"
       >
         {/* FLOATING SIDEBAR COLLAPSE CHEVRON TOGGLE PILL */}
         <button

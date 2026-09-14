@@ -57,7 +57,7 @@ public class DataInitializer implements CommandLineRunner {
             User superAdmin = new User();
             superAdmin.setEmail("superadmin@divyavastu.in");
             superAdmin.setPasswordHash(passwordEncoder.encode("SuperAdmin123!"));
-            superAdmin.setFullName("Divyavastu Master CEO");
+            superAdmin.setFullName("Pathome Master CEO");
             superAdmin.setRole(Role.ROLE_ADMIN);
             superAdmin = userRepository.save(superAdmin);
 
