@@ -1,0 +1,99 @@
+package com.indore.divyavastu.spaces.service;
+
+import com.indore.divyavastu.spaces.dto.ParsedPropertyDTO;
+import com.indore.divyavastu.spaces.entity.Locality;
+import com.indore.divyavastu.spaces.repository.LocalityRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+public class PropertyParserServiceTest {
+
+    @Mock
+    private LocalityRepository localityRepository;
+
+    @InjectMocks
+    private PropertyParserService propertyParserService;
+
+    @BeforeEach
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+        when(localityRepository.findAll()).thenReturn(new ArrayList<>());
+        when(localityRepository.findDistinctCities()).thenReturn(new ArrayList<>());
+        propertyParserService.initCache();
+    }
+
+    @Test
+    public void testNumericBhkParsing() {
+        ParsedPropertyDTO dto = propertyParserService.parseAndSave("4bhk flat in Nanda Nagar for 18000");
+        assertNotNull(dto);
+        assertEquals("4 BHK", dto.getBhk());
+        assertEquals("Flat", dto.getType());
+        assertEquals("Nanda Nagar", dto.getSector());
+        assertEquals(18000.0, dto.getRentAmount());
+    }
+
+    @Test
+    public void testFractionalBhkParsing() {
+        ParsedPropertyDTO dto = propertyParserService.parseAndSave("2.5 bhk flat in Vijay Nagar for 24000");
+        assertNotNull(dto);
+        assertEquals("2.5 BHK", dto.getBhk());
+        assertEquals("Vijay Nagar", dto.getSector());
+        assertEquals(24000.0, dto.getRentAmount());
+    }
+
+    @Test
+    public void testWordBhkParsing() {
+        ParsedPropertyDTO dto = propertyParserService.parseAndSave("three bhk house in Bhawarkua Indore for 28000");
+        assertNotNull(dto);
+        assertEquals("3 BHK", dto.getBhk());
+        assertEquals("House", dto.getType());
+        assertEquals("Indore", dto.getCity());
+    }
+
+    @Test
+    public void testStudioAndDuplexParsing() {
+        ParsedPropertyDTO studioDto = propertyParserService.parseAndSave("1 rk studio in Rau for 10k");
+        assertEquals("1 RK Studio", studioDto.getBhk());
+        assertEquals(10000.0, studioDto.getRentAmount());
+
+        ParsedPropertyDTO duplexDto = propertyParserService.parseAndSave("duplex villa in Palasia for 50000");
+        assertEquals("Duplex Villa", duplexDto.getBhk());
+        assertEquals("House", duplexDto.getType());
+    }
+
+    @Test
+    public void testVastuAndAmenitiesParsing() {
+        ParsedPropertyDTO dto = propertyParserService.parseAndSave("2bhk in Vijay Nagar with balcony facing west for 20000");
+        assertEquals("West Facing", dto.getVastuFacing());
+        assertTrue(dto.getAmenities().contains("Balcony & City View"));
+    }
+
+    @Test
+    public void testPostgresLocalityAutoSave() {
+        when(localityRepository.findByCityIgnoreCaseAndSectorNameIgnoreCase(eq("Jaipur"), eq("Civil Lines")))
+                .thenReturn(Optional.empty());
+
+        Locality savedLocality = new Locality("Jaipur", "Civil Lines", "civil lines", 92, 22000.0);
+        when(localityRepository.save(any(Locality.class))).thenReturn(savedLocality);
+
+        ParsedPropertyDTO dto = propertyParserService.parseAndSave("2bhk in Civil Lines Jaipur for 22000");
+        assertNotNull(dto);
+        assertEquals("Jaipur", dto.getCity());
+        assertEquals("Civil Lines", dto.getSector());
+        assertTrue(dto.isSavedToDatabase());
+
+        verify(localityRepository, times(1)).save(any(Locality.class));
+    }
+}
