@@ -22,12 +22,6 @@ public class PropertyParserService {
         this.localityRepository = localityRepository;
     }
 
-    private static final List<String> CITIES = Arrays.asList(
-            "Indore", "Bhopal", "Pune", "Bangalore", "Mumbai", "Delhi",
-            "Gurgaon", "Noida", "Hyderabad", "Chennai", "Kolkata",
-            "Ahmedabad", "Jaipur", "Surat", "Lucknow", "Chandigarh", "Goa"
-    );
-
     public ParsedPropertyDTO parseAndSave(String prompt) {
         if (prompt == null || prompt.isBlank()) {
             return new ParsedPropertyDTO();
@@ -75,43 +69,57 @@ public class PropertyParserService {
         }
         String rentVal = String.format("₹%,.0f", rentAmount);
 
-        // 4. Extract City
-        String city = "Indore";
-        for (String c : CITIES) {
-            if (cleanLower.contains(c.toLowerCase())) {
-                city = c;
-                break;
-            }
-        }
-
-        // 5. Extract Sector / Locality
+        // 4. Extract Sector & City driven by PostgreSQL Database
         String sector = "";
-        
-        // Check database first!
+        String city = "";
+
+        // Query database first for existing localities
         List<Locality> dbLocalities = localityRepository.findAll();
         for (Locality loc : dbLocalities) {
             if (loc.getSectorName() != null && cleanLower.contains(loc.getSectorName().toLowerCase())) {
                 sector = loc.getSectorName();
-                if (loc.getCity() != null) {
+                if (loc.getCity() != null && !loc.getCity().isBlank()) {
                     city = loc.getCity();
                 }
                 break;
             }
         }
 
-        // Fallback to Dynamic Preposition NER
+        // Query database for distinct existing cities
+        List<String> dbCities = localityRepository.findDistinctCities();
+        if (city.isBlank()) {
+            for (String c : dbCities) {
+                if (cleanLower.contains(c.toLowerCase())) {
+                    city = c;
+                    break;
+                }
+            }
+        }
+
+        // Dynamic City NER extraction (if city not yet in PostgreSQL DB)
+        if (city.isBlank()) {
+            Pattern cityPattern = Pattern.compile("\\b(?:in|at|near)\\s+([A-Z][a-z]{2,20})\\b");
+            Matcher cityMatcher = cityPattern.matcher(input);
+            if (cityMatcher.find()) {
+                city = capitalizeWords(cityMatcher.group(1));
+            } else {
+                city = "Indore"; // Default baseline fallback
+            }
+        }
+
+        // Dynamic Sector NER extraction (if sector not yet in PostgreSQL DB)
         if (sector.isBlank()) {
             Pattern prepPattern = Pattern.compile("\\b(?:in|at|near|around|sector)\\s+([A-Za-z0-9\\s]{2,30}?)(?=\\s+(?:with|having|facing|for|rent|per|\\d|rs|rupees|\\$|$))", Pattern.CASE_INSENSITIVE);
             Matcher prepMatcher = prepPattern.matcher(input);
             if (prepMatcher.find()) {
                 String candidate = prepMatcher.group(1).trim();
-                if (!CITIES.stream().anyMatch(c -> c.equalsIgnoreCase(candidate))) {
+                if (!candidate.equalsIgnoreCase(city)) {
                     sector = capitalizeWords(candidate);
                 }
             }
         }
 
-        // Fallback to Suffix Pattern (Nagar, Colony, Circle, etc.)
+        // Suffix Pattern Fallback (Nagar, Colony, Circle, etc.)
         if (sector.isBlank()) {
             Pattern suffixPattern = Pattern.compile("\\b([A-Za-z0-9\\s]{2,20}\\s+(?:nagar|colony|city|township|road|circle|sector|bazar|vihar|enclave|pur|ganj|heights|residency|villa|society|square|chowk|puri|dham|bagh|marg))\\b", Pattern.CASE_INSENSITIVE);
             Matcher suffixMatcher = suffixPattern.matcher(input);
