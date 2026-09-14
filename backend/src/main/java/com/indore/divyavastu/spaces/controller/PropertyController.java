@@ -128,7 +128,7 @@ public class PropertyController {
         rental.setMonthlyRent(new BigDecimal(body.getOrDefault("monthlyRent", body.getOrDefault("price", "20000")).toString()));
         rental.setSecurityDeposit(new BigDecimal(body.getOrDefault("securityDeposit", "40000").toString()));
         rental.setStatus(ListingStatus.ACTIVE);
-        rental.setPropertyType(PropertyType.APARTMENT);
+        rental.setPropertyType(PropertyType.FLAT);
 
         Listing saved = listingRepository.save(rental);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
@@ -312,7 +312,7 @@ public class PropertyController {
         listing.setLatitude(22.7533);
         listing.setLongitude(75.8937);
         listing.setStatus(ListingStatus.ACTIVE);
-        listing.setPropertyType(PropertyType.APARTMENT);
+        listing.setPropertyType(PropertyType.FLAT);
         return listing;
     }
 }
