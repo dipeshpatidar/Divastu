@@ -677,6 +677,21 @@ const mockPropertyList: Property[] = [
   }
 ];
 
+const getCombinedProperties = (): Property[] => {
+  try {
+    const customStr = localStorage.getItem('divyavastu_custom_properties');
+    if (customStr) {
+      const customProps = JSON.parse(customStr);
+      if (Array.isArray(customProps) && customProps.length > 0) {
+        return [...customProps, ...mockPropertyList];
+      }
+    }
+  } catch (err) {
+    console.error('Error reading custom properties from storage', err);
+  }
+  return mockPropertyList;
+};
+
 export const Home: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -684,12 +699,24 @@ export const Home: React.FC = () => {
   const initialSession = getInitialSession();
   const [role, setRole] = useState<UserRole>(initialSession.role);
   const [user, setUser] = useState<UserProfile | null>(initialSession.user);
+  const [properties, setProperties] = useState<Property[]>(getCombinedProperties);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showLeaseModal, setShowLeaseModal] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState('overview');
   const [filterSector, setFilterSector] = useState<string>('');
   const [guestModalConfig, setGuestModalConfig] = useState<{ property: Property; initialMode?: 'VIDEO' | 'PHOTOS' } | null>(null);
+
+  // Synchronize newly published properties in real time
+  useEffect(() => {
+    const handlePropertyPublished = () => {
+      setProperties(getCombinedProperties());
+    };
+    window.addEventListener('divyavastu_property_published', handlePropertyPublished);
+    return () => {
+      window.removeEventListener('divyavastu_property_published', handlePropertyPublished);
+    };
+  }, []);
 
   // 1. MULTI-TAB & MULTI-WINDOW CROSS-TAB SESSION SYNCHRONIZATION
   useEffect(() => {
@@ -844,7 +871,7 @@ export const Home: React.FC = () => {
           >
             <TenantDashboard
               user={user}
-              properties={mockPropertyList}
+              properties={properties}
               onBookTour={handleBookTour}
               onOpenLeaseUpload={() => setShowLeaseModal(true)}
             />
@@ -875,7 +902,7 @@ export const Home: React.FC = () => {
             {/* SECTION 3: FEATURED PROPERTIES GRID */}
             <div id="listings">
               <PropertyShowcase
-                properties={mockPropertyList}
+                properties={properties}
                 onBookTour={handleBookTour}
                 onOpenMediaModal={(p, mode) => setGuestModalConfig({ property: p, initialMode: mode })}
                 selectedSectorFilter={filterSector}

@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { propertyService } from '../services/propertyService';
 import { useNotification } from '../context/NotificationContext';
-import { RoomTag } from '../types';
+import { RoomTag, Property } from '../types';
 
 import { RevenueAreaChart } from './analytics/RevenueAreaChart';
 import { FunnelStepGraph } from './analytics/FunnelStepGraph';
@@ -885,6 +885,35 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         },
         ...prev
       ]);
+
+      const newPropertyObj: Property = {
+        id: Date.now(),
+        title: parsed.title,
+        listingType: 'RENT',
+        propertyType: parsed.type === 'HOUSE' ? 'HOUSE' : parsed.type === 'PLOT' ? 'PLOT' : 'FLAT',
+        city: parsed.city || 'Indore',
+        sector: parsed.sector,
+        bhk: parsed.bhk,
+        monthlyRent: parsed.rentAmount || (parsed.rentVal ? parseInt(parsed.rentVal.replace(/[^0-9]/g, '')) : 18000),
+        securityDeposit: parsed.rentAmount ? parsed.rentAmount * 2 : 36000,
+        totalAreaSqFt: parsed.areaSqFt ? parseInt(parsed.areaSqFt) || 1250 : 1250,
+        images: attachedMediaFiles.length > 0
+          ? attachedMediaFiles.map(f => URL.createObjectURL(f))
+          : ["/assets/hero_luxury.jpg", "/assets/interior_living.jpg"],
+        verified: true,
+        ownerPhone: parsed.ownerPhone || "+91 98260 *****",
+        latitude: 22.7500,
+        longitude: 75.8900
+      };
+
+      try {
+        const existingCustom = JSON.parse(localStorage.getItem('divyavastu_custom_properties') || '[]');
+        const updatedCustom = [newPropertyObj, ...existingCustom];
+        localStorage.setItem('divyavastu_custom_properties', JSON.stringify(updatedCustom));
+        window.dispatchEvent(new Event('divyavastu_property_published'));
+      } catch (err) {
+        console.error('Failed to sync published property to storage', err);
+      }
 
       notifySuccess(
         '🎉 Property Listing Published!',
