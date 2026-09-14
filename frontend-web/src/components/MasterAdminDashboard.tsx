@@ -823,7 +823,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         }
       }
 
-      const cleanId = (parsed ? `${parsed.bhk}-${parsed.sector}` : newBhkLabel).toUpperCase().replace(/\s+/g, '-');
+      const baseCleanId = (parsed ? `${parsed.bhk}-${parsed.sector}` : newBhkLabel).toUpperCase().replace(/\s+/g, '-');
+      const cleanId = `${baseCleanId}-${propertyId || Date.now()}`;
       const displayLabel = parsed ? parsed.label : newBhkLabel;
       const avgRent = parsed ? parsed.rentVal : '₹18,000';
 
