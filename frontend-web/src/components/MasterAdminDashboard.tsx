@@ -236,14 +236,68 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     else if (/penthouse/i.test(input)) type = 'Penthouse';
     else if (/studio/i.test(input)) type = 'Studio';
 
-    // 3. Extract Rent / Price (e.g. 18000, 18k, 22000)
+    // 3A. Brokerage Extractor
+    let brokerageVal = '';
+    const brokerageMatch = input.match(/(\d{4,6}|\d{1,2}k)\s*(?:brokerage|broker\s*fee|commission)\b|\b(?:brokerage|broker\s*fee|commission)\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{4,6}|\d{1,2}k)\b/i);
+    if (brokerageMatch) {
+      const rawB = brokerageMatch[1] || brokerageMatch[2];
+      if (rawB) {
+        const amt = rawB.toLowerCase().endsWith('k') ? parseInt(rawB.slice(0, -1)) * 1000 : parseInt(rawB);
+        brokerageVal = `₹${amt.toLocaleString('en-IN')}`;
+      }
+    }
+
+    // 3B. Area Sqft Extractor
+    let areaSqFt = '';
+    const sqftMatch = input.match(/\b(\d{3,5})\s*(?:sqft|sq\.ft|sq\s*ft|sqfeet|square\s*feet|sq\s*meters|sqm)\b/i);
+    if (sqftMatch) {
+      areaSqFt = `${sqftMatch[1]} sqft`;
+    }
+
+    // 3C. Security Deposit Extractor
+    let depositVal = '';
+    const depositMatch = input.match(/(\d+(?:\+\d+)?)\s*(?:security\s*deposit|deposit|dep)\b|\b(?:security\s*deposit|deposit)\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{4,6}|\d{1,2}k|\d\+\d)\b/i);
+    if (depositMatch) {
+      const depRaw = depositMatch[1] || depositMatch[2];
+      depositVal = `${depRaw} Security Deposit`;
+    }
+
+    // 3D. Owner Name & Phone Extractor
+    let ownerName = '';
+    const ownerNameMatch = input.match(/\b(?:owner\s*name|owner)\s*[:\-]?\s*([A-Za-z\s]{2,30}?)(?=\s+\d|\s+phone|\s+mobile|\s+rent|\s+brokerage|$)/i);
+    if (ownerNameMatch && ownerNameMatch[1].trim()) {
+      ownerName = ownerNameMatch[1].trim().replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    let ownerPhone = '';
+    const phoneMatch = input.match(/\b(?:\+?91[\-\s]?)?([6-9]\d{9}|\d{8,11})\b/);
+    if (phoneMatch) {
+      const cand = phoneMatch[1];
+      if (!areaSqFt?.startsWith(cand) && (!brokerageVal || !brokerageVal.includes(cand))) {
+        ownerPhone = cand;
+      }
+    }
+
+    // 3E. Extract Rent / Price (Explicit Rent keyword prioritized over generic number)
     let rentVal = '₹18,000';
-    let numberMatch = input.match(/\b(\d{4,6})\b/);
-    let kMatch = input.match(/\b(\d{1,2})k\b/i);
-    if (numberMatch) {
-      rentVal = `₹${parseInt(numberMatch[1]).toLocaleString('en-IN')}`;
-    } else if (kMatch) {
-      rentVal = `₹${(parseInt(kMatch[1]) * 1000).toLocaleString('en-IN')}`;
+    let rentAmount = 18000;
+    const explicitRentMatch = input.match(/(\d{4,6}|\d{1,2}k)\s*(?:rent|per\s*month|\/month|pm)\b|\brent\b\s*[:\-]?\s*(?:rs\.?|₹)?\s*(\d{4,6}|\d{1,2}k)\b/i);
+    if (explicitRentMatch) {
+      const rawR = explicitRentMatch[1] || explicitRentMatch[2];
+      if (rawR) {
+        rentAmount = rawR.toLowerCase().endsWith('k') ? parseInt(rawR.slice(0, -1)) * 1000 : parseInt(rawR);
+        rentVal = `₹${rentAmount.toLocaleString('en-IN')}`;
+      }
+    } else {
+      let numberMatch = input.match(/\b(\d{4,6})\b/);
+      let kMatch = input.match(/\b(\d{1,2})k\b/i);
+      if (numberMatch && (!areaSqFt || !areaSqFt.startsWith(numberMatch[1])) && (!brokerageVal || !brokerageVal.includes(numberMatch[1]))) {
+        rentAmount = parseInt(numberMatch[1]);
+        rentVal = `₹${rentAmount.toLocaleString('en-IN')}`;
+      } else if (kMatch) {
+        rentAmount = parseInt(kMatch[1]) * 1000;
+        rentVal = `₹${rentAmount.toLocaleString('en-IN')}`;
+      }
     }
 
     // 3.5. Multi-City Pan-India Extractor (Indore, Bhopal, Pune, Bangalore, Mumbai, Delhi, Hyderabad, etc.)
@@ -339,7 +393,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     }
 
     if (!sector) {
-      sector = city ? `${city} Central` : 'Indore Region';
+      sector = 'Not Specified';
     }
 
     // 4.5. Society / Colony Landmark Detection
@@ -360,8 +414,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       }
     }
 
-    // 5. Extract Vastu Facing Direction (supports disconnected "west ... facing")
-    let vastuFacing = 'East Facing';
+    // 5. Extract Vastu Facing Direction (Defaults to 'Not Specified' unless direction keyword is present)
+    let vastuFacing = 'Not Specified';
     const directions = [
       { key: 'north-east', label: 'North-East Facing' },
       { key: 'north-west', label: 'North-West Facing' },
@@ -374,7 +428,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     ];
 
     for (const dir of directions) {
-      if (cleanLower.includes(dir.key)) {
+      if (new RegExp(`\\b(?:facing\\s+${dir.key}|${dir.key}\\s+facing|${dir.key})\\b`, 'i').test(cleanLower)) {
         vastuFacing = dir.label;
         break;
       }
@@ -390,7 +444,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
     const locationPart = city ? `${sector}, ${city}` : sector;
     const fullLocation = colony ? `${locationPart} (${colony})` : locationPart;
-    const title = `${bhk} ${type} in ${colony ? colony + ', ' : ''}${locationPart} (${vastuFacing})${amenities.length > 0 ? ' with ' + amenities.join(', ') : ''}`;
+    const title = `${bhk} ${type} in ${colony ? colony + ', ' : ''}${locationPart}${vastuFacing !== 'Not Specified' ? ' (' + vastuFacing + ')' : ''}${amenities.length > 0 ? ' with ' + amenities.join(', ') : ''}`;
     const label = `${bhk} ${type} (${fullLocation})`;
 
     return {
@@ -400,6 +454,12 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       sector,
       colony,
       rentVal,
+      rentAmount,
+      brokerageVal,
+      areaSqFt,
+      depositVal,
+      ownerName,
+      ownerPhone,
       vastuFacing,
       amenities,
       title,
@@ -447,6 +507,11 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         colony: parsed.colony || 'None Specified',
         rentVal: parsed.rentVal,
         rentAmount: parsed.rentAmount || (parsed.rentVal ? parseInt(parsed.rentVal.replace(/[^0-9]/g, '')) : 18000),
+        brokerageVal: parsed.brokerageVal || 'None / Direct Owner',
+        areaSqFt: parsed.areaSqFt || 'Not Specified',
+        depositVal: parsed.depositVal || 'Not Specified',
+        ownerName: parsed.ownerName || 'Not Specified',
+        ownerPhone: parsed.ownerPhone || 'Not Specified',
         vastuFacing: parsed.vastuFacing,
         amenities: parsed.amenities || [],
         title: parsed.title,
@@ -976,7 +1041,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     </p>
                   </div>
 
-                  {/* 8 KEY EXTRACTED PARAMETERS GRID */}
+                  {/* 12 EXTRACTED PARAMETERS GRID */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 relative z-10 mb-6">
                     {/* 1. BHK */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition-all">
@@ -1015,46 +1080,86 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                         <Compass className="w-4 h-4 text-emerald-400" />
                       </div>
                       <div className="text-base font-extrabold text-emerald-300 font-['Outfit'] truncate" title={lastExtractedResult.sector}>
-                        {lastExtractedResult.sector || 'Central Region'}
+                        {lastExtractedResult.sector || 'Not Specified'}
                       </div>
-                      <span className="text-[10px] text-emerald-400 font-mono font-bold">✓ Saved to PostgreSQL</span>
+                      <span className="text-[10px] text-emerald-400 font-mono font-bold">
+                        {lastExtractedResult.sector !== 'Not Specified' ? '✓ Saved to PostgreSQL' : 'Unspecified'}
+                      </span>
                     </div>
 
-                    {/* 5. Colony / Society */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-purple-500/40 transition-all">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Society / Colony</span>
-                        <Tag className="w-4 h-4 text-purple-400" />
-                      </div>
-                      <div className="text-sm font-extrabold text-purple-300 font-['Outfit'] truncate" title={lastExtractedResult.colony}>
-                        {lastExtractedResult.colony || 'None Specified'}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Landmark / Society</span>
-                    </div>
-
-                    {/* 6. Monthly Rent */}
+                    {/* 5. Monthly Rent */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-amber-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
                         <span className="text-[10px] font-mono uppercase font-extrabold">Monthly Rent</span>
                         <DollarSign className="w-4 h-4 text-amber-400" />
                       </div>
                       <div className="text-lg font-black text-amber-300 font-['Outfit']">{lastExtractedResult.rentVal || '₹18,000'}</div>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        Deposit: {lastExtractedResult.rentAmount ? `₹${(lastExtractedResult.rentAmount * 2).toLocaleString('en-IN')}` : '₹36,000'}
-                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">Extracted Rent Amount</span>
                     </div>
 
-                    {/* 7. Vastu Facing */}
+                    {/* 6. Brokerage Fee */}
+                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-purple-500/40 transition-all">
+                      <div className="flex items-center justify-between text-slate-400 mb-1">
+                        <span className="text-[10px] font-mono uppercase font-extrabold">Brokerage Fee</span>
+                        <Tag className="w-4 h-4 text-purple-400" />
+                      </div>
+                      <div className="text-base font-extrabold text-purple-300 font-['Outfit'] truncate">
+                        {lastExtractedResult.brokerageVal || 'None / Direct Owner'}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">Extracted Brokerage</span>
+                    </div>
+
+                    {/* 7. Carpet Area (Sq Ft) */}
+                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-teal-500/40 transition-all">
+                      <div className="flex items-center justify-between text-slate-400 mb-1">
+                        <span className="text-[10px] font-mono uppercase font-extrabold">Carpet Area</span>
+                        <SlidersHorizontal className="w-4 h-4 text-teal-400" />
+                      </div>
+                      <div className="text-base font-extrabold text-teal-300 font-['Outfit']">
+                        {lastExtractedResult.areaSqFt || 'Not Specified'}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">Square Feet</span>
+                    </div>
+
+                    {/* 8. Security Deposit */}
+                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-blue-500/40 transition-all">
+                      <div className="flex items-center justify-between text-slate-400 mb-1">
+                        <span className="text-[10px] font-mono uppercase font-extrabold">Security Deposit</span>
+                        <ShieldCheck className="w-4 h-4 text-blue-400" />
+                      </div>
+                      <div className="text-sm font-extrabold text-blue-300 font-['Outfit'] truncate">
+                        {lastExtractedResult.depositVal || 'Not Specified'}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">Lease Security Terms</span>
+                    </div>
+
+                    {/* 9. Owner Contact Details */}
+                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-pink-500/40 transition-all sm:col-span-2">
+                      <div className="flex items-center justify-between text-slate-400 mb-1">
+                        <span className="text-[10px] font-mono uppercase font-extrabold">Owner Contact Details</span>
+                        <Users className="w-4 h-4 text-pink-400" />
+                      </div>
+                      <div className="text-sm font-extrabold text-pink-300 font-['Outfit'] truncate">
+                        {lastExtractedResult.ownerName && lastExtractedResult.ownerName !== 'Not Specified' 
+                          ? `${lastExtractedResult.ownerName} (${lastExtractedResult.ownerPhone || 'No Phone'})`
+                          : (lastExtractedResult.ownerPhone || 'Not Specified')}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">Owner / Lead Seller Info</span>
+                    </div>
+
+                    {/* 10. Vastu Facing */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
                         <span className="text-[10px] font-mono uppercase font-extrabold">Vastu Facing</span>
                         <Sparkles className="w-4 h-4 text-cyan-400" />
                       </div>
-                      <div className="text-sm font-extrabold text-cyan-300 font-['Outfit']">{lastExtractedResult.vastuFacing || 'East Facing'}</div>
+                      <div className="text-sm font-extrabold text-cyan-300 font-['Outfit']">
+                        {lastExtractedResult.vastuFacing || 'Not Specified'}
+                      </div>
                       <span className="text-[10px] text-slate-400 font-mono">Solar Direction</span>
                     </div>
 
-                    {/* 8. Extracted Amenities */}
+                    {/* 11. Extracted Amenities */}
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-teal-500/40 transition-all">
                       <div className="flex items-center justify-between text-slate-400 mb-1">
                         <span className="text-[10px] font-mono uppercase font-extrabold">Extracted Amenities</span>
@@ -1068,7 +1173,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                             </span>
                           ))
                         ) : (
-                          <span className="text-xs text-slate-500 italic">Standard Amenities</span>
+                          <span className="text-xs text-slate-500 italic">None Specified</span>
                         )}
                       </div>
                     </div>

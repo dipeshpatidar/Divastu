@@ -10,6 +10,11 @@ public class ParsedPropertyDTO {
     private String colony;
     private String rentVal;
     private Double rentAmount;
+    private String brokerageVal;
+    private String areaSqFt;
+    private String depositVal;
+    private String ownerName;
+    private String ownerPhone;
     private String vastuFacing;
     private List<String> amenities;
     private String title;
@@ -27,6 +32,26 @@ public class ParsedPropertyDTO {
         this.colony = colony;
         this.rentVal = rentVal;
         this.rentAmount = rentAmount;
+        this.vastuFacing = vastuFacing;
+        this.amenities = amenities;
+        this.title = title;
+        this.label = label;
+        this.savedToDatabase = savedToDatabase;
+    }
+
+    public ParsedPropertyDTO(String bhk, String type, String city, String sector, String colony, String rentVal, Double rentAmount, String brokerageVal, String areaSqFt, String depositVal, String ownerName, String ownerPhone, String vastuFacing, List<String> amenities, String title, String label, boolean savedToDatabase) {
+        this.bhk = bhk;
+        this.type = type;
+        this.city = city;
+        this.sector = sector;
+        this.colony = colony;
+        this.rentVal = rentVal;
+        this.rentAmount = rentAmount;
+        this.brokerageVal = brokerageVal;
+        this.areaSqFt = areaSqFt;
+        this.depositVal = depositVal;
+        this.ownerName = ownerName;
+        this.ownerPhone = ownerPhone;
         this.vastuFacing = vastuFacing;
         this.amenities = amenities;
         this.title = title;
@@ -120,6 +145,46 @@ public class ParsedPropertyDTO {
 
     public void setLabel(String label) {
         this.label = label;
+    }
+
+    public String getBrokerageVal() {
+        return brokerageVal;
+    }
+
+    public void setBrokerageVal(String brokerageVal) {
+        this.brokerageVal = brokerageVal;
+    }
+
+    public String getAreaSqFt() {
+        return areaSqFt;
+    }
+
+    public void setAreaSqFt(String areaSqFt) {
+        this.areaSqFt = areaSqFt;
+    }
+
+    public String getDepositVal() {
+        return depositVal;
+    }
+
+    public void setDepositVal(String depositVal) {
+        this.depositVal = depositVal;
+    }
+
+    public String getOwnerName() {
+        return ownerName;
+    }
+
+    public void setOwnerName(String ownerName) {
+        this.ownerName = ownerName;
+    }
+
+    public String getOwnerPhone() {
+        return ownerPhone;
+    }
+
+    public void setOwnerPhone(String ownerPhone) {
+        this.ownerPhone = ownerPhone;
     }
 
     public boolean isSavedToDatabase() {

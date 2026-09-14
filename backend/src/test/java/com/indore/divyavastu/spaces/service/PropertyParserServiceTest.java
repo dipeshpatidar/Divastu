@@ -96,4 +96,22 @@ public class PropertyParserServiceTest {
 
         verify(localityRepository, times(1)).save(any(Locality.class));
     }
+
+    @Test
+    public void testUserComplexPromptParsing() {
+        String prompt = "Premium 2bhk flat 525 sqft 15000 brokerage 30000 rent 1+1 security deposit owner name Piyushi Saha 458888248";
+        ParsedPropertyDTO dto = propertyParserService.parseAndSave(prompt);
+
+        assertNotNull(dto);
+        assertEquals("2 BHK", dto.getBhk());
+        assertEquals("Flat", dto.getType());
+        assertEquals(30000.0, dto.getRentAmount());
+        assertEquals("₹30,000", dto.getRentVal());
+        assertEquals("₹15,000", dto.getBrokerageVal());
+        assertEquals("525 sqft", dto.getAreaSqFt());
+        assertEquals("1+1 Security Deposit", dto.getDepositVal());
+        assertEquals("Piyushi Saha", dto.getOwnerName());
+        assertEquals("458888248", dto.getOwnerPhone());
+        assertEquals("Not Specified", dto.getVastuFacing());
+    }
 }
