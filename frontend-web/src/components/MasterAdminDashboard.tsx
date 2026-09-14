@@ -356,11 +356,20 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     };
   };
 
-  const handleAddCustomBhk = (e: React.FormEvent) => {
+  const handleAddCustomBhk = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBhkLabel.trim()) return;
 
-    const parsed = parseNaturalLanguageProperty(newBhkLabel);
+    let parsed: any = null;
+    try {
+      // 1. Primary: Call Spring Boot Backend REST API & Save Locality to PostgreSQL DB
+      parsed = await propertyService.parsePropertyPrompt(newBhkLabel);
+    } catch (backendErr) {
+      console.warn('Backend prompt parser endpoint unreachable, using client-side fallback:', backendErr);
+      // 2. Client-side fallback parsing
+      parsed = parseNaturalLanguageProperty(newBhkLabel);
+    }
+
     const cleanId = (parsed ? `${parsed.bhk}-${parsed.sector}` : newBhkLabel).toUpperCase().replace(/\s+/g, '-');
 
     const displayLabel = parsed ? parsed.label : newBhkLabel;
@@ -382,7 +391,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       setMediaPriceTag(`${parsed.rentVal} / month`);
       setMediaVastu(parsed.vastuFacing);
       setMediaCaption(parsed.title);
-      alert(`🎉 AI Natural Language Auto-Parse Successful!\n\nAdded: '${parsed.label}'\nLocation: ${parsed.sector}\nRent: ${parsed.rentVal} / month\nVastu: ${parsed.vastuFacing}\nAmenities: ${parsed.amenities.join(', ') || 'Standard'}\n\nPre-populated Media CDN upload fields below!`);
+      const dbStatusMsg = parsed.savedToDatabase ? '\n⚡ Locality & City automatically persisted to PostgreSQL Database!' : '';
+      alert(`🎉 AI Backend Property Auto-Parse Successful!\n\nAdded: '${parsed.label}'\nCity: ${parsed.city || 'Indore'}\nSector/Locality: ${parsed.sector}\nRent: ${parsed.rentVal} / month\nVastu: ${parsed.vastuFacing}\nAmenities: ${parsed.amenities?.join(', ') || 'Standard'}${dbStatusMsg}\n\nPre-populated Media CDN upload fields below!`);
     } else {
       alert(`🎉 Property BHK configuration '${newBhkLabel}' enabled on Tenant search decks!`);
     }

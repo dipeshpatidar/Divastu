@@ -19,13 +19,16 @@ public class PropertyController {
     private final ListingRepository listingRepository;
     private final PropertyMediaAssetRepository mediaAssetRepository;
     private final CloudinaryService cloudinaryService;
+    private final com.indore.divyavastu.spaces.service.PropertyParserService propertyParserService;
 
     public PropertyController(ListingRepository listingRepository,
                               PropertyMediaAssetRepository mediaAssetRepository,
-                              CloudinaryService cloudinaryService) {
+                              CloudinaryService cloudinaryService,
+                              com.indore.divyavastu.spaces.service.PropertyParserService propertyParserService) {
         this.listingRepository = listingRepository;
         this.mediaAssetRepository = mediaAssetRepository;
         this.cloudinaryService = cloudinaryService;
+        this.propertyParserService = propertyParserService;
     }
 
     /**
@@ -230,5 +233,17 @@ public class PropertyController {
                 "videoUrl", videoUrl,
                 "propertyId", id
         ));
+    }
+
+    /**
+     * POST /api/v1/properties/parse-prompt - Backend Natural Language Property Parser & Locality Database Auto-Save
+     */
+    @PostMapping("/parse-prompt")
+    public ResponseEntity<com.indore.divyavastu.spaces.dto.ParsedPropertyDTO> parseNaturalLanguagePrompt(
+            @RequestBody Map<String, String> request) {
+
+        String prompt = request.get("prompt");
+        com.indore.divyavastu.spaces.dto.ParsedPropertyDTO result = propertyParserService.parseAndSave(prompt);
+        return ResponseEntity.ok(result);
     }
 }

@@ -145,5 +145,25 @@ export const propertyService = {
 
     const data = await response.json();
     return data.videoUrl || '';
+  },
+
+  /**
+   * Calls Spring Boot backend REST API to parse natural language prompt and auto-save locality in PostgreSQL database
+   */
+  async parsePropertyPrompt(prompt: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/parse-prompt`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ prompt })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to parse prompt on backend: status ${response.status}`);
+    }
+
+    return await response.json();
   }
 };
