@@ -437,6 +437,33 @@ public class PropertyParserService {
         String label = bhk + " " + type + " (" + fullLocation + ")";
         String address = sector + (city != null ? ", " + city : "") + (state != null ? ", " + state : "") + (pincode != null ? " - " + pincode : "");
 
+        StringBuilder descBuilder = new StringBuilder();
+        descBuilder.append(bhk).append(" ").append(type).append(" available for rent in ").append(sector);
+        if (city != null && !city.isBlank()) descBuilder.append(", ").append(city);
+        if (state != null && !state.isBlank()) descBuilder.append(", ").append(state);
+        if (pincode != null && !pincode.isBlank() && !pincode.equals("Not Specified")) descBuilder.append(" (Pincode: ").append(pincode).append(")");
+        descBuilder.append(".");
+
+        if (colony != null && !colony.isBlank()) descBuilder.append(" Located in ").append(colony).append(".");
+        if (landmark != null && !landmark.isBlank() && !landmark.equals("Not Specified")) descBuilder.append(" Landmark: ").append(landmark).append(".");
+        if (areaSqFt != null && !areaSqFt.equals("Not Specified")) descBuilder.append(" Carpet Area: ").append(areaSqFt).append(".");
+        if (bathrooms != null && !bathrooms.equals("Not Specified")) descBuilder.append(" Bathrooms: ").append(bathrooms).append(".");
+        if (vastuFacing != null && !vastuFacing.equals("Not Specified")) descBuilder.append(" Vastu Facing: ").append(vastuFacing).append(".");
+        if (furnishingStatus != null && !furnishingStatus.equalsIgnoreCase("UNSPECIFIED")) descBuilder.append(" Furnishing: ").append(furnishingStatus).append(".");
+        descBuilder.append(" Monthly Rent: ").append(rentVal).append(".");
+        if (depositVal != null && !depositVal.equals("Not Specified")) descBuilder.append(" Security Deposit: ").append(depositVal).append(".");
+        if (brokerageVal != null) descBuilder.append(" Brokerage Fee: ").append(brokerageVal).append(".");
+        if (possessionDate != null) descBuilder.append(" Possession: ").append(possessionDate).append(".");
+        if (amenities != null && !amenities.isEmpty()) descBuilder.append(" Key Amenities: ").append(String.join(", ", amenities)).append(".");
+        if (ownerName != null && !ownerName.equals("Not Specified")) {
+            descBuilder.append(" Contact Owner: ").append(ownerName);
+            if (ownerPhone != null && !ownerPhone.equals("Not Specified")) descBuilder.append(" (").append(ownerPhone).append(")");
+            descBuilder.append(".");
+        }
+        descBuilder.append(" Listing Status: ").append(status).append(".");
+
+        String synthesizedDescription = descBuilder.toString();
+
         ParsedPropertyDTO dto = new ParsedPropertyDTO();
         dto.setBhk(bhk);
         dto.setType(type);
@@ -457,7 +484,7 @@ public class PropertyParserService {
         dto.setState(state != null ? state : "Madhya Pradesh");
         dto.setPincode(pincode != null ? pincode : "Not Specified");
         dto.setLandmark(landmark != null ? landmark : "Not Specified");
-        dto.setDescription(input);
+        dto.setDescription(synthesizedDescription);
         dto.setOwnerName(ownerName != null ? ownerName : "Direct Owner");
         dto.setOwnerPhone(ownerPhone != null ? ownerPhone : "Not Specified");
         dto.setVastuFacing(vastuFacing);
