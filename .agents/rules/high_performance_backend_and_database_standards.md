@@ -16,5 +16,10 @@
 - **PostgreSQL Auto-Persistence**: Automatically persist newly parsed or extracted entities into the PostgreSQL database.
 
 ### 4. Mandatory Automated Unit Testing
-- **100% Test Coverage**: Every parser, service, or business logic component must have a corresponding JUnit 5 test suite (`PropertyParserServiceTest.java`, etc.).
+- **100% Test Coverage**: Every parser, service, or business logic component must have a corresponding JUnit 5 test suite (`PropertyParserServiceTest.java`, `GlobalExceptionHandlerTest.java`, etc.).
 - **Build Cleanliness**: Ensure `mvn test`, `mvn clean compile`, and `npm run build` pass with 0 errors before committing or declaring a task complete.
+
+### 5. Centralized Global Exception Handling
+- **@RestControllerAdvice Mandate**: All unhandled exceptions from controllers or services must be intercepted globally by `GlobalExceptionHandler.java`.
+- **Structured Error Schema**: Returns standardized `ErrorResponseDTO` JSON payloads (`timestamp`, `status`, `error`, `message`, `path`).
+

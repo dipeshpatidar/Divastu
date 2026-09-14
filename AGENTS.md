@@ -18,5 +18,10 @@ When developing features for Divyavastu Spaces (Backend Spring Boot & Frontend W
    - Newly extracted entities must auto-persist to PostgreSQL with proper composite database indexes (`@Index`).
 
 4. **Mandatory JUnit 5 Testing**:
-   - All parser logic and services must be covered by JUnit 5 tests.
+   - All parser logic, services, and exception handlers must be covered by JUnit 5 tests.
    - Verify changes with `mvn test`, `mvn clean compile`, and `npm run build`.
+
+5. **Centralized Global Exception Handling**:
+   - All HTTP REST controllers must route unhandled exceptions through `@RestControllerAdvice` (`GlobalExceptionHandler.java`).
+   - Standardized structured JSON response: `{ timestamp, status, error, message, path }`.
+
