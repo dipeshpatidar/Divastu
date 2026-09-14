@@ -99,8 +99,13 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   const [internalTab, setInternalTab] = useState<string>('funnel');
   const activeTab = externalActiveTab || internalTab;
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [showAllAttributesMobile, setShowAllAttributesMobile] = useState<boolean>(false);
+  const [activeAttributeTab, setActiveAttributeTab] = useState<'all' | 'location' | 'pricing' | 'specs'>('all');
+
   const handleTabSelect = (tabId: string) => {
     setInternalTab(tabId);
+    setIsMobileMenuOpen(false);
     if (externalSetActiveAdminTab) {
       externalSetActiveAdminTab(tabId);
     }
@@ -857,7 +862,72 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row">
 
-      {/* 1. COLLAPSIBLE LEFT SIDEBAR NAVIGATION */}
+      {/* MOBILE NAVIGATION BAR HEADER (VISIBLE ON PHONES/SMALL DEVICES < 768px) */}
+      <div className="md:hidden sticky top-0 z-40 bg-slate-900 text-white border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-lg">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold border border-emerald-500/30">
+            <ShieldCheck className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-xs font-black font-['Outfit'] text-white leading-tight">Divyavastu Admin Portal</h2>
+            <span className="text-[10px] text-emerald-400 font-mono font-bold block">Indore Region HQ</span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 rounded-xl bg-slate-800 text-emerald-300 hover:bg-slate-700 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer border border-slate-700"
+        >
+          {isMobileMenuOpen ? <XCircle className="w-4 h-4 text-rose-400" /> : <Menu className="w-4 h-4 text-emerald-400" />}
+          <span className="text-xs font-bold font-mono">{isMobileMenuOpen ? "Close" : "Menu"}</span>
+        </button>
+      </div>
+
+      {/* MOBILE DRAWER NAVIGATION MENU OVERLAY */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25 }}
+            className="md:hidden bg-slate-950 text-white border-b border-slate-800 px-4 py-4 space-y-2 z-40 shadow-2xl"
+          >
+            <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
+              Select Navigation Panel:
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              {adminNavItems.map((item) => {
+                const isActive = activeTab === item.id || (activeTab === 'overview' && item.id === 'funnel');
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleTabSelect(item.id)}
+                    className={`w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between transition-all ${
+                      isActive
+                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 font-black'
+                        : 'bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800/80'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-emerald-400'}`} />
+                      <span className="font-['Outfit']">{item.label}</span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold border ${
+                      isActive ? 'bg-emerald-700 text-emerald-100 border-emerald-500/40' : 'bg-slate-950 text-slate-400 border-slate-800'
+                    }`}>
+                      {item.badge}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 1. COLLAPSIBLE LEFT SIDEBAR NAVIGATION (DESKTOP / TABLET >= 768px) */}
       <motion.aside
         animate={{ width: isSidebarCollapsed ? 80 : 280 }}
         transition={{ type: "spring", stiffness: 350, damping: 32 }}
@@ -1257,25 +1327,68 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
               exit="hidden"
               className="space-y-6"
             >
-              {/* PRIMARY AI PROPERTY UPLOAD & PROMPT MEDIA CONSOLE */}
+              {/* PRIMARY SMART PROPERTY UPLOAD & PROMPT CONSOLE */}
               <motion.div variants={cardVariants} className="bg-slate-900 text-white rounded-3xl p-6 sm:p-7 border border-slate-800 shadow-2xl relative overflow-hidden">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 mb-5 border-b border-slate-800">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-black text-emerald-400 bg-emerald-950 px-3 py-1 rounded-full border border-emerald-800 uppercase font-mono tracking-wider flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Divyavastu AI Property Engine v2.0
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Divyavastu Smart Property Parser
                       </span>
                       <span className="text-[10px] font-black text-cyan-400 bg-cyan-950 px-3 py-1 rounded-full border border-cyan-800 uppercase font-mono tracking-wider">
-                        PostgreSQL Live Gazetteer
+                        Indore Locality Registry
                       </span>
                     </div>
                     <h2 className="text-xl sm:text-2xl font-black text-white font-['Outfit'] flex items-center gap-2">
-                      <UploadCloud className="w-6 h-6 text-emerald-400" /> AI Property Upload & Prompt Media Console
+                      <UploadCloud className="w-6 h-6 text-emerald-400" /> Property Upload & Prompt Parser Console
                     </h2>
                     <p className="text-xs text-slate-400">
-                      Type or paste natural language property prompt & attach property photos/videos. AI auto-parses 18+ fields, generates title/description, and persists to PostgreSQL.
+                      Type or paste property description & attach property photos/videos. All key parameters are automatically identified and verified.
                     </p>
+                  </div>
+                </div>
+
+                {/* 4-STEP VISUAL WORKFLOW STEPPER */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-6 p-3 bg-slate-950/90 rounded-2xl border border-slate-800/90 font-mono shadow-inner">
+                  <div className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-all ${
+                    newBhkLabel ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-500/40 shadow-sm' : 'bg-slate-900/80 text-slate-400 border border-slate-800/60'
+                  }`}>
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black text-xs shrink-0 border border-emerald-500/30">1</div>
+                    <div className="text-[11px] leading-tight min-w-0">
+                      <div className="font-black uppercase text-[9px] text-emerald-400 tracking-wider">Step 1: Input Prompt</div>
+                      <div className="truncate font-sans font-bold text-slate-200">Type or 1-Click Preset</div>
+                    </div>
+                  </div>
+
+                  <div className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-all ${
+                    liveExtractedPreview && !liveExtractedPreview.isGarbageInput ? 'bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 shadow-sm' : 'bg-slate-900/80 text-slate-400 border border-slate-800/60'
+                  }`}>
+                    <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-black text-xs shrink-0 border border-cyan-500/30">2</div>
+                    <div className="text-[11px] leading-tight min-w-0">
+                      <div className="font-black uppercase text-[9px] text-cyan-400 tracking-wider">Step 2: Auto Extraction</div>
+                      <div className="truncate font-sans font-bold text-slate-200">Identified Parameters</div>
+                    </div>
+                  </div>
+
+                  <div className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-all ${
+                    attachedMediaFiles.length > 0 ? 'bg-indigo-950/90 text-indigo-300 border border-indigo-500/40 shadow-sm' : 'bg-slate-900/80 text-slate-400 border border-slate-800/60'
+                  }`}>
+                    <div className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-black text-xs shrink-0 border border-indigo-500/30">3</div>
+                    <div className="text-[11px] leading-tight min-w-0">
+                      <div className="font-black uppercase text-[9px] text-indigo-400 tracking-wider">Step 3: Attach Media</div>
+                      <div className="truncate font-sans font-bold text-slate-200">Photos & Video</div>
+                    </div>
+                  </div>
+
+                  <div className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-all ${
+                    lastExtractedResult?.savedToDatabase ? 'bg-purple-950/90 text-purple-300 border border-purple-500/40 shadow-sm' : 'bg-slate-900/80 text-slate-400 border border-slate-800/60'
+                  }`}>
+                    <div className="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-black text-xs shrink-0 border border-purple-500/30">4</div>
+                    <div className="text-[11px] leading-tight min-w-0">
+                      <div className="font-black uppercase text-[9px] text-purple-400 tracking-wider">Step 4: Save & Publish</div>
+                      <div className="truncate font-sans font-bold text-slate-200">Publish Property</div>
+                    </div>
                   </div>
                 </div>
 
@@ -1291,14 +1404,34 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                         <button
                           type="button"
                           onClick={() => setNewBhkLabel('')}
-                          className="text-[11px] text-rose-400 hover:text-rose-300 font-bold font-mono transition-colors cursor-pointer"
+                          className="text-[11px] text-rose-400 hover:text-rose-300 font-bold font-mono transition-colors cursor-pointer flex items-center gap-1"
                         >
-                          ✕ Clear Prompt
+                          <span>↺ Reset Prompt</span>
                         </button>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {/* MOBILE PRESET SELECTOR DROPDOWN (SMALL DEVICES < 640px) */}
+                    <div className="sm:hidden mb-2">
+                      <select
+                        onChange={(e) => {
+                          const selected = PRESET_PROMPTS.find(p => p.id === e.target.value);
+                          if (selected) setNewBhkLabel(selected.text);
+                        }}
+                        value={PRESET_PROMPTS.find(p => p.text === newBhkLabel)?.id || ''}
+                        className="w-full bg-slate-950 text-emerald-300 text-xs font-mono p-3 rounded-xl border border-slate-800 focus:outline-none focus:border-emerald-500 font-bold"
+                      >
+                        <option value="" disabled>-- Select 1-Click Example Prompt --</option>
+                        {PRESET_PROMPTS.map((preset) => (
+                          <option key={preset.id} value={preset.id}>
+                            {preset.label} ({preset.badge})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* DESKTOP/TABLET PRESET GRID (DESKTOPS >= 640px) */}
+                    <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-3">
                       {PRESET_PROMPTS.map((preset) => (
                         <button
                           key={preset.id}
@@ -1327,224 +1460,328 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     </div>
                   </div>
 
-                  {/* EDITABLE PROMPT TEXTAREA INPUT BOX */}
+                  {/* EDITABLE PROMPT TEXTAREA INPUT BOX WITH ANIMATED GLOWING BORDER */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-extrabold text-slate-300 flex items-center gap-1.5 font-mono uppercase tracking-wide">
-                        <FileText className="w-3.5 h-3.5 text-emerald-400" />
-                        Editable Property Prompt / Description Input Box:
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                        AI Smart Property Prompt & Listing Description Box:
                       </label>
-                      <span className="text-[10px] font-mono font-bold text-slate-400">
+                      <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-800/80">
                         {newBhkLabel.length} characters typed
                       </span>
                     </div>
 
-                    <div className="relative">
-                      <textarea
-                        rows={4}
-                        value={newBhkLabel}
-                        onChange={(e) => setNewBhkLabel(e.target.value)}
-                        placeholder="Type or edit your property prompt here... (e.g. Premium 2bhk flat 525 sqft 15000 rent brokerage 30000 1+1 security deposit owner name John Doe +91 1234567890 status live in Nanda Nagar Indore facing east fully furnished ready to move)..."
-                        className="w-full bg-slate-950 text-emerald-300 placeholder-slate-500 text-xs font-mono p-4 rounded-2xl border-2 border-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none leading-relaxed shadow-inner"
-                      />
+                    <div className="spark-search-container shadow-2xl">
+                      <div className="spark-border-beam" />
+                      <div className="spark-search-inner">
+                        <textarea
+                          rows={4}
+                          value={newBhkLabel}
+                          onChange={(e) => setNewBhkLabel(e.target.value)}
+                          placeholder="Type or edit your property prompt here... (e.g. Premium 2bhk flat 525 sqft 15000 rent brokerage 30000 1+1 security deposit owner name John Doe +91 1234567890 status live in Nanda Nagar Indore facing east fully furnished ready to move)..."
+                          className="w-full bg-slate-950/95 text-emerald-300 placeholder-slate-500 text-xs font-mono p-4 border-0 focus:ring-0 transition-all outline-none leading-relaxed"
+                        />
+                      </div>
                     </div>
 
-                    {/* LIVE REAL-TIME AI EXTRACTION PREVIEW DECK */}
+                    {/* LIVE REAL-TIME IDENTIFIED PROPERTY ATTRIBUTES */}
                     {liveExtractedPreview && (
-                      <div className={`p-4 rounded-2xl border space-y-3 shadow-inner transition-all ${
+                      <div className={`p-4 sm:p-5 rounded-2xl border space-y-4 shadow-xl transition-all ${
                         liveExtractedPreview.isGarbageInput
                           ? 'bg-amber-950/40 border-amber-500/40'
-                          : 'bg-slate-950 border-emerald-500/40'
+                          : 'bg-slate-950/95 border-emerald-500/40'
                       }`}>
-                        <div className="flex items-center justify-between">
-                          <span className={`text-[10px] font-mono font-black uppercase tracking-wider flex items-center gap-1.5 ${
-                            liveExtractedPreview.isGarbageInput ? 'text-amber-400' : 'text-emerald-400'
-                          }`}>
-                            <Zap className={`w-3.5 h-3.5 fill-current ${liveExtractedPreview.isGarbageInput ? 'text-amber-400' : 'text-emerald-400 animate-pulse'}`} />
-                            {liveExtractedPreview.isGarbageInput
-                              ? '⚠️ Unrecognized Prompt Input - No valid property parameters detected in text'
-                              : 'Live Real-Time AI Extracted Values (12 Parameters Auto-Parsed as You Type):'}
-                          </span>
-                          <span className={`text-[9px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
-                            liveExtractedPreview.isGarbageInput
-                              ? 'text-amber-300 bg-amber-950/80 border-amber-700'
-                              : 'text-emerald-300 bg-emerald-950 border-emerald-800'
-                          }`}>
-                            {liveExtractedPreview.isGarbageInput ? '⚠️ Unrecognized' : '⚡ AI Auto-Parsed'}
-                          </span>
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                              liveExtractedPreview.isGarbageInput ? 'text-amber-400' : 'text-emerald-400'
+                            }`}>
+                              <Zap className={`w-3.5 h-3.5 fill-current ${liveExtractedPreview.isGarbageInput ? 'text-amber-400' : 'text-emerald-400 animate-pulse'}`} />
+                              {liveExtractedPreview.isGarbageInput
+                                ? '⚠️ Unrecognized Input - No property parameters detected'
+                                : 'Auto-Identified Property Attributes (Extracted in Real-Time):'}
+                            </span>
+                            <span className={`text-[9px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
+                              liveExtractedPreview.isGarbageInput
+                                ? 'text-amber-300 bg-amber-950/80 border-amber-700'
+                                : 'text-emerald-300 bg-emerald-950 border-emerald-800'
+                            }`}>
+                              {liveExtractedPreview.isGarbageInput ? '⚠️ Unrecognized' : '✓ Verified & Auto-Parsed'}
+                            </span>
+                          </div>
+
+                          {!liveExtractedPreview.isGarbageInput && (
+                            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                              <button
+                                type="button"
+                                onClick={handleOpenInlineEdit}
+                                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-300 text-[11px] font-extrabold rounded-xl transition-all border border-amber-500/40 flex items-center gap-1 cursor-pointer shadow-sm"
+                              >
+                                <SlidersHorizontal className="w-3 h-3" />
+                                <span>✏️ Edit Fields</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={handleCopyJson}
+                                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 text-[11px] font-bold rounded-xl transition-all border border-slate-700 flex items-center gap-1 cursor-pointer shadow-sm"
+                              >
+                                {copiedJson ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-400" />}
+                                <span>{copiedJson ? 'Copied!' : '📋 Copy Summary'}</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={handleFillMediaFromExtracted}
+                                className="px-3 py-1.5 bg-cyan-950/90 hover:bg-cyan-900 text-cyan-200 text-[11px] font-extrabold rounded-xl transition-all border border-cyan-500/40 flex items-center gap-1 cursor-pointer shadow-sm"
+                              >
+                                <Tag className="w-3 h-3 text-cyan-400" />
+                                <span>🏷️ Tag Photos</span>
+                              </button>
+                            </div>
+                          )}
                         </div>
 
-                        {/* 18-Card Full Real-Time Parameter Inspection Grid */}
+                        {/* CATEGORY SEGMENTED FILTER TABS FOR 18 ATTRIBUTES */}
+                        {!liveExtractedPreview.isGarbageInput && (
+                          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                            <button
+                              type="button"
+                              onClick={() => setActiveAttributeTab('all')}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold font-mono transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                                activeAttributeTab === 'all'
+                                  ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/50 shadow-md'
+                                  : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:text-slate-200'
+                              }`}
+                            >
+                              <span>🌐 All 18 Attributes</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setActiveAttributeTab('location')}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold font-mono transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                                activeAttributeTab === 'location'
+                                  ? 'bg-blue-950 text-blue-300 border border-blue-500/50 shadow-md'
+                                  : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:text-slate-200'
+                              }`}
+                            >
+                              <span>📍 Location & Type (6)</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setActiveAttributeTab('pricing')}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold font-mono transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                                activeAttributeTab === 'pricing'
+                                  ? 'bg-amber-950 text-amber-300 border border-amber-500/50 shadow-md'
+                                  : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:text-slate-200'
+                              }`}
+                            >
+                              <span>💰 Rent & Financials (5)</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setActiveAttributeTab('specs')}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold font-mono transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                                activeAttributeTab === 'specs'
+                                  ? 'bg-purple-950 text-purple-300 border border-purple-500/50 shadow-md'
+                                  : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:text-slate-200'
+                              }`}
+                            >
+                              <span>🛋️ Specs & Amenities (7)</span>
+                            </button>
+                          </div>
+                        )}
+
+                        {/* 18-CARD CATEGORIZED REAL-TIME PARAMETER INSPECTION GRID */}
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
-                          {/* 1. BHK Layout */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🏠 BHK Layout</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              liveExtractedPreview.bhk === 'Unspecified' ? 'text-slate-500 italic' : 'text-white'
-                            }`}>{liveExtractedPreview.bhk}</span>
-                          </div>
+                          {/* CATEGORY 1: LOCATION & TYPE */}
+                          {(activeAttributeTab === 'all' || activeAttributeTab === 'location') && (
+                            <>
+                              {/* 1. BHK Layout */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🏠 BHK Layout</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  liveExtractedPreview.bhk === 'Unspecified' ? 'text-slate-500 italic' : 'text-white'
+                                }`}>{liveExtractedPreview.bhk}</span>
+                              </div>
 
-                          {/* 2. Property Type */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🏷️ Property Type</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              !liveExtractedPreview.type ? 'text-slate-500 italic' : 'text-indigo-300'
-                            }`}>
-                              {liveExtractedPreview.type === 'FLAT' ? 'Flat / Apartment' :
-                               liveExtractedPreview.type === 'HOUSE' ? 'Independent House' :
-                               liveExtractedPreview.type === 'VILLA' ? 'Villa' :
-                               liveExtractedPreview.type === 'PLOT' ? 'Plot / Land' :
-                               liveExtractedPreview.type === 'PENTHOUSE' ? 'Penthouse' :
-                               liveExtractedPreview.type === 'STUDIO' ? 'Studio Apartment' :
-                               liveExtractedPreview.type === 'AIRBNB' ? 'Airbnb' :
-                               (liveExtractedPreview.type || 'Unspecified')}
-                            </span>
-                          </div>
+                              {/* 2. Property Type */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🏷️ Property Type</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  !liveExtractedPreview.type ? 'text-slate-500 italic' : 'text-indigo-300'
+                                }`}>
+                                  {liveExtractedPreview.type === 'FLAT' ? 'Flat / Apartment' :
+                                   liveExtractedPreview.type === 'HOUSE' ? 'Independent House' :
+                                   liveExtractedPreview.type === 'VILLA' ? 'Villa' :
+                                   liveExtractedPreview.type === 'PLOT' ? 'Plot / Land' :
+                                   liveExtractedPreview.type === 'PENTHOUSE' ? 'Penthouse' :
+                                   liveExtractedPreview.type === 'STUDIO' ? 'Studio Apartment' :
+                                   liveExtractedPreview.type === 'AIRBNB' ? 'Airbnb' :
+                                   (liveExtractedPreview.type || 'Unspecified')}
+                                </span>
+                              </div>
 
-                          {/* 3. Locality / Sector */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📍 Locality / Sector</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              liveExtractedPreview.sector === 'Not Specified' ? 'text-slate-500 italic' : 'text-emerald-300'
-                            }`} title={liveExtractedPreview.sector}>
-                              {liveExtractedPreview.sector}
-                            </span>
-                          </div>
+                              {/* 3. Locality / Sector */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📍 Locality / Sector</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  liveExtractedPreview.sector === 'Not Specified' ? 'text-slate-500 italic' : 'text-emerald-300'
+                                }`} title={liveExtractedPreview.sector}>
+                                  {liveExtractedPreview.sector}
+                                </span>
+                              </div>
 
-                          {/* 4. City & State */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🏙️ City & State</span>
-                            <span className="text-xs font-black font-['Outfit'] truncate block mt-0.5 text-blue-300">
-                              {liveExtractedPreview.city || 'Indore'}{liveExtractedPreview.state ? `, ${liveExtractedPreview.state}` : ''}
-                            </span>
-                          </div>
+                              {/* 4. City & State */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🏙️ City & State</span>
+                                <span className="text-xs font-black font-['Outfit'] truncate block mt-0.5 text-blue-300">
+                                  {liveExtractedPreview.city || 'Indore'}{liveExtractedPreview.state ? `, ${liveExtractedPreview.state}` : ''}
+                                </span>
+                              </div>
 
-                          {/* 5. Monthly Rent */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">💰 Monthly Rent</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              liveExtractedPreview.rentVal === 'Unspecified' ? 'text-slate-500 italic' : 'text-amber-300'
-                            }`}>{liveExtractedPreview.rentVal}</span>
-                          </div>
+                              {/* 11. Landmark */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🏢 Landmark</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  !liveExtractedPreview.landmark ? 'text-slate-500 italic' : 'text-yellow-300'
+                                }`} title={liveExtractedPreview.landmark || 'Unspecified'}>
+                                  {liveExtractedPreview.landmark || 'Unspecified'}
+                                </span>
+                              </div>
 
-                          {/* 6. Brokerage Fee */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">💼 Brokerage Fee</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              liveExtractedPreview.brokerageVal === 'Unmentioned' ? 'text-slate-500 italic' : 'text-purple-300'
-                            }`}>{liveExtractedPreview.brokerageVal}</span>
-                          </div>
+                              {/* 12. Pincode */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📌 Pincode</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  !liveExtractedPreview.pincode ? 'text-slate-500 italic' : 'text-indigo-400'
+                                }`}>{liveExtractedPreview.pincode || 'Unspecified'}</span>
+                              </div>
+                            </>
+                          )}
 
-                          {/* 7. Security Deposit */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🛡️ Security Deposit</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              !liveExtractedPreview.depositVal || liveExtractedPreview.depositVal === 'Unspecified' ? 'text-slate-500 italic' : 'text-rose-300'
-                            }`}>{liveExtractedPreview.depositVal || 'Unspecified'}</span>
-                          </div>
+                          {/* CATEGORY 2: RENT & FINANCIALS */}
+                          {(activeAttributeTab === 'all' || activeAttributeTab === 'pricing') && (
+                            <>
+                              {/* 5. Monthly Rent */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">💰 Monthly Rent</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  liveExtractedPreview.rentVal === 'Unspecified' ? 'text-slate-500 italic' : 'text-amber-300'
+                                }`}>{liveExtractedPreview.rentVal}</span>
+                              </div>
 
-                          {/* 8. Carpet Area */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📐 Carpet Area</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              !liveExtractedPreview.areaSqFt || liveExtractedPreview.areaSqFt === 'Unspecified' ? 'text-slate-500 italic' : 'text-orange-300'
-                            }`}>{liveExtractedPreview.areaSqFt || 'Unspecified'}</span>
-                          </div>
+                              {/* 6. Brokerage Fee */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">💼 Brokerage Fee</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  liveExtractedPreview.brokerageVal === 'Unmentioned' ? 'text-slate-500 italic' : 'text-purple-300'
+                                }`}>{liveExtractedPreview.brokerageVal}</span>
+                              </div>
 
-                          {/* 9. Bathrooms */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🛁 Bathrooms</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              !liveExtractedPreview.bathrooms ? 'text-slate-500 italic' : 'text-cyan-300'
-                            }`}>{liveExtractedPreview.bathrooms ? `${liveExtractedPreview.bathrooms} Baths` : 'Unspecified'}</span>
-                          </div>
+                              {/* 7. Security Deposit */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🛡️ Security Deposit</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  !liveExtractedPreview.depositVal || liveExtractedPreview.depositVal === 'Unspecified' ? 'text-slate-500 italic' : 'text-rose-300'
+                                }`}>{liveExtractedPreview.depositVal || 'Unspecified'}</span>
+                              </div>
 
-                          {/* 10. Possession Date */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📅 Possession Date</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              !liveExtractedPreview.possessionDate ? 'text-slate-500 italic' : 'text-emerald-400'
-                            }`}>{liveExtractedPreview.possessionDate || 'Unspecified'}</span>
-                          </div>
+                              {/* 10. Possession Date */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📅 Possession Date</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  !liveExtractedPreview.possessionDate ? 'text-slate-500 italic' : 'text-emerald-400'
+                                }`}>{liveExtractedPreview.possessionDate || 'Unspecified'}</span>
+                              </div>
 
-                          {/* 11. Landmark */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🏢 Landmark</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              !liveExtractedPreview.landmark ? 'text-slate-500 italic' : 'text-yellow-300'
-                            }`} title={liveExtractedPreview.landmark || 'Unspecified'}>
-                              {liveExtractedPreview.landmark || 'Unspecified'}
-                            </span>
-                          </div>
+                              {/* 17. Listing Status */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">⚡ Listing Status</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  !liveExtractedPreview.status ? 'text-slate-500 italic' : 'text-lime-300'
+                                }`}>
+                                  {liveExtractedPreview.status || 'LIVE'}
+                                </span>
+                              </div>
+                            </>
+                          )}
 
-                          {/* 12. Pincode */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📌 Pincode</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              !liveExtractedPreview.pincode ? 'text-slate-500 italic' : 'text-indigo-400'
-                            }`}>{liveExtractedPreview.pincode || 'Unspecified'}</span>
-                          </div>
+                          {/* CATEGORY 3: SPECS & AMENITIES */}
+                          {(activeAttributeTab === 'all' || activeAttributeTab === 'specs') && (
+                            <>
+                              {/* 8. Carpet Area */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📐 Carpet Area</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  !liveExtractedPreview.areaSqFt || liveExtractedPreview.areaSqFt === 'Unspecified' ? 'text-slate-500 italic' : 'text-orange-300'
+                                }`}>{liveExtractedPreview.areaSqFt || 'Unspecified'}</span>
+                              </div>
 
-                          {/* 13. Owner Name */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">👤 Owner Name</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              liveExtractedPreview.ownerName === 'Not Specified' ? 'text-slate-500 italic' : 'text-cyan-300'
-                            }`} title={liveExtractedPreview.ownerName}>
-                              {liveExtractedPreview.ownerName}
-                            </span>
-                          </div>
+                              {/* 9. Bathrooms */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🛁 Bathrooms</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  !liveExtractedPreview.bathrooms ? 'text-slate-500 italic' : 'text-cyan-300'
+                                }`}>{liveExtractedPreview.bathrooms ? `${liveExtractedPreview.bathrooms} Baths` : 'Unspecified'}</span>
+                              </div>
 
-                          {/* 14. Owner Phone */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📞 Owner Contact</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              liveExtractedPreview.ownerPhone === 'Not Specified' ? 'text-slate-500 italic' : 'text-sky-300'
-                            }`} title={liveExtractedPreview.ownerPhone}>
-                              {liveExtractedPreview.ownerPhone}
-                            </span>
-                          </div>
+                              {/* 13. Owner Name */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">👤 Owner Name</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  liveExtractedPreview.ownerName === 'Not Specified' ? 'text-slate-500 italic' : 'text-cyan-300'
+                                }`} title={liveExtractedPreview.ownerName}>
+                                  {liveExtractedPreview.ownerName}
+                                </span>
+                              </div>
 
-                          {/* 15. Vastu Facing */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🧭 Vastu Facing</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              liveExtractedPreview.vastuFacing === 'Not Specified' ? 'text-slate-500 italic' : 'text-teal-300'
-                            }`}>{liveExtractedPreview.vastuFacing}</span>
-                          </div>
+                              {/* 14. Owner Phone */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">📞 Owner Contact</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  liveExtractedPreview.ownerPhone === 'Not Specified' ? 'text-slate-500 italic' : 'text-sky-300'
+                                }`} title={liveExtractedPreview.ownerPhone}>
+                                  {liveExtractedPreview.ownerPhone}
+                                </span>
+                              </div>
 
-                          {/* 16. Furnishing Status */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🛋️ Furnishing</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              liveExtractedPreview.furnishingStatus === 'UNSPECIFIED' ? 'text-slate-500 italic' : 'text-fuchsia-300'
-                            }`}>
-                              {liveExtractedPreview.furnishingStatus === 'FULLY_FURNISHED' ? 'Fully Furnished' :
-                               liveExtractedPreview.furnishingStatus === 'SEMI_FURNISHED' ? 'Semi Furnished' :
-                               liveExtractedPreview.furnishingStatus === 'UNFURNISHED' ? 'Unfurnished' :
-                               'Unspecified'}
-                            </span>
-                          </div>
+                              {/* 15. Vastu Facing */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🧭 Vastu Facing</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  liveExtractedPreview.vastuFacing === 'Not Specified' ? 'text-slate-500 italic' : 'text-teal-300'
+                                }`}>{liveExtractedPreview.vastuFacing}</span>
+                              </div>
 
-                          {/* 17. Listing Status */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">⚡ Listing Status</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              !liveExtractedPreview.status ? 'text-slate-500 italic' : 'text-lime-300'
-                            }`}>
-                              {liveExtractedPreview.status || 'LIVE'}
-                            </span>
-                          </div>
+                              {/* 16. Furnishing Status */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🛋️ Furnishing</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  liveExtractedPreview.furnishingStatus === 'UNSPECIFIED' ? 'text-slate-500 italic' : 'text-fuchsia-300'
+                                }`}>
+                                  {liveExtractedPreview.furnishingStatus === 'FULLY_FURNISHED' ? 'Fully Furnished' :
+                                   liveExtractedPreview.furnishingStatus === 'SEMI_FURNISHED' ? 'Semi Furnished' :
+                                   liveExtractedPreview.furnishingStatus === 'UNFURNISHED' ? 'Unfurnished' :
+                                   'Unspecified'}
+                                </span>
+                              </div>
 
-                          {/* 18. Amenities */}
-                          <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                            <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">✨ Key Amenities</span>
-                            <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
-                              !liveExtractedPreview.amenities || liveExtractedPreview.amenities.length === 0 ? 'text-slate-500 italic' : 'text-violet-300'
-                            }`} title={liveExtractedPreview.amenities?.join(', ') || 'Standard'}>
-                              {liveExtractedPreview.amenities && liveExtractedPreview.amenities.length > 0 ? liveExtractedPreview.amenities.join(', ') : 'Standard'}
-                            </span>
-                          </div>
+                              {/* 18. Amenities */}
+                              <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all hover:scale-[1.02]">
+                                <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">✨ Key Amenities</span>
+                                <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
+                                  !liveExtractedPreview.amenities || liveExtractedPreview.amenities.length === 0 ? 'text-slate-500 italic' : 'text-violet-300'
+                                }`} title={liveExtractedPreview.amenities?.join(', ') || 'Standard'}>
+                                  {liveExtractedPreview.amenities && liveExtractedPreview.amenities.length > 0 ? liveExtractedPreview.amenities.join(', ') : 'Standard'}
+                                </span>
+                              </div>
+                            </>
+                          )}
                         </div>
 
                         {/* Optional Missing Fields Indicator */}
@@ -1565,8 +1802,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                         <Camera className="w-3.5 h-3.5 text-cyan-400" />
                         Property Photos & Walkthrough Video Attachments:
                       </span>
-                      <span className="text-[10px] font-bold text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800">
-                        Cloudinary CDN Ready
+                      <span className="text-[10px] font-bold text-cyan-400 bg-cyan-950 px-2.5 py-0.5 rounded-full border border-cyan-800">
+                        High-Speed Storage
                       </span>
                     </label>
 
@@ -1645,7 +1882,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
                     <div className="text-xs text-slate-400 flex items-center gap-1.5 font-mono">
                       <Info className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>Submitting will parse prompt parameters, generate description & save to DB</span>
+                      <span>Submitting will parse prompt parameters, generate title & publish property listing</span>
                     </div>
 
                     <button
@@ -1653,317 +1890,11 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                       className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs sm:text-sm rounded-2xl transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
-                      <span>🚀 Upload Property & Save to PostgreSQL DB</span>
+                      <span>✨ Save & Publish Property Listing</span>
                     </button>
                   </div>
                 </form>
               </motion.div>
-
-              {/* EXACT EXTRACTED PARAMETERS SUMMARY CARD FOR UPLOADED PROPERTIES */}
-              {lastExtractedResult && (
-                <motion.div
-                  variants={cardVariants}
-                  className="bg-slate-900 text-white rounded-3xl p-6 sm:p-7 border border-slate-800 shadow-xl overflow-hidden relative"
-                >
-                  {/* Decorative Gradient Background Overlay */}
-                  <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 mb-6 border-b border-slate-800 relative z-10">
-                    <div>
-                      <div className="flex items-center gap-2.5 flex-wrap">
-                        <span className="text-[10px] font-black text-emerald-300 bg-emerald-950/80 border border-emerald-500/30 px-3 py-1 rounded-full uppercase font-mono flex items-center gap-1.5 shadow-xs">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                          Exact AI Extracted Values
-                        </span>
-
-                        <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase font-mono border ${lastExtractedResult.savedToDatabase
-                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                            : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                          }`}>
-                          {lastExtractedResult.savedToDatabase ? '⚡ PostgreSQL DB Auto-Persisted' : '⚡ Loaded from L1 Cache'}
-                        </span>
-
-                        <span className="text-xs text-slate-400 font-mono">
-                          Parsed at {lastExtractedResult.extractedAt}
-                        </span>
-                      </div>
-
-                      <h3 className="text-xl sm:text-2xl font-black text-white font-['Outfit'] mt-2 flex items-center gap-2">
-                        <Database className="w-6 h-6 text-emerald-400" /> Exact Extracted Property Parameters Summary
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-1">
-                        Exact values extracted by Divyavastu AI parser from the uploaded property description. Verified & stored in PostgreSQL database.
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={handleSaveToDatabase}
-                        disabled={isSavingDb}
-                        className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-xl transition-all shadow-md shadow-emerald-600/30 flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Database className="w-3.5 h-3.5 text-white" />
-                        <span>{isSavingDb ? 'Persisting...' : '💾 Save to PostgreSQL DB'}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleOpenInlineEdit}
-                        className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-extrabold rounded-xl transition-all border border-amber-500/40 flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <SlidersHorizontal className="w-3.5 h-3.5" />
-                        <span>✏️ Quick Inline Edit</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleCopyJson}
-                        className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition-all border border-slate-700 flex items-center gap-1.5 cursor-pointer"
-                      >
-                        {copiedJson ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                        <span>{copiedJson ? 'Copied JSON!' : 'Copy JSON'}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleFillMediaFromExtracted}
-                        className="px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-extrabold rounded-xl transition-all shadow-md shadow-cyan-600/20 flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <UploadCloud className="w-3.5 h-3.5" />
-                        <span>Pre-fill CDN Tags</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {dbSaveSuccessMsg && (
-                    <div className="mb-6 p-4 bg-emerald-950/80 border border-emerald-500/50 rounded-2xl text-emerald-300 font-mono text-xs font-bold relative z-10 flex items-center justify-between shadow-lg">
-                      <span className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                        {dbSaveSuccessMsg}
-                      </span>
-                      <button onClick={() => setDbSaveSuccessMsg(null)} className="text-emerald-400 hover:text-white text-xs font-black">✕</button>
-                    </div>
-                  )}
-
-                  {/* MISSING ATTRIBUTES WARNING DECK */}
-                  {lastExtractedResult.missingFields && lastExtractedResult.missingFields.length > 0 && (
-                    <div className="mb-6 bg-amber-950/70 border border-amber-500/50 rounded-2xl p-4 text-amber-200 relative z-10 space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                          <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 animate-bounce" />
-                          <div>
-                            <h4 className="font-extrabold text-xs text-amber-300 font-['Outfit'] uppercase tracking-wider">
-                              ⚠️ Missing Attributes Warning Deck ({lastExtractedResult.missingFields.length} Attributes Unmentioned in Prompt)
-                            </h4>
-                            <p className="text-[11px] text-amber-200/80">
-                              The input prompt was missing some standard property parameters. You can proceed with auto-filled defaults or edit them inline.
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            type="button"
-                            onClick={handleAutoFillDefaults}
-                            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <Zap className="w-3.5 h-3.5 fill-current" />
-                            <span>⚡ Proceed & Auto-Fill Standard Defaults</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={handleOpenInlineEdit}
-                            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-extrabold rounded-xl border border-amber-500/40 transition-all flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <SlidersHorizontal className="w-3.5 h-3.5" />
-                            <span>✏️ Quick Inline Edit</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1.5 pt-1 border-t border-amber-500/20">
-                        {lastExtractedResult.missingFields.map((field: string, idx: number) => (
-                          <span key={idx} className="text-[10px] font-mono font-bold bg-amber-900/80 text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-500/30">
-                            ⚠️ {field} Unmentioned
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* RAW PROMPT INPUT DISPLAY */}
-                  <div className="mb-6 bg-slate-950 p-4 rounded-2xl border border-slate-800/90 relative z-10 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider block">
-                        Uploaded Property Prompt / Description:
-                      </span>
-                      <span className="text-[9px] font-mono font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
-                        ⚡ Live Prompt Input Sync
-                      </span>
-                    </div>
-                    <p className="text-xs font-mono text-emerald-300 bg-slate-900/60 p-3 rounded-xl border border-slate-800 italic leading-relaxed">
-                      "{newBhkLabel.trim() ? newBhkLabel : lastExtractedResult.rawInput}"
-                    </p>
-                  </div>
-
-                  {/* 12 EXTRACTED PARAMETERS GRID */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 relative z-10 mb-6">
-                    {/* 1. BHK */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition-all">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">BHK Layout</span>
-                        <Home className="w-4 h-4 text-emerald-400" />
-                      </div>
-                      <div className="text-lg font-black text-white font-['Outfit']">{lastExtractedResult.bhk || 'N/A'}</div>
-                      <span className="text-[10px] text-slate-400 font-mono">Parsed Configuration</span>
-                    </div>
-
-                    {/* 2. Type */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition-all">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Property Type</span>
-                        <Layers className="w-4 h-4 text-indigo-400" />
-                      </div>
-                      <div className="text-lg font-black text-indigo-300 font-['Outfit']">{lastExtractedResult.type || 'Flat'}</div>
-                      <span className="text-[10px] text-slate-400 font-mono">Structure Category</span>
-                    </div>
-
-                    {/* 3. City */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Target City</span>
-                        <MapPin className="w-4 h-4 text-cyan-400" />
-                      </div>
-                      <div className="text-lg font-black text-cyan-300 font-['Outfit']">{lastExtractedResult.city || 'Indore'}</div>
-                      <span className="text-[10px] text-slate-400 font-mono">PostgreSQL Gazetteer</span>
-                    </div>
-
-                    {/* 4. Locality / Sector */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition-all">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Locality / Sector</span>
-                        <Compass className="w-4 h-4 text-emerald-400" />
-                      </div>
-                      <div className="text-base font-extrabold text-emerald-300 font-['Outfit'] truncate" title={lastExtractedResult.sector}>
-                        {lastExtractedResult.sector || 'Not Specified'}
-                      </div>
-                      <span className="text-[10px] text-emerald-400 font-mono font-bold">
-                        {lastExtractedResult.sector !== 'Not Specified' ? '✓ Saved to PostgreSQL' : 'Unspecified'}
-                      </span>
-                    </div>
-
-                    {/* 5. Monthly Rent */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-amber-500/40 transition-all">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Monthly Rent</span>
-                        <DollarSign className="w-4 h-4 text-amber-400" />
-                      </div>
-                      <div className="text-lg font-black text-amber-300 font-['Outfit']">{lastExtractedResult.rentVal || '₹18,000'}</div>
-                      <span className="text-[10px] text-slate-400 font-mono">Extracted Rent Amount</span>
-                    </div>
-
-                    {/* 6. Brokerage Fee */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-purple-500/40 transition-all">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Brokerage Fee</span>
-                        <Tag className="w-4 h-4 text-purple-400" />
-                      </div>
-                      <div className="text-base font-extrabold text-purple-300 font-['Outfit'] truncate">
-                        {lastExtractedResult.brokerageVal || 'None / Direct Owner'}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Extracted Brokerage</span>
-                    </div>
-
-                    {/* 7. Carpet Area (Sq Ft) */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-teal-500/40 transition-all">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Carpet Area</span>
-                        <SlidersHorizontal className="w-4 h-4 text-teal-400" />
-                      </div>
-                      <div className="text-base font-extrabold text-teal-300 font-['Outfit']">
-                        {lastExtractedResult.areaSqFt || 'Not Specified'}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Square Feet</span>
-                    </div>
-
-                    {/* 8. Security Deposit */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-blue-500/40 transition-all">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Security Deposit</span>
-                        <ShieldCheck className="w-4 h-4 text-blue-400" />
-                      </div>
-                      <div className="text-sm font-extrabold text-blue-300 font-['Outfit'] truncate">
-                        {lastExtractedResult.depositVal || 'Not Specified'}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Lease Security Terms</span>
-                    </div>
-
-                    {/* 9. Owner Contact Details */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-pink-500/40 transition-all sm:col-span-2">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Owner Contact Details</span>
-                        <Users className="w-4 h-4 text-pink-400" />
-                      </div>
-                      <div className="text-sm font-extrabold text-pink-300 font-['Outfit'] truncate">
-                        {lastExtractedResult.ownerName && lastExtractedResult.ownerName !== 'Not Specified'
-                          ? `${lastExtractedResult.ownerName} (${lastExtractedResult.ownerPhone || 'No Phone'})`
-                          : (lastExtractedResult.ownerPhone || 'Not Specified')}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Owner / Lead Seller Info</span>
-                    </div>
-
-                    {/* 10. Vastu Facing */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Vastu Facing</span>
-                        <Sparkles className="w-4 h-4 text-cyan-400" />
-                      </div>
-                      <div className="text-sm font-extrabold text-cyan-300 font-['Outfit']">
-                        {lastExtractedResult.vastuFacing || 'Not Specified'}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Solar Direction</span>
-                    </div>
-
-                    {/* 11. Extracted Amenities */}
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 hover:border-teal-500/40 transition-all">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
-                        <span className="text-[10px] font-mono uppercase font-extrabold">Extracted Amenities</span>
-                        <CheckCircle2 className="w-4 h-4 text-teal-400" />
-                      </div>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {lastExtractedResult.amenities && lastExtractedResult.amenities.length > 0 ? (
-                          lastExtractedResult.amenities.map((am: string, idx: number) => (
-                            <span key={idx} className="text-[9px] font-extrabold bg-teal-950 text-teal-300 border border-teal-800 px-2 py-0.5 rounded-md">
-                              {am}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-xs text-slate-500 italic">None Specified</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* AUTO-GENERATED TITLE & SEARCH INDEX DISPLAY */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 relative z-10 pt-4 border-t border-slate-800 text-xs font-mono">
-                    <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
-                      <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Generated Public Listing Title:</span>
-                      <p className="text-emerald-300 font-bold font-['Outfit'] text-sm">
-                        {lastExtractedResult.title || `${lastExtractedResult.bhk} ${lastExtractedResult.type} in ${lastExtractedResult.sector}`}
-                      </p>
-                    </div>
-
-                    <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
-                      <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Tenant Deck Search Index Label:</span>
-                      <p className="text-amber-300 font-bold font-['Outfit'] text-sm">
-                        {lastExtractedResult.label || `${lastExtractedResult.bhk} ${lastExtractedResult.type} (${lastExtractedResult.sector})`}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
 
               {/* BHK DEMAND VISUAL SCORE GAUGES */}
               <motion.div variants={cardVariants}>

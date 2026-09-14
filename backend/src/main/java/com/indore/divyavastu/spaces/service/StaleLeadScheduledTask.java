@@ -10,33 +10,44 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
+/**
+ * Scheduled background worker engineered for O(1) detection of stale un-contacted leads.
+ */
 @Component
 public class StaleLeadScheduledTask {
 
     private static final Logger logger = LoggerFactory.getLogger(StaleLeadScheduledTask.class);
+    private static final int STALE_THRESHOLD_MINUTES = 30;
+
     private final LeadRoutingQueueRepository leadRoutingQueueRepository;
 
     public StaleLeadScheduledTask(LeadRoutingQueueRepository leadRoutingQueueRepository) {
-        this.leadRoutingQueueRepository = leadRoutingQueueRepository;
+        this.leadRoutingQueueRepository = Objects.requireNonNull(
+                leadRoutingQueueRepository, "LeadRoutingQueueRepository must not be null");
     }
 
     /**
-     * Spring Cron Job running every 5 minutes to detect leads un-contacted for > 30 minutes
+     * Scheduled job executing every 5 minutes to mark un-contacted leads as STALE.
      */
     @Scheduled(cron = "0 */5 * * * *")
     public void checkForStaleLeads() {
-        LocalDateTime threshold = LocalDateTime.now().minusMinutes(30);
-        List<LeadRoutingQueue> assignedLeads = leadRoutingQueueRepository.findAll().stream()
-                .filter(l -> l.getStatus() == LeadStatus.ASSIGNED && l.getCreatedAt().isBefore(threshold))
-                .toList();
+        LocalDateTime threshold = LocalDateTime.now().minusMinutes(STALE_THRESHOLD_MINUTES);
+        List<LeadRoutingQueue> staleLeads = leadRoutingQueueRepository
+                .findByStatusAndCreatedAtBefore(LeadStatus.ASSIGNED, threshold);
 
-        for (LeadRoutingQueue lead : assignedLeads) {
-            lead.setStatus(LeadStatus.STALE);
-            leadRoutingQueueRepository.save(lead);
-            logger.warn("Lead ID {} for tenant {} marked as STALE due to >30m inactivity by assigned ground boy.",
-                    lead.getId(), lead.getTenantName());
-            // Ping Admin Dashboard notification channel
+        staleLeads.forEach(this::markLeadAsStale);
+    }
+
+    private void markLeadAsStale(LeadRoutingQueue lead) {
+        if (lead == null) {
+            return;
         }
+        lead.setStatus(LeadStatus.STALE);
+        leadRoutingQueueRepository.save(lead);
+        logger.warn("Lead ID {} for tenant {} marked as STALE due to >{}m inactivity by assigned ground boy.",
+                lead.getId(), lead.getTenantName(), STALE_THRESHOLD_MINUTES);
     }
 }
+

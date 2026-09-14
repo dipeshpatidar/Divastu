@@ -4,7 +4,11 @@ import com.indore.divyavastu.spaces.entity.EmployeeProfile;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
+/**
+ * Service calculating monthly payroll and deal incentive distributions for Ground Boys and WFH Admins.
+ */
 @Service
 public class PayrollService {
 
@@ -13,6 +17,9 @@ public class PayrollService {
     private static final BigDecimal WFH_ADMIN_BASE_SALARY = new BigDecimal("8000.00");
 
     public BigDecimal calculateGroundBoyPayout(int closedDealsCount) {
+        if (closedDealsCount < 0) {
+            throw new IllegalArgumentException("Closed deals count cannot be negative");
+        }
         BigDecimal totalIncentive = GROUND_BOY_DEAL_INCENTIVE.multiply(BigDecimal.valueOf(closedDealsCount));
         return GROUND_BOY_BASE_SALARY.add(totalIncentive);
     }
@@ -22,11 +29,15 @@ public class PayrollService {
     }
 
     public BigDecimal calculateEmployeeMonthlyPayout(EmployeeProfile employeeProfile) {
-        if ("GROUND_BOY".equalsIgnoreCase(employeeProfile.getRoleType())) {
+        Objects.requireNonNull(employeeProfile, "EmployeeProfile must not be null");
+
+        String roleType = employeeProfile.getRoleType();
+        if ("GROUND_BOY".equalsIgnoreCase(roleType)) {
             return calculateGroundBoyPayout(employeeProfile.getClosedDealsCount());
-        } else if ("WFH_ADMIN".equalsIgnoreCase(employeeProfile.getRoleType())) {
+        } else if ("WFH_ADMIN".equalsIgnoreCase(roleType)) {
             return calculateAdminPayout();
         }
-        return employeeProfile.getBaseSalary();
+
+        return employeeProfile.getBaseSalary() != null ? employeeProfile.getBaseSalary() : BigDecimal.ZERO;
     }
 }

@@ -10,7 +10,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
+/**
+ * Controller handling real-time Webhook subscriptions and lead payload ingestion from Meta Graph API.
+ */
 @RestController
 @RequestMapping("/api/v1/webhooks/meta-leads")
 public class MetaLeadWebhookController {
@@ -23,11 +27,12 @@ public class MetaLeadWebhookController {
     private final MetaLeadIngestionService metaLeadIngestionService;
 
     public MetaLeadWebhookController(MetaLeadIngestionService metaLeadIngestionService) {
-        this.metaLeadIngestionService = metaLeadIngestionService;
+        this.metaLeadIngestionService = Objects.requireNonNull(
+                metaLeadIngestionService, "MetaLeadIngestionService must not be null");
     }
 
     /**
-     * Meta Webhook Subscription Verification Endpoint
+     * Meta Webhook Subscription Verification Endpoint.
      */
     @GetMapping
     public ResponseEntity<String> verifyWebhook(
@@ -38,43 +43,54 @@ public class MetaLeadWebhookController {
         if ("subscribe".equals(mode) && metaVerifyToken.equals(token)) {
             logger.info("Meta Webhook successfully verified with challenge token.");
             return ResponseEntity.ok(challenge);
-        } else {
-            logger.warn("Meta Webhook verification failed. Invalid verify token provided: {}", token);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Verification failed");
         }
+
+        logger.warn("Meta Webhook verification failed. Invalid verify token provided.");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Verification failed");
     }
 
     /**
-     * Real-time Meta Lead Ingestion Endpoint (Triggers Asynchronous Processing)
+     * Real-time Meta Lead Ingestion Endpoint (Triggers Asynchronous Processing).
      */
     @PostMapping
     public ResponseEntity<String> handleIncomingMetaLead(@RequestBody Map<String, Object> payload) {
-        logger.info("Received Meta Lead Webhook event payload: {}", payload);
+        if (payload == null || payload.isEmpty()) {
+            return ResponseEntity.badRequest().body("Payload cannot be empty");
+        }
 
+        logger.info("Received Meta Lead Webhook event payload with keys: {}", payload.keySet());
+        processPayloadEntries(payload);
+
+        return ResponseEntity.ok("EVENT_RECEIVED");
+    }
+
+    private void processPayloadEntries(Map<String, Object> payload) {
         try {
-            if (payload.containsKey("entry")) {
-                List<?> entries = (List<?>) payload.get("entry");
-                for (Object entryObj : entries) {
-                    if (entryObj instanceof Map<?, ?> entryMap && entryMap.containsKey("changes")) {
-                        List<?> changes = (List<?>) entryMap.get("changes");
-                        for (Object changeObj : changes) {
-                            if (changeObj instanceof Map<?, ?> changeMap && changeMap.containsKey("value")) {
-                                Map<?, ?> valueMap = (Map<?, ?>) changeMap.get("value");
-                                if (valueMap.containsKey("leadgen_id")) {
-                                    String leadId = valueMap.get("leadgen_id").toString();
-                                    // Trigger non-blocking async parsing service
-                                    metaLeadIngestionService.processMetaLeadAsync(leadId);
-                                }
-                            }
-                        }
-                    }
+            if (!payload.containsKey("entry") || !(payload.get("entry") instanceof List<?> entries)) {
+                return;
+            }
+            for (Object entryObj : entries) {
+                if (entryObj instanceof Map<?, ?> entryMap) {
+                    processEntryMap(entryMap);
                 }
             }
         } catch (Exception e) {
-            logger.error("Error extracting leadgen_id from Meta webhook payload", e);
+            logger.error("Error parsing leadgen_id from Meta webhook payload", e);
         }
+    }
 
-        // Return 200 OK immediately to satisfy Meta Graph API webhook SLA
-        return ResponseEntity.ok("EVENT_RECEIVED");
+    private void processEntryMap(Map<?, ?> entryMap) {
+        if (!entryMap.containsKey("changes") || !(entryMap.get("changes") instanceof List<?> changes)) {
+            return;
+        }
+        for (Object changeObj : changes) {
+            if (changeObj instanceof Map<?, ?> changeMap && changeMap.get("value") instanceof Map<?, ?> valueMap) {
+                if (valueMap.containsKey("leadgen_id")) {
+                    String leadId = valueMap.get("leadgen_id").toString();
+                    metaLeadIngestionService.processMetaLeadAsync(leadId);
+                }
+            }
+        }
     }
 }
+

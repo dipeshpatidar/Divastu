@@ -10,5 +10,5 @@ import java.util.List;
 
 @Repository
 public interface LeadRoutingQueueRepository extends JpaRepository<LeadRoutingQueue, Long> {
-    List<LeadStatus> findByStatusAndCreatedAtBefore(LeadStatus status, LocalDateTime threshold);
+    List<LeadRoutingQueue> findByStatusAndCreatedAtBefore(LeadStatus status, LocalDateTime threshold);
 }
