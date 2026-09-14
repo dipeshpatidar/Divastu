@@ -1,22 +1,34 @@
 package com.indore.divyavastu.spaces.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ParsedPropertyDTO {
     private String bhk;
     private String type;
+    private String status = "LIVE";
     private String city;
     private String sector;
     private String colony;
     private String rentVal;
     private Double rentAmount;
     private String brokerageVal;
+    private String brokerageDays;
     private String areaSqFt;
     private String depositVal;
+    private String bathrooms;
+    private String furnishingStatus;
+    private String possessionDate;
+    private String address;
+    private String state;
+    private String pincode;
+    private String landmark;
+    private String description;
     private String ownerName;
     private String ownerPhone;
     private String vastuFacing;
-    private List<String> amenities;
+    private List<String> amenities = new ArrayList<>();
+    private List<String> missingFields = new ArrayList<>();
     private String title;
     private String label;
     private boolean savedToDatabase;
@@ -185,6 +197,94 @@ public class ParsedPropertyDTO {
 
     public void setOwnerPhone(String ownerPhone) {
         this.ownerPhone = ownerPhone;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getBrokerageDays() {
+        return brokerageDays;
+    }
+
+    public void setBrokerageDays(String brokerageDays) {
+        this.brokerageDays = brokerageDays;
+    }
+
+    public String getBathrooms() {
+        return bathrooms;
+    }
+
+    public void setBathrooms(String bathrooms) {
+        this.bathrooms = bathrooms;
+    }
+
+    public String getFurnishingStatus() {
+        return furnishingStatus;
+    }
+
+    public void setFurnishingStatus(String furnishingStatus) {
+        this.furnishingStatus = furnishingStatus;
+    }
+
+    public String getPossessionDate() {
+        return possessionDate;
+    }
+
+    public void setPossessionDate(String possessionDate) {
+        this.possessionDate = possessionDate;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getPincode() {
+        return pincode;
+    }
+
+    public void setPincode(String pincode) {
+        this.pincode = pincode;
+    }
+
+    public String getLandmark() {
+        return landmark;
+    }
+
+    public void setLandmark(String landmark) {
+        this.landmark = landmark;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public List<String> getMissingFields() {
+        return missingFields;
+    }
+
+    public void setMissingFields(List<String> missingFields) {
+        this.missingFields = missingFields;
     }
 
     public boolean isSavedToDatabase() {

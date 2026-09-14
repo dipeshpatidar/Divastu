@@ -246,4 +246,31 @@ public class PropertyController {
         com.indore.divyavastu.spaces.dto.ParsedPropertyDTO result = propertyParserService.parseAndSave(prompt);
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * POST /api/v1/properties/create-from-parsed - Persist verified ParsedPropertyDTO to PostgreSQL DB listings
+     */
+    @PostMapping("/create-from-parsed")
+    public ResponseEntity<Map<String, Object>> createFromParsedPrompt(@RequestBody com.indore.divyavastu.spaces.dto.ParsedPropertyDTO dto) {
+        com.indore.divyavastu.spaces.entity.RentalDetails listing = new com.indore.divyavastu.spaces.entity.RentalDetails();
+        listing.setTitle(dto.getTitle() != null ? dto.getTitle() : "Property Listing");
+        listing.setDescription(dto.getDescription());
+        listing.setSector(dto.getSector() != null ? dto.getSector() : "Vijay Nagar");
+        listing.setAddress(dto.getAddress() != null ? dto.getAddress() : dto.getSector());
+        listing.setMonthlyRent(java.math.BigDecimal.valueOf(dto.getRentAmount() != null ? dto.getRentAmount() : 18000.0));
+        listing.setSecurityDeposit(java.math.BigDecimal.valueOf((dto.getRentAmount() != null ? dto.getRentAmount() : 18000.0) * 2));
+        listing.setOwnerPhoneNumber(dto.getOwnerPhone() != null ? dto.getOwnerPhone() : "+91 98765 43210");
+        listing.setLatitude(22.7533);
+        listing.setLongitude(75.8937);
+        listing.setStatus(com.indore.divyavastu.spaces.entity.ListingStatus.ACTIVE);
+        
+        com.indore.divyavastu.spaces.entity.Listing saved = listingRepository.save(listing);
+        
+        return ResponseEntity.ok(Map.of(
+            "status", "SUCCESS",
+            "message", "Property created and mapped to PostgreSQL listings & rental_details tables",
+            "propertyId", saved.getId(),
+            "parsedDto", dto
+        ));
+    }
 }

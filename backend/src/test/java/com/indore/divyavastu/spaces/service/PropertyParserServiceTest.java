@@ -114,4 +114,37 @@ public class PropertyParserServiceTest {
         assertEquals("458888248", dto.getOwnerPhone());
         assertEquals("Not Specified", dto.getVastuFacing());
     }
+
+    @Test
+    public void testFull18PlusAttributeExtractionAndMissingTelemetry() {
+        String fullPrompt = "Premium 2bhk flat 525 sqft 15000 brokerage 30000 rent 1+1 security deposit owner name Piyushi Saha 9876543210 status live in Nanda Nagar Indore facing east fully furnished ready to move near Main Square 452010 3 bathrooms";
+        ParsedPropertyDTO dto = propertyParserService.parseAndSave(fullPrompt);
+
+        assertNotNull(dto);
+        assertEquals("2 BHK", dto.getBhk());
+        assertEquals("Flat", dto.getType());
+        assertEquals(30000.0, dto.getRentAmount());
+        assertEquals("₹15,000", dto.getBrokerageVal());
+        assertEquals("525 sqft", dto.getAreaSqFt());
+        assertEquals("1+1 Security Deposit", dto.getDepositVal());
+        assertEquals("Piyushi Saha", dto.getOwnerName());
+        assertEquals("9876543210", dto.getOwnerPhone());
+        assertEquals("East Facing", dto.getVastuFacing());
+        assertEquals("Fully Furnished", dto.getFurnishingStatus());
+        assertEquals("Ready To Move", dto.getPossessionDate());
+        assertEquals("LIVE", dto.getStatus());
+        assertEquals("Nanda Nagar", dto.getSector());
+        assertEquals("Indore", dto.getCity());
+        assertEquals("452010", dto.getPincode());
+        assertEquals("Main Square", dto.getLandmark());
+        assertEquals("3 Baths", dto.getBathrooms());
+
+        // Test partial prompt missing fields detection
+        String partialPrompt = "2bhk flat in Nanda Nagar";
+        ParsedPropertyDTO partialDto = propertyParserService.parseAndSave(partialPrompt);
+        assertNotNull(partialDto);
+        assertNotNull(partialDto.getMissingFields());
+        assertTrue(partialDto.getMissingFields().contains("Bathrooms Count"));
+        assertTrue(partialDto.getMissingFields().contains("Monthly Rent"));
+    }
 }

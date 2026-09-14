@@ -165,5 +165,25 @@ export const propertyService = {
     }
 
     return await response.json();
+  },
+
+  /**
+   * Persists verified ParsedPropertyDTO to PostgreSQL database listings & rental_details tables
+   */
+  async createPropertyFromParsed(dto: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/create-from-parsed`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(dto)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create property from parsed DTO: status ${response.status}`);
+    }
+
+    return await response.json();
   }
 };
