@@ -80,9 +80,9 @@ public class PropertyParserService {
     private static final Pattern STATUS_PATTERN = Pattern.compile("\\b(live|pending|sold|expired|rented|removed)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern OWNER_NAME_PATTERN = Pattern.compile(
-            "\\b(?:owner\\s*name|owner)\\s*[:\\-]?\\s*([A-Za-z\\s]{2,30}?)(?=\\s+\\d|\\s+phone|\\s+mobile|\\s+rent|\\s+brokerage|$)",
+            "\\b(?:owner\\s*name|owner)\\s*[:\\-]?\\s*([A-Za-z\\s]{2,30}?)(?=\\s+\\d|\\s+\\+?91|\\s+phone|\\s+mobile|\\s+rent|\\s+brokerage|$)",
             Pattern.CASE_INSENSITIVE);
-    private static final Pattern PHONE_PATTERN = Pattern.compile("\\b(?:\\+?91[\\-\\s]?)?([6-9]\\d{9}|\\d{8,11})\\b");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("\\b(?:\\+?91[\\-\\s]?)?([1-9]\\d{9}|\\d{8,11})\\b");
 
     private static final Pattern NUM_PRICE_PATTERN = Pattern.compile("\\b(\\d{4,6})\\b");
     private static final Pattern K_PRICE_PATTERN = Pattern.compile("\\b(\\d{1,2})k\\b", Pattern.CASE_INSENSITIVE);

@@ -49,28 +49,28 @@ const PRESET_PROMPTS = [
     label: '🏠 2 BHK Family Flat',
     subtitle: 'Full details: Rent, Deposit, Brokerage & Vastu',
     badge: 'Most Popular',
-    text: 'Premium 2bhk flat 525 sqft 15000 rent brokerage 30000 1+1 security deposit owner name Rajesh Agrawal 9826000000 status live in Nanda Nagar Indore facing east fully furnished ready to move'
+    text: 'Premium 2bhk flat 525 sqft 15000 rent brokerage 30000 1+1 security deposit owner name John Doe +91 1234567890 status live in Nanda Nagar Indore facing east fully furnished ready to move'
   },
   {
     id: '3bhk-luxury-penthouse',
     label: '🏢 3 BHK Luxury Penthouse',
     subtitle: 'High-rise with Terrace, Pool & Furnishing',
     badge: 'High-Value',
-    text: 'Luxury 3 BHK Penthouse 1800 sqft in Vijay Nagar Indore rent 45000 brokerage 22500 security deposit 90000 owner name Rajesh Agrawal 9826000000 north east facing terrace balcony pool fully furnished ready to move status live'
+    text: 'Luxury 3 BHK Penthouse 1800 sqft in Vijay Nagar Indore rent 45000 brokerage 22500 security deposit 90000 owner name John Doe +91 1234567890 north east facing terrace balcony pool fully furnished ready to move status live'
   },
   {
     id: '4bhk-gated-villa',
     label: '🏡 4 BHK Gated Villa',
     subtitle: 'Independent Villa with Private Garden & Gym',
     badge: 'Premium',
-    text: 'Spacious 4 BHK Independent Villa 2500 sqft in Nipania Indore rent 60000 brokerage 30000 security deposit 120000 owner name Rajesh Agrawal 9826000000 east facing private garden gym semi furnished ready to move status live'
+    text: 'Spacious 4 BHK Independent Villa 2500 sqft in Nipania Indore rent 60000 brokerage 30000 security deposit 120000 owner name John Doe +91 1234567890 east facing private garden gym semi furnished ready to move status live'
   },
   {
     id: 'express-2bhk-quick',
     label: '⚡ Express 2 BHK Quick',
     subtitle: 'Fast 3-line prompt for rapid property listing',
     badge: 'Fast Upload',
-    text: '2bhk flat in Saket Nagar 22000 rent owner Rajesh Agrawal 9826000000 east facing semi furnished status live'
+    text: '2bhk flat in Saket Nagar 22000 rent owner John Doe +91 1234567890 east facing semi furnished status live'
   }
 ];
 
@@ -131,7 +131,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
   // Extracted Property Parameters Inspection State
   const [lastExtractedResult, setLastExtractedResult] = useState<any>({
-    rawInput: "Premium 2bhk flat 525 sqft 15000 brokerage 30000 rent 1+1 security deposit owner name Piyushi Saha 9876543210 status live in Nanda Nagar Indore facing east fully furnished ready to move",
+    rawInput: "Premium 2bhk flat 525 sqft 15000 rent brokerage 30000 1+1 security deposit owner name John Doe +91 1234567890 status live in Nanda Nagar Indore facing east fully furnished ready to move",
     bhk: "2 BHK",
     type: "FLAT",
     city: "Indore",
@@ -145,8 +145,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     bathrooms: 2,
     areaSqFt: "525 sqft",
     depositVal: "1+1 Security Deposit",
-    ownerName: "Piyushi Saha",
-    ownerPhone: "9876543210",
+    ownerName: "John Doe",
+    ownerPhone: "+91 1234567890",
     vastuFacing: "East Facing",
     furnishingStatus: "FULLY_FURNISHED",
     possessionDate: "Ready to Move (Immediate)",
@@ -201,8 +201,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       state: lastExtractedResult.state || 'Madhya Pradesh',
       pincode: lastExtractedResult.pincode || '452010',
       landmark: lastExtractedResult.landmark || 'Near Main Market',
-      ownerName: lastExtractedResult.ownerName && lastExtractedResult.ownerName !== 'Not Specified' ? lastExtractedResult.ownerName : 'Piyushi Saha',
-      ownerPhone: lastExtractedResult.ownerPhone && lastExtractedResult.ownerPhone !== 'Not Specified' ? lastExtractedResult.ownerPhone : '+91 98765 43210',
+      ownerName: lastExtractedResult.ownerName && lastExtractedResult.ownerName !== 'Not Specified' ? lastExtractedResult.ownerName : 'John Doe',
+      ownerPhone: lastExtractedResult.ownerPhone && lastExtractedResult.ownerPhone !== 'Not Specified' ? lastExtractedResult.ownerPhone : '+91 1234567890',
       missingFields: []
     };
     setLastExtractedResult(updated);
@@ -235,8 +235,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         landmark: lastExtractedResult.landmark || 'Near Market',
         status: (lastExtractedResult.status || 'LIVE').toUpperCase(),
         description: lastExtractedResult.rawInput || lastExtractedResult.title,
-        ownerName: lastExtractedResult.ownerName && lastExtractedResult.ownerName !== 'Not Specified' ? lastExtractedResult.ownerName : 'Piyushi Saha',
-        ownerPhoneNumber: lastExtractedResult.ownerPhone && lastExtractedResult.ownerPhone !== 'Not Specified' ? lastExtractedResult.ownerPhone : '+91 98765 43210'
+        ownerName: lastExtractedResult.ownerName && lastExtractedResult.ownerName !== 'Not Specified' ? lastExtractedResult.ownerName : 'John Doe',
+        ownerPhoneNumber: lastExtractedResult.ownerPhone && lastExtractedResult.ownerPhone !== 'Not Specified' ? lastExtractedResult.ownerPhone : '+91 1234567890'
       };
 
       const saved = await propertyService.createPropertyFromParsed(payload);
@@ -1272,7 +1272,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                         rows={4}
                         value={newBhkLabel}
                         onChange={(e) => setNewBhkLabel(e.target.value)}
-                        placeholder="Type or edit your property prompt here... (e.g. Premium 2bhk flat 525 sqft 15000 rent brokerage 30000 1+1 security deposit owner name Rajesh Agrawal 9826000000 status live in Nanda Nagar Indore facing east fully furnished ready to move)..."
+                        placeholder="Type or edit your property prompt here... (e.g. Premium 2bhk flat 525 sqft 15000 rent brokerage 30000 1+1 security deposit owner name John Doe +91 1234567890 status live in Nanda Nagar Indore facing east fully furnished ready to move)..."
                         className="w-full bg-slate-950 text-emerald-300 placeholder-slate-500 text-xs font-mono p-4 rounded-2xl border-2 border-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none leading-relaxed shadow-inner"
                       />
                     </div>
@@ -1321,7 +1321,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                           <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
                             <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">Owner Details</span>
                             <span className="text-xs font-black text-cyan-300 font-['Outfit'] truncate block mt-0.5" title={`${liveExtractedPreview.ownerName} (${liveExtractedPreview.ownerPhone})`}>
-                              {liveExtractedPreview.ownerName !== 'Not Specified' ? liveExtractedPreview.ownerName : 'Rajesh Agrawal'}
+                              {liveExtractedPreview.ownerName !== 'Not Specified' ? liveExtractedPreview.ownerName : 'John Doe'}
                             </span>
                           </div>
 
