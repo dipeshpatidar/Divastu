@@ -37,20 +37,23 @@ public class PropertyParserService {
             "\\b([1-9]|10)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:bath|baths|bathroom|bathrooms|toilet|washroom)\\b|\\b(?:bath|baths|bathroom|bathrooms|toilet|washroom)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?([1-9]|10)\\b",
             Pattern.CASE_INSENSITIVE);
 
-    // Immediate & Distance-Independent Rent Patterns (Excludes numbers explicitly tagged with brokerage/deposit/sqft/bath)
-    private static final Pattern IMMEDIATE_RENT_PATTERN = Pattern.compile(
-            "(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)(?!\\s*(?:brokerage|broker\\s*fee|commission|deposit|sqft|bath))\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,2}?(?:rent|per\\s*month|/month|pm|monthly\\s*rent)\\b|\\b(?:monthly\\s*rent|rent|pm)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,2}?(?:rs\\.?|₹)?\\s*(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b",
+    // Immediate & High-Precision Forward/Reverse Rent Patterns (Strict word boundaries & zero cross-field bleeding)
+    private static final Pattern FWD_RENT_PATTERN = Pattern.compile(
+            "\\b(?:monthly\\s*rent|rent|per\\s*month|/month|pm|rnt|ren)\\b\\s*[:\\-]?\\s*(?:(?!(?:brokerage|commission|deposit|security|depost))[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,2}?(?:rs\\.?|₹)?\\s*\\b(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b(?!\\s*(?:days|day|sqft|sq|feet|square|meters|bath))",
             Pattern.CASE_INSENSITIVE);
-    private static final Pattern RENT_KEYWORD_PATTERN = Pattern.compile(
-            "(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)(?!\\s*(?:brokerage|broker\\s*fee|commission|deposit|sqft|bath))\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:rent|per\\s*month|/month|pm|rnt|ren|monthly\\s*rent)\\b|\\b(?:monthly\\s*rent|rent|rnt|ren)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:rs\\.?|₹)?\\s*(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b",
+    private static final Pattern REV_RENT_PATTERN = Pattern.compile(
+            "\\b(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b(?!\\s*(?:days|day|brokerage|broker|commission|deposit|security|sqft|sq|feet|square|meters|bath))\\s*[:\\-]?\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,2}?(?:rent|per\\s*month|/month|pm|rnt|ren|monthly\\s*rent)\\b",
             Pattern.CASE_INSENSITIVE);
 
-    // Explicit Brokerage Pattern (Forward & Reverse Multi-Word Distance Independent)
-    private static final Pattern BROKERAGE_PATTERN = Pattern.compile(
-            "(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:brokerage|broker\\s*fee|commission)\\b|\\b(?:brokerage|broker\\s*fee|commission)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:rs\\.?|₹)?\\s*(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b",
+    // Explicit Forward & Reverse Brokerage Patterns
+    private static final Pattern FWD_BROKERAGE_PATTERN = Pattern.compile(
+            "\\b(?:brokerage|broker\\s*fee|commission)\\b\\s*[:\\-]?\\s*(?:(?!(?:rent|rnt|ren|monthly|deposit|security|depost))[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,2}?(?:rs\\.?|₹)?\\s*\\b(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b(?!\\s*(?:days|day|sqft|sq|feet|square|meters|bath))",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern REV_BROKERAGE_PATTERN = Pattern.compile(
+            "\\b(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b(?!\\s*(?:days|day|rent|monthly|rnt|ren|deposit|security|depost|sqft|sq|feet|square|meters|bath))\\s*[:\\-]?\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,2}?(?:brokerage|broker\\s*fee|commission)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern BROKERAGE_DAYS_PATTERN = Pattern.compile(
-            "\\b(\\d{1,2})\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,5}?(?:day|days)\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,5}?(?:rent|brokerage)?\\b",
+            "\\b(\\d{1,2})\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,3}?(?:day|days)\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,3}?(?:rent|brokerage)?\\b",
             Pattern.CASE_INSENSITIVE);
 
     // Explicit Area / Sqft Pattern (Forward & Reverse Multi-Word Distance Independent, 3+ digits)
@@ -58,9 +61,12 @@ public class PropertyParserService {
             "\\b(\\d{1,3}(?:,\\d{3})+|\\d{3,5})\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,5}?(?:sqft|sq\\.ft|sq\\s*ft|sqfeet|square\\s*feet|sq\\s*meters|sqm)\\b|\\b(?:sqft|sq\\.ft|sq\\s*ft|sqfeet|square\\s*feet|sq\\s*meters|sqm)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,5}?(\\d{1,3}(?:,\\d{3})+|\\d{3,5})\\b",
             Pattern.CASE_INSENSITIVE);
 
-    // Explicit Security Deposit Pattern (Forward & Reverse Multi-Word Distance Independent)
-    private static final Pattern DEPOSIT_PATTERN = Pattern.compile(
-            "(\\d+(?:\\+\\d+)?|\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:security\\s*deposit|deposit|dep|depost|deposite|scurity)\\b|\\b(?:security\\s*deposit|deposit|depost|deposite|scurity)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:rs\\.?|₹)?\\s*(\\d+(?:\\+\\d+)?|\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b",
+    // Explicit Forward & Reverse Security Deposit Patterns
+    private static final Pattern FWD_DEPOSIT_PATTERN = Pattern.compile(
+            "\\b(?:security\\s*deposit|deposit|dep|depost|deposite|scurity)\\b\\s*[:\\-]?\\s*(?:(?!(?:rent|rnt|ren|monthly|brokerage|commission))[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,2}?(?:rs\\.?|₹)?\\s*\\b([1-3]\\+[1-3]|\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b(?!\\s*(?:days|day|sqft|sq|feet|square|meters|bath))",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern REV_DEPOSIT_PATTERN = Pattern.compile(
+            "\\b([1-3]\\+[1-3]|\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b(?!\\s*(?:days|day|rent|monthly|rnt|ren|brokerage|broker|commission|sqft|sq|feet|square|meters|bath))\\s*[:\\-]?\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,2}?(?:security\\s*deposit|deposit|dep|depost|deposite|scurity)\\b",
             Pattern.CASE_INSENSITIVE);
 
     // Furnishing & Possession Patterns
@@ -87,7 +93,7 @@ public class PropertyParserService {
             Pattern.CASE_INSENSITIVE);
     private static final Pattern PHONE_PATTERN = Pattern.compile("\\b(?:\\+?91[\\-\\s]?)?([1-9]\\d{9}|\\d{8,11})\\b");
 
-    private static final Pattern NUM_PRICE_PATTERN = Pattern.compile("\\b(\\d{4,6})\\b");
+    private static final Pattern NUM_PRICE_PATTERN = Pattern.compile("\\b(\\d{4,6})\\b(?!\\s*(?:sqft|sq|feet|square|meters|days|day|bhk|baths|bed|pin|pincode|deposit|security))", Pattern.CASE_INSENSITIVE);
     private static final Pattern K_PRICE_PATTERN = Pattern.compile("\\b(\\d{1,2})k\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern CITY_NER_PATTERN = Pattern
             .compile("\\b(?:in|at|near|around)\\s+([a-zA-Z]{3,20})(?:\\s+city)?\\b", Pattern.CASE_INSENSITIVE);
@@ -242,17 +248,99 @@ public class PropertyParserService {
             status = statusMatcher.group(1).toUpperCase();
         }
 
-        // 3A. Explicit Brokerage & Brokerage Days Extractor
+        // 2.6. Pincode & Owner Phone Extractor (Extracted early to isolate 6-digit PIN & 10-digit phone)
+        String pincode = null;
+        Matcher pinMatcher = PINCODE_PATTERN.matcher(input);
+        if (pinMatcher.find()) {
+            pincode = pinMatcher.group(1);
+        }
+
+        String ownerName = null;
+        Matcher ownerMatcher = OWNER_NAME_PATTERN.matcher(input);
+        if (ownerMatcher.find()) {
+            ownerName = capitalizeWords(ownerMatcher.group(1).trim());
+        }
+
+        String ownerPhone = null;
+        Matcher phoneMatcher = PHONE_PATTERN.matcher(input);
+        while (phoneMatcher.find()) {
+            String pCandidate = phoneMatcher.group(1);
+            if (!pCandidate.equals(pincode)) {
+                ownerPhone = pCandidate;
+                break;
+            }
+        }
+
+        // 3A. Price / Rent Extractor (Extracted FIRST as primary monetary field)
+        double rentAmount = 0.0;
+        boolean rentFound = false;
+
+        Matcher fwdRent = FWD_RENT_PATTERN.matcher(normalized);
+        while (fwdRent.find()) {
+            String rawRent = fwdRent.group(1);
+            if (rawRent != null) {
+                String cleanRent = rawRent.replace(",", "");
+                if (pincode != null && pincode.equals(cleanRent)) continue;
+                if (ownerPhone != null && ownerPhone.contains(cleanRent)) continue;
+
+                rentAmount = cleanRent.toLowerCase().endsWith("k")
+                        ? Double.parseDouble(cleanRent.substring(0, cleanRent.length() - 1)) * 1000
+                        : Double.parseDouble(cleanRent);
+                rentFound = true;
+                break;
+            }
+        }
+
+        if (!rentFound) {
+            Matcher revRent = REV_RENT_PATTERN.matcher(normalized);
+            while (revRent.find()) {
+                String rawRent = revRent.group(1);
+                if (rawRent != null) {
+                    String cleanRent = rawRent.replace(",", "");
+                    if (pincode != null && pincode.equals(cleanRent)) continue;
+                    if (ownerPhone != null && ownerPhone.contains(cleanRent)) continue;
+
+                    rentAmount = cleanRent.toLowerCase().endsWith("k")
+                            ? Double.parseDouble(cleanRent.substring(0, cleanRent.length() - 1)) * 1000
+                            : Double.parseDouble(cleanRent);
+                    rentFound = true;
+                    break;
+                }
+            }
+        }
+
+        // 3B. Explicit Brokerage & Brokerage Days Extractor
         String brokerageVal = "Unmentioned";
-        Matcher brokerageMatcher = BROKERAGE_PATTERN.matcher(normalized);
-        if (brokerageMatcher.find()) {
-            String rawVal = brokerageMatcher.group(1) != null ? brokerageMatcher.group(1) : brokerageMatcher.group(2);
+        Matcher fwdBrokerage = FWD_BROKERAGE_PATTERN.matcher(normalized);
+        if (fwdBrokerage.find()) {
+            String rawVal = fwdBrokerage.group(1);
             if (rawVal != null) {
                 String cleanVal = rawVal.replace(",", "");
-                double bAmt = cleanVal.toLowerCase().endsWith("k")
-                        ? Double.parseDouble(cleanVal.substring(0, cleanVal.length() - 1)) * 1000
-                        : Double.parseDouble(cleanVal);
-                brokerageVal = String.format("₹%,.0f", bAmt);
+                if ((pincode == null || !pincode.equals(cleanVal)) && (ownerPhone == null || !ownerPhone.contains(cleanVal))) {
+                    double bAmt = cleanVal.toLowerCase().endsWith("k")
+                            ? Double.parseDouble(cleanVal.substring(0, cleanVal.length() - 1)) * 1000
+                            : Double.parseDouble(cleanVal);
+                    if (!rentFound || Math.abs(rentAmount - bAmt) > 0.01) {
+                        brokerageVal = String.format("₹%,.0f", bAmt);
+                    }
+                }
+            }
+        }
+        if ("Unmentioned".equals(brokerageVal)) {
+            Matcher revBrokerage = REV_BROKERAGE_PATTERN.matcher(normalized);
+            if (revBrokerage.find()) {
+                String rawVal = revBrokerage.group(1);
+                if (rawVal != null) {
+                    String cleanVal = rawVal.replace(",", "");
+                    if ((pincode == null || !pincode.equals(cleanVal)) && (ownerPhone == null || !ownerPhone.contains(cleanVal))) {
+                        double bAmt = cleanVal.toLowerCase().endsWith("k")
+                                ? Double.parseDouble(cleanVal.substring(0, cleanVal.length() - 1)) * 1000
+                                : Double.parseDouble(cleanVal);
+                        if (!rentFound || Math.abs(rentAmount - bAmt) > 0.01) {
+                            brokerageVal = String.format("₹%,.0f", bAmt);
+                        }
+                    }
+                }
             }
         }
 
@@ -264,22 +352,40 @@ public class PropertyParserService {
             brokerageDays = "15 Days"; // Default brokerage terms
         }
 
-        // 3B. Explicit Sqft Area Extractor
+        // 3C. Explicit Sqft Area Extractor
         String areaSqFt = null;
         Matcher sqftMatcher = SQFT_PATTERN.matcher(input);
         if (sqftMatcher.find()) {
-            areaSqFt = sqftMatcher.group(1) + " sqft";
+            String candidateArea = sqftMatcher.group(1) != null ? sqftMatcher.group(1) : sqftMatcher.group(2);
+            areaSqFt = candidateArea + " sqft";
         }
 
-        // 3C. Explicit Security Deposit Extractor
+        // 3D. Explicit Security Deposit Extractor
         String depositVal = null;
-        Matcher depositMatcher = DEPOSIT_PATTERN.matcher(input);
-        if (depositMatcher.find()) {
-            String depRaw = depositMatcher.group(1) != null ? depositMatcher.group(1) : depositMatcher.group(2);
-            depositVal = depRaw + " Security Deposit";
+        Matcher fwdDeposit = FWD_DEPOSIT_PATTERN.matcher(normalized);
+        if (fwdDeposit.find()) {
+            String depRaw = fwdDeposit.group(1);
+            if (depRaw != null) {
+                String cleanDep = depRaw.replace(",", "");
+                if ((pincode == null || !pincode.equals(cleanDep)) && (ownerPhone == null || !ownerPhone.contains(cleanDep))) {
+                    depositVal = depRaw + " Security Deposit";
+                }
+            }
+        }
+        if (depositVal == null) {
+            Matcher revDeposit = REV_DEPOSIT_PATTERN.matcher(normalized);
+            if (revDeposit.find()) {
+                String depRaw = revDeposit.group(1);
+                if (depRaw != null) {
+                    String cleanDep = depRaw.replace(",", "");
+                    if ((pincode == null || !pincode.equals(cleanDep)) && (ownerPhone == null || !ownerPhone.contains(cleanDep))) {
+                        depositVal = depRaw + " Security Deposit";
+                    }
+                }
+            }
         }
 
-        // 3D. Furnishing & Possession Date Extractor
+        // 3E. Furnishing & Possession Date Extractor
         String furnishingStatus = null;
         Matcher furnMatcher = FURNISHING_PATTERN.matcher(normalized);
         if (furnMatcher.find()) {
@@ -292,17 +398,11 @@ public class PropertyParserService {
             possessionDate = capitalizeWords(possMatcher.group(0).trim());
         }
 
-        // 3E. State, Pincode & Landmark Extractor
+        // 3F. State & Landmark Extractor
         String state = null;
         Matcher stateMatcher = STATE_PATTERN.matcher(input);
         if (stateMatcher.find()) {
             state = capitalizeWords(stateMatcher.group(1));
-        }
-
-        String pincode = null;
-        Matcher pinMatcher = PINCODE_PATTERN.matcher(input);
-        if (pinMatcher.find()) {
-            pincode = pinMatcher.group(1);
         }
 
         String landmark = null;
@@ -310,71 +410,13 @@ public class PropertyParserService {
         if (lmMatcher.find()) {
             landmark = capitalizeWords(lmMatcher.group(1).trim());
         }
-
-        // 3F. Explicit Owner Name & Phone Extractor
-        String ownerName = null;
-        Matcher ownerMatcher = OWNER_NAME_PATTERN.matcher(input);
-        if (ownerMatcher.find()) {
-            ownerName = capitalizeWords(ownerMatcher.group(1).trim());
-        }
-
-        String ownerPhone = null;
-        Matcher phoneMatcher = PHONE_PATTERN.matcher(input);
-        while (phoneMatcher.find()) {
-            String pCandidate = phoneMatcher.group(1);
-            // Ignore matched rent, brokerage, pincode or area numbers
-            if (!pCandidate.equals(pincode) && !pCandidate.equals(areaSqFt != null ? areaSqFt.split(" ")[0] : "")
-                    && (brokerageVal == null || !brokerageVal.contains(pCandidate))) {
-                ownerPhone = pCandidate;
-                break;
-            }
-        }
-
-        // 3G. Price / Rent Extractor (Disambiguated from Brokerage, Pincode & Area)
-        double rentAmount = 0.0;
-        boolean rentFound = false;
-
-        Matcher immRentMatcher = IMMEDIATE_RENT_PATTERN.matcher(normalized);
-        if (immRentMatcher.find()) {
-            String rawRent = immRentMatcher.group(1) != null ? immRentMatcher.group(1) : immRentMatcher.group(2);
-            if (rawRent != null) {
-                String cleanRent = rawRent.replace(",", "");
-                rentAmount = cleanRent.toLowerCase().endsWith("k")
-                        ? Double.parseDouble(cleanRent.substring(0, cleanRent.length() - 1)) * 1000
-                        : Double.parseDouble(cleanRent);
-                rentFound = true;
-            }
-        }
-
-        if (!rentFound) {
-            Matcher explicitRentMatcher = RENT_KEYWORD_PATTERN.matcher(normalized);
-            while (explicitRentMatcher.find()) {
-                String rawRent = explicitRentMatcher.group(1) != null ? explicitRentMatcher.group(1)
-                        : explicitRentMatcher.group(2);
-                if (rawRent != null) {
-                    String cleanRent = rawRent.replace(",", "");
-                    if (brokerageVal != null && brokerageVal.replace(",", "").contains(cleanRent)) {
-                        continue;
-                    }
-                    if (depositVal != null && depositVal.replace(",", "").contains(cleanRent)) {
-                        continue;
-                    }
-                    rentAmount = cleanRent.toLowerCase().endsWith("k")
-                            ? Double.parseDouble(cleanRent.substring(0, cleanRent.length() - 1)) * 1000
-                            : Double.parseDouble(cleanRent);
-                    rentFound = true;
-                    break;
-                }
-            }
-        }
-
         if (!rentFound) {
             Matcher numMatcher = NUM_PRICE_PATTERN.matcher(input);
             while (numMatcher.find()) {
                 String candidateVal = numMatcher.group(1);
-                // Exclude matches if equal to extracted area sqft, pincode or brokerage
                 if (candidateVal.equals(pincode) || (areaSqFt != null && areaSqFt.startsWith(candidateVal))
-                        || (brokerageVal != null && brokerageVal.contains(candidateVal))) {
+                        || (brokerageVal != null && brokerageVal.replace(",", "").contains(candidateVal))
+                        || (depositVal != null && depositVal.replace(",", "").contains(candidateVal))) {
                     continue;
                 }
                 rentAmount = Double.parseDouble(candidateVal);
