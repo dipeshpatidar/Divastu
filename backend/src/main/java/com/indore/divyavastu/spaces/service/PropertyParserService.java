@@ -33,33 +33,34 @@ public class PropertyParserService {
     private static final Pattern WORD_BHK_PATTERN = Pattern.compile(
             "\\b(one|two|three|four|five|six|seven|eight|nine|ten)\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk)\\b",
             Pattern.CASE_INSENSITIVE);
-    private static final Pattern BATHROOMS_PATTERN = Pattern
-            .compile("\\b(\\d{1,2})\\s*(?:bath|baths|bathroom|bathrooms|toilet|washroom)\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern BATHROOMS_PATTERN = Pattern.compile(
+            "\\b([1-9]|10)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:bath|baths|bathroom|bathrooms|toilet|washroom)\\b|\\b(?:bath|baths|bathroom|bathrooms|toilet|washroom)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?([1-9]|10)\\b",
+            Pattern.CASE_INSENSITIVE);
 
-    // Explicit Rent Pattern (e.g. '30000 rent', 'rent 30000', '30k rent', 'rent
-    // 30k')
+    // Immediate & Distance-Independent Rent Patterns (Excludes numbers explicitly tagged with brokerage/deposit/sqft/bath)
+    private static final Pattern IMMEDIATE_RENT_PATTERN = Pattern.compile(
+            "(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)(?!\\s*(?:brokerage|broker\\s*fee|commission|deposit|sqft|bath))\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,2}?(?:rent|per\\s*month|/month|pm|monthly\\s*rent)\\b|\\b(?:monthly\\s*rent|rent|pm)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,2}?(?:rs\\.?|₹)?\\s*(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern RENT_KEYWORD_PATTERN = Pattern.compile(
-            "(\\d{4,6}|\\d{1,2}k)\\s*(?:rent|per\\s*month|/month|pm)\\b|\\brent\\b\\s*[:\\-]?\\s*(?:rs\\.?|₹)?\\s*(\\d{4,6}|\\d{1,2}k)\\b",
+            "(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)(?!\\s*(?:brokerage|broker\\s*fee|commission|deposit|sqft|bath))\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:rent|per\\s*month|/month|pm|rnt|ren|monthly\\s*rent)\\b|\\b(?:monthly\\s*rent|rent|rnt|ren)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:rs\\.?|₹)?\\s*(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b",
             Pattern.CASE_INSENSITIVE);
 
-    // Explicit Brokerage Pattern (e.g. '15000 brokerage', 'brokerage 15000', '15
-    // days brokerage')
+    // Explicit Brokerage Pattern (Forward & Reverse Multi-Word Distance Independent)
     private static final Pattern BROKERAGE_PATTERN = Pattern.compile(
-            "(\\d{4,6}|\\d{1,2}k)\\s*(?:brokerage|broker\\s*fee|commission)\\b|\\b(?:brokerage|broker\\s*fee|commission)\\b\\s*[:\\-]?\\s*(?:rs\\.?|₹)?\\s*(\\d{4,6}|\\d{1,2}k)\\b",
+            "(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:brokerage|broker\\s*fee|commission)\\b|\\b(?:brokerage|broker\\s*fee|commission)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:rs\\.?|₹)?\\s*(\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b",
             Pattern.CASE_INSENSITIVE);
-    private static final Pattern BROKERAGE_DAYS_PATTERN = Pattern
-            .compile("\\b(\\d{1,2})\\s*(?:day|days)\\s*(?:rent|brokerage)?\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern BROKERAGE_DAYS_PATTERN = Pattern.compile(
+            "\\b(\\d{1,2})\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,5}?(?:day|days)\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,5}?(?:rent|brokerage)?\\b",
+            Pattern.CASE_INSENSITIVE);
 
-    // Explicit Area / Sqft Pattern (e.g. '525 sqft', '525 sq ft', '525 sq.ft', '525
-    // square feet')
+    // Explicit Area / Sqft Pattern (Forward & Reverse Multi-Word Distance Independent, 3+ digits)
     private static final Pattern SQFT_PATTERN = Pattern.compile(
-            "\\b(\\d{3,5})\\s*(?:sqft|sq\\.ft|sq\\s*ft|sqfeet|square\\s*feet|sq\\s*meters|sqm)\\b",
+            "\\b(\\d{1,3}(?:,\\d{3})+|\\d{3,5})\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,5}?(?:sqft|sq\\.ft|sq\\s*ft|sqfeet|square\\s*feet|sq\\s*meters|sqm)\\b|\\b(?:sqft|sq\\.ft|sq\\s*ft|sqfeet|square\\s*feet|sq\\s*meters|sqm)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,5}?(\\d{1,3}(?:,\\d{3})+|\\d{3,5})\\b",
             Pattern.CASE_INSENSITIVE);
 
-    // Explicit Security Deposit Pattern (e.g. '1+1 security deposit', '30000
-    // deposit', 'deposit 30000')
+    // Explicit Security Deposit Pattern (Forward & Reverse Multi-Word Distance Independent)
     private static final Pattern DEPOSIT_PATTERN = Pattern.compile(
-            "(\\d+(?:\\+\\d+)?)\\s*(?:security\\s*deposit|deposit|dep)\\b|\\b(?:security\\s*deposit|deposit)\\b\\s*[:\\-]?\\s*(?:rs\\.?|₹)?\\s*(\\d{4,6}|\\d{1,2}k|\\d\\+\\d)\\b",
+            "(\\d+(?:\\+\\d+)?|\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:security\\s*deposit|deposit|dep|depost|deposite|scurity)\\b|\\b(?:security\\s*deposit|deposit|depost|deposite|scurity)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:rs\\.?|₹)?\\s*(\\d+(?:\\+\\d+)?|\\d{1,3}(?:,\\d{2,3})+|\\d{4,6}|\\d{1,2}k)\\b",
             Pattern.CASE_INSENSITIVE);
 
     // Furnishing & Possession Patterns
@@ -245,13 +246,14 @@ public class PropertyParserService {
 
         // 3A. Explicit Brokerage & Brokerage Days Extractor
         String brokerageVal = "Unmentioned";
-        Matcher brokerageMatcher = BROKERAGE_PATTERN.matcher(input);
+        Matcher brokerageMatcher = BROKERAGE_PATTERN.matcher(normalized);
         if (brokerageMatcher.find()) {
             String rawVal = brokerageMatcher.group(1) != null ? brokerageMatcher.group(1) : brokerageMatcher.group(2);
             if (rawVal != null) {
-                double bAmt = rawVal.toLowerCase().endsWith("k")
-                        ? Double.parseDouble(rawVal.substring(0, rawVal.length() - 1)) * 1000
-                        : Double.parseDouble(rawVal);
+                String cleanVal = rawVal.replace(",", "");
+                double bAmt = cleanVal.toLowerCase().endsWith("k")
+                        ? Double.parseDouble(cleanVal.substring(0, cleanVal.length() - 1)) * 1000
+                        : Double.parseDouble(cleanVal);
                 brokerageVal = String.format("₹%,.0f", bAmt);
             }
         }
@@ -333,15 +335,38 @@ public class PropertyParserService {
         // 3G. Price / Rent Extractor (Disambiguated from Brokerage, Pincode & Area)
         double rentAmount = 0.0;
         boolean rentFound = false;
-        Matcher explicitRentMatcher = RENT_KEYWORD_PATTERN.matcher(input);
-        if (explicitRentMatcher.find()) {
-            String rawRent = explicitRentMatcher.group(1) != null ? explicitRentMatcher.group(1)
-                    : explicitRentMatcher.group(2);
+
+        Matcher immRentMatcher = IMMEDIATE_RENT_PATTERN.matcher(normalized);
+        if (immRentMatcher.find()) {
+            String rawRent = immRentMatcher.group(1) != null ? immRentMatcher.group(1) : immRentMatcher.group(2);
             if (rawRent != null) {
-                rentAmount = rawRent.toLowerCase().endsWith("k")
-                        ? Double.parseDouble(rawRent.substring(0, rawRent.length() - 1)) * 1000
-                        : Double.parseDouble(rawRent);
+                String cleanRent = rawRent.replace(",", "");
+                rentAmount = cleanRent.toLowerCase().endsWith("k")
+                        ? Double.parseDouble(cleanRent.substring(0, cleanRent.length() - 1)) * 1000
+                        : Double.parseDouble(cleanRent);
                 rentFound = true;
+            }
+        }
+
+        if (!rentFound) {
+            Matcher explicitRentMatcher = RENT_KEYWORD_PATTERN.matcher(normalized);
+            while (explicitRentMatcher.find()) {
+                String rawRent = explicitRentMatcher.group(1) != null ? explicitRentMatcher.group(1)
+                        : explicitRentMatcher.group(2);
+                if (rawRent != null) {
+                    String cleanRent = rawRent.replace(",", "");
+                    if (brokerageVal != null && brokerageVal.replace(",", "").contains(cleanRent)) {
+                        continue;
+                    }
+                    if (depositVal != null && depositVal.replace(",", "").contains(cleanRent)) {
+                        continue;
+                    }
+                    rentAmount = cleanRent.toLowerCase().endsWith("k")
+                            ? Double.parseDouble(cleanRent.substring(0, cleanRent.length() - 1)) * 1000
+                            : Double.parseDouble(cleanRent);
+                    rentFound = true;
+                    break;
+                }
             }
         }
 
