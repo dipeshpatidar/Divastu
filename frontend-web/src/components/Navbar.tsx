@@ -167,7 +167,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}>
                   {user?.fullName ? user.fullName.charAt(0).toUpperCase() : role.charAt(0)}
                 </div>
-                <span className="text-xs font-bold max-w-[110px] truncate hidden sm:inline text-slate-200">
+                <span className="text-xs font-bold max-w-[180px] sm:max-w-[220px] truncate hidden sm:inline text-slate-200">
                   {user?.fullName || role}
                 </span>
                 <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-300 ${profileDropdownOpen ? 'rotate-180' : ''}`} />

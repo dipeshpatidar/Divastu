@@ -856,11 +856,11 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     { id: 'crm', label: 'Staff CRM & Telemetry', badge: `${employees.length} Staff`, icon: Users, color: 'text-indigo-600' },
     { id: 'approval', label: 'Approvals Queue', badge: `${cashbacks.filter(c => c.status === 'PENDING').length} New`, icon: CheckSquare, color: 'text-amber-600' },
     { id: 'config', label: 'BHK Engine', badge: 'Active', icon: SlidersHorizontal, color: 'text-purple-600' },
-    { id: 'media', label: 'Update Properties & Media', badge: 'Cloudinary CDN', icon: UploadCloud, color: 'text-teal-600' }
+    { id: 'media', label: 'Update Property Listing', badge: 'Console', icon: UploadCloud, color: 'text-teal-600' }
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row min-w-0">
 
       {/* MOBILE NAVIGATION BAR HEADER (VISIBLE ON PHONES/SMALL DEVICES < 768px) */}
       <div className="md:hidden sticky top-0 z-40 bg-slate-900 text-white border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-lg">
@@ -977,20 +977,20 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                 <button
                   key={item.id}
                   onClick={() => handleTabSelect(item.id)}
-                  className={`w-full relative px-3.5 py-3 rounded-2xl text-xs font-bold flex items-center justify-between transition-all duration-200 group cursor-pointer ${isActive
+                  className={`w-full relative px-3 py-3 rounded-2xl text-xs font-bold flex items-center justify-between transition-all duration-200 group cursor-pointer ${isActive
                       ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
                       : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   title={isSidebarCollapsed ? item.label : undefined}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <Icon className={`w-4.5 h-4.5 shrink-0 ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-emerald-600'}`} />
                     {!isSidebarCollapsed && (
                       <motion.span
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.2 }}
-                        className="truncate font-['Outfit'] font-bold text-xs whitespace-nowrap"
+                        className="truncate font-['Outfit'] font-bold text-xs"
                       >
                         {item.label}
                       </motion.span>
@@ -1002,7 +1002,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.2 }}
-                      className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold font-mono border shrink-0 ${isActive
+                      className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold font-mono border shrink-0 ml-1 ${isActive
                           ? 'bg-emerald-700 text-emerald-100 border-emerald-500/40'
                           : 'bg-slate-100 text-slate-600 border-slate-200'
                         }`}
@@ -1038,7 +1038,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               </div>
               <p className="text-[11px] text-emerald-700 font-medium leading-relaxed">
-                Cloudinary CDN & PostgreSQL Database Online.
+                High-Speed Listing Engine & Database Active.
               </p>
             </div>
           </motion.div>
@@ -1046,13 +1046,13 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       </motion.aside>
 
       {/* 2. MAIN ADMIN CONTENT CONTAINER */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 w-full">
+      <main className="flex-1 min-w-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 w-full">
 
         {/* EXECUTIVE PORTAL HEADER */}
         <div className="bg-white text-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm relative overflow-hidden">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-extrabold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5 font-mono">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                   Executive Analytics Portal
@@ -1060,21 +1060,21 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                 <span className="text-xs text-slate-500 font-mono font-semibold">Indore Region HQ</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-black font-['Outfit'] mt-2 text-slate-900 tracking-tight">
-                Google Analytics Operations & Data Hub
+                Operations & Property Analytics Hub
               </h1>
               <p className="text-xs text-slate-500 mt-1">
-                Visual Area Graphs, Conversion Funnels, GPS Telemetry Radar & Cloudinary CDN Pipeline.
+                Visual Area Graphs, Conversion Funnels, GPS Telemetry Radar & Automated Property Ingestion.
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 shrink-0 flex-wrap">
               <div className="bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-200 text-right font-mono">
                 <span className="text-[10px] text-slate-500 block uppercase font-bold">Monthly Revenue</span>
-                <span className="text-lg font-black text-emerald-700">₹14.2 Lakhs</span>
+                <span className="text-base sm:text-lg font-black text-emerald-700">₹14.2 Lakhs</span>
               </div>
               <div className="bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-200 text-right font-mono">
                 <span className="text-[10px] text-slate-500 block uppercase font-bold">Active Employees</span>
-                <span className="text-lg font-black text-amber-700">{employees.length} Staff</span>
+                <span className="text-base sm:text-lg font-black text-amber-700">{employees.length} Staff</span>
               </div>
             </div>
           </div>
