@@ -168,14 +168,27 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     const input = text.trim();
     const cleanLower = input.toLowerCase();
 
-    // 1. Extract BHK / Layout (supports disconnected "4 ... bhk" or "4bhk")
-    let bhkMatch = input.match(/\b([1-9])\b[\s\S]{0,30}?\b(bhk|rk|bedroom|room)\b/i) || input.match(/([1-9])\s*(bhk|rk|bedroom|room)/i);
-    let bhk = bhkMatch ? `${bhkMatch[1]} BHK` : '';
-    if (!bhk) {
-      if (/studio|1rk/i.test(input)) bhk = '1 RK Studio';
-      else if (/duplex|villa/i.test(input)) bhk = 'Duplex Villa';
-      else if (/penthouse/i.test(input)) bhk = 'Luxury Penthouse';
-      else bhk = '2 BHK';
+    // 1. Universal BHK / Layout Extractor (fractional 1.5/2.5/3.5, words 'three bhk', studio, duplex, etc.)
+    let bhk = '';
+    const numBhkMatch = input.match(/\b(\d+(?:\.\d+)?)\s*(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\b/i);
+    const wordBhkMatch = input.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms)\b/i);
+
+    if (numBhkMatch) {
+      const val = numBhkMatch[1];
+      bhk = val.endsWith('.0') ? `${val.substring(0, val.length - 2)} BHK` : `${val} BHK`;
+    } else if (wordBhkMatch) {
+      const wordMap: Record<string, string> = { one: '1', two: '2', three: '3', four: '4', five: '5', six: '6', seven: '7', eight: '8', nine: '9', ten: '10' };
+      bhk = `${wordMap[wordBhkMatch[1].toLowerCase()] || '2'} BHK`;
+    } else if (/studio|1rk|\brk\b/i.test(input)) {
+      bhk = '1 RK Studio';
+    } else if (/triplex/i.test(input)) {
+      bhk = 'Triplex Villa';
+    } else if (/duplex|villa/i.test(input)) {
+      bhk = 'Duplex Villa';
+    } else if (/penthouse/i.test(input)) {
+      bhk = 'Luxury Penthouse';
+    } else {
+      bhk = '2 BHK';
     }
 
     // 2. Extract Property Type
