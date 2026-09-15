@@ -200,7 +200,45 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   const [editForm, setEditForm] = useState<any>(null);
 
   const handleOpenInlineEdit = () => {
-    setEditForm({ ...lastExtractedResult });
+    const activeData = lastExtractedResult || liveExtractedPreview;
+    if (activeData) {
+      const rawType = (activeData.type || 'FLAT').toUpperCase();
+      const typeVal = rawType.includes('HOUSE') || rawType.includes('VILLA') ? 'HOUSE'
+                    : rawType.includes('PLOT') ? 'PLOT'
+                    : rawType.includes('PENTHOUSE') ? 'PENTHOUSE'
+                    : rawType.includes('STUDIO') ? 'STUDIO'
+                    : rawType.includes('AIRBNB') ? 'AIRBNB'
+                    : 'FLAT';
+
+      const rawFurnish = String(activeData.furnishingStatus || 'UNSPECIFIED').toUpperCase();
+      const furnishingVal = rawFurnish.includes('SEMI') ? 'SEMI_FURNISHED'
+                          : rawFurnish.includes('FULLY') || rawFurnish.includes('FURNISHED') ? 'FULLY_FURNISHED'
+                          : rawFurnish.includes('UNFURNISHED') ? 'UNFURNISHED'
+                          : 'UNSPECIFIED';
+
+      const parsedRentAmount = activeData.rentAmount || (activeData.rentVal && activeData.rentVal !== 'Unspecified' ? parseInt(String(activeData.rentVal).replace(/[^0-9]/g, '')) : 0);
+
+      const initialForm = {
+        ...activeData,
+        title: activeData.title || (activeData.bhk ? `${activeData.bhk} ${typeVal} in ${activeData.sector || 'Indore'}` : ''),
+        bhk: activeData.bhk && activeData.bhk !== 'Unspecified' ? activeData.bhk : '',
+        type: typeVal,
+        bathrooms: activeData.bathrooms ? (typeof activeData.bathrooms === 'number' ? activeData.bathrooms : parseInt(String(activeData.bathrooms))) : 2,
+        rentAmount: parsedRentAmount || '',
+        rentVal: activeData.rentVal && activeData.rentVal !== 'Unspecified' ? activeData.rentVal : (parsedRentAmount ? `₹${parsedRentAmount.toLocaleString('en-IN')}` : ''),
+        brokerageVal: activeData.brokerageVal && activeData.brokerageVal !== 'Unmentioned' ? activeData.brokerageVal : '',
+        depositVal: activeData.depositVal && activeData.depositVal !== 'Unspecified' ? activeData.depositVal : '',
+        areaSqFt: activeData.areaSqFt && activeData.areaSqFt !== 'Unspecified' ? activeData.areaSqFt : '',
+        vastuFacing: activeData.vastuFacing || 'Not Specified',
+        furnishingStatus: furnishingVal,
+        sector: activeData.sector && activeData.sector !== 'Not Specified' ? activeData.sector : '',
+        city: activeData.city && activeData.city !== 'Not Specified' ? activeData.city : 'Indore',
+        ownerName: activeData.ownerName && activeData.ownerName !== 'Not Specified' ? activeData.ownerName : '',
+        ownerPhone: activeData.ownerPhone && activeData.ownerPhone !== 'Not Specified' ? activeData.ownerPhone : ''
+      };
+      setEditForm(initialForm);
+      setLastExtractedResult(initialForm);
+    }
     setIsInlineEditOpen(true);
   };
 
@@ -208,13 +246,28 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     e.preventDefault();
     if (!editForm) return;
     const updated = {
-      ...lastExtractedResult,
+      ...(lastExtractedResult || liveExtractedPreview || {}),
       ...editForm,
+      bhk: editForm.bhk || 'Unspecified',
+      type: editForm.type || 'FLAT',
+      sector: editForm.sector || 'Not Specified',
+      city: editForm.city || 'Indore',
+      rentAmount: editForm.rentAmount ? Number(editForm.rentAmount) : 0,
+      rentVal: editForm.rentVal || (editForm.rentAmount ? `₹${Number(editForm.rentAmount).toLocaleString('en-IN')}` : 'Unspecified'),
+      brokerageVal: editForm.brokerageVal || 'Unmentioned',
+      depositVal: editForm.depositVal || 'Unspecified',
+      areaSqFt: editForm.areaSqFt || 'Unspecified',
+      vastuFacing: editForm.vastuFacing || 'Not Specified',
+      furnishingStatus: editForm.furnishingStatus || 'UNSPECIFIED',
+      ownerName: editForm.ownerName || 'Not Specified',
+      ownerPhone: editForm.ownerPhone || 'Not Specified',
+      title: editForm.title || `${editForm.bhk || ''} ${editForm.type || 'Flat'} in ${editForm.sector || 'Indore'}`,
+      label: `${editForm.bhk || 'Property'} ${editForm.type || ''} (${editForm.sector || ''}, ${editForm.city || 'Indore'})`,
       missingFields: [] // Clear missing attributes warning deck after manual admin verification
     };
     setLastExtractedResult(updated);
     setIsInlineEditOpen(false);
-    alert("✅ Updated property extracted parameters with admin inline edits!");
+    notifySuccess('✅ Inline Edits Applied', 'Extracted property parameters updated successfully');
   };
 
   const handleAutoFillDefaults = () => {
@@ -2370,8 +2423,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
         {/* INLINE QUICK EDIT MODAL DIALOG */}
         {isInlineEditOpen && editForm && (
-          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-slate-900 text-white rounded-3xl border border-slate-800 p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl">
+          <div className="fixed inset-0 z-[9999] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+            <div className="bg-slate-900 text-white rounded-3xl border border-slate-800 p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl my-auto">
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <div>
                   <h3 className="text-lg font-bold font-['Outfit'] text-emerald-400 flex items-center gap-2">
