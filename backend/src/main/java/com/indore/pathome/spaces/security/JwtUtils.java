@@ -13,7 +13,7 @@ import java.util.Date;
 @Component
 public class JwtUtils {
 
-    @Value("${app.jwt.secret:PathomeSpacesSuperSecretKeyForJWTAuthTokenGeneration2026!}")
+    @Value("${app.jwt.secret}")
     private String jwtSecret;
 
     @Value("${app.jwt.expiration-ms:86400000}") // 24 hours default

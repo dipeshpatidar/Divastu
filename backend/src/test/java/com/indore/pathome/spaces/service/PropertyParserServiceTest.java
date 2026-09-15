@@ -81,20 +81,50 @@ public class PropertyParserServiceTest {
     }
 
     @Test
-    public void testPostgresLocalityAutoSave() {
+    public void testParsingDoesNotPersistLocalityUntilPublicationIsConfirmed() {
         when(localityRepository.findByCityIgnoreCaseAndSectorNameIgnoreCase(eq("Jaipur"), eq("Civil Lines")))
                 .thenReturn(Optional.empty());
 
         Locality savedLocality = new Locality("Jaipur", "Civil Lines", "civil lines", 92, 22000.0);
         when(localityRepository.save(any(Locality.class))).thenReturn(savedLocality);
 
-        ParsedPropertyDTO dto = propertyParserService.parseAndSave("2bhk in Civil Lines Jaipur for 22000");
+        ParsedPropertyDTO dto = propertyParserService.parse("2bhk in Civil Lines Jaipur for 22000");
         assertNotNull(dto);
         assertEquals("Jaipur", dto.getCity());
         assertEquals("Civil Lines", dto.getSector());
-        assertTrue(dto.isSavedToDatabase());
+        assertFalse(dto.isSavedToDatabase());
+        verify(localityRepository, never()).save(any(Locality.class));
 
+        propertyParserService.confirmLocality(dto.getCity(), dto.getSector(), dto.getRentAmount());
         verify(localityRepository, times(1)).save(any(Locality.class));
+    }
+
+    @Test
+    public void testConflictingAmountsRequireReviewWithoutInventingValues() {
+        ParsedPropertyDTO dto = propertyParserService.parse(
+                "2 BHK flat in Vijay Nagar rent 25000, later rent 30000, owner +91 98260 12345");
+
+        assertTrue(dto.isRequiresReview());
+        assertTrue(dto.getConflicts().stream().anyMatch(conflict -> conflict.startsWith("Monthly Rent")));
+        assertTrue(dto.getMissingFields().contains("Security Deposit"));
+    }
+
+    @Test
+    public void testAmbiguousCachedLocalityDoesNotInventACity() {
+        when(localityRepository.findAll()).thenReturn(List.of(
+                new Locality("Jaipur", "Civil Lines", "civil lines", 92, 22000.0),
+                new Locality("Pune", "Civil Lines", "civil lines", 92, 30000.0)
+        ));
+        propertyParserService.initCache();
+
+        ParsedPropertyDTO ambiguous = propertyParserService.parse(
+                "2 BHK flat in Civil Lines rent 22000 owner +91 98260 12345");
+        ParsedPropertyDTO explicit = propertyParserService.parse(
+                "2 BHK flat in Civil Lines Jaipur rent 22000 owner +91 98260 12345");
+
+        assertEquals("Not Specified", ambiguous.getCity());
+        assertEquals("Jaipur", explicit.getCity());
+        assertEquals("Civil Lines", explicit.getSector());
     }
 
     @Test
@@ -180,6 +210,35 @@ public class PropertyParserServiceTest {
         assertEquals("2 BHK", dto.getBhk());
         assertEquals("Not Specified", dto.getType());
         assertEquals("Not Specified", dto.getBathrooms());
+        assertNull(dto.getDepositVal(), "Missing depositVal must be null, not fake default");
+        assertNull(dto.getFurnishingStatus(), "Missing furnishingStatus must be null, not fake default");
+        assertNull(dto.getPossessionDate(), "Missing possessionDate must be null, not fake default");
+        assertNull(dto.getBrokerageDays(), "Missing brokerageDays must be null, not fake default");
+        assertEquals("Not Specified", dto.getOwnerName(), "Missing ownerName must be Not Specified, not Direct Owner");
+    }
+
+    @Test
+    public void testNoFakeDefaultsWhenAttributesMissing() {
+        String prompt = "2bhk flat in Vijay Nagar for 25000";
+        ParsedPropertyDTO dto = propertyParserService.parseAndSave(prompt);
+
+        assertNotNull(dto);
+        assertEquals("2 BHK", dto.getBhk());
+        assertEquals("Flat", dto.getType());
+        assertEquals("Vijay Nagar", dto.getSector());
+        assertEquals(25000.0, dto.getRentAmount());
+
+        // Must NOT invent fake property data
+        assertNull(dto.getDepositVal(), "Missing depositVal must be null, not fake default");
+        assertNull(dto.getFurnishingStatus(), "Missing furnishingStatus must be null, not fake default");
+        assertNull(dto.getPossessionDate(), "Missing possessionDate must be null, not fake default");
+        assertNull(dto.getBrokerageDays(), "Missing brokerageDays must be null, not fake default");
+        assertEquals("Not Specified", dto.getOwnerName(), "Missing ownerName must be Not Specified, not Direct Owner");
+
+        // Telemetry must report missing attributes
+        assertTrue(dto.getMissingFields().contains("Security Deposit"));
+        assertTrue(dto.getMissingFields().contains("Furnishing Status"));
+        assertTrue(dto.getMissingFields().contains("Possession Date / Readiness"));
     }
 
     @Test

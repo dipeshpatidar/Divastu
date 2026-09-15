@@ -32,21 +32,21 @@ spring:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:PathomeSpacesSuperSecretKeyForJWTAuthTokenGeneration2026!}
+    secret: ${JWT_SECRET}
     expiration-ms: 86400000
 
 meta:
   webhook:
-    verify-token: ${META_VERIFY_TOKEN:PATHOME_META_VERIFY_TOKEN_2026}
+    verify-token: ${META_VERIFY_TOKEN}
   graph:
     api:
-      token: ${META_GRAPH_TOKEN:MOCK_META_GRAPH_API_TOKEN}
+      token: ${META_GRAPH_TOKEN}
 
 server:
   port: 8080
 
 
 cloudinary:
-  cloud-name: ${CLOUDINARY_CLOUD_NAME:hbgzetjy}
-  api-key: ${CLOUDINARY_API_KEY:634495656114524}
-  api-secret: ${CLOUDINARY_API_SECRET:n-5APnV28TMkUnQrnjI-Pc9BEGg}
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}

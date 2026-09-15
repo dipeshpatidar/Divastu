@@ -1,7 +1,9 @@
 package com.indore.pathome.spaces.dto;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ParsedPropertyDTO {
     private String bhk;
@@ -34,6 +36,11 @@ public class ParsedPropertyDTO {
     private boolean savedToDatabase;
     private List<String> mediaUrls = new ArrayList<>();
     private int promptIndex = 1;
+    private String rawPrompt;
+    private boolean requiresReview;
+    private boolean adminVerified;
+    private List<String> conflicts = new ArrayList<>();
+    private Map<String, String> sourceSnippets = new LinkedHashMap<>();
 
     public ParsedPropertyDTO() {
     }
@@ -312,5 +319,44 @@ public class ParsedPropertyDTO {
     public void setPromptIndex(int promptIndex) {
         this.promptIndex = promptIndex;
     }
-}
 
+    public String getRawPrompt() {
+        return rawPrompt;
+    }
+
+    public void setRawPrompt(String rawPrompt) {
+        this.rawPrompt = rawPrompt;
+    }
+
+    public boolean isRequiresReview() {
+        return requiresReview;
+    }
+
+    public void setRequiresReview(boolean requiresReview) {
+        this.requiresReview = requiresReview;
+    }
+
+    public boolean isAdminVerified() {
+        return adminVerified;
+    }
+
+    public void setAdminVerified(boolean adminVerified) {
+        this.adminVerified = adminVerified;
+    }
+
+    public List<String> getConflicts() {
+        return conflicts;
+    }
+
+    public void setConflicts(List<String> conflicts) {
+        this.conflicts = conflicts != null ? conflicts : new ArrayList<>();
+    }
+
+    public Map<String, String> getSourceSnippets() {
+        return sourceSnippets;
+    }
+
+    public void setSourceSnippets(Map<String, String> sourceSnippets) {
+        this.sourceSnippets = sourceSnippets != null ? sourceSnippets : new LinkedHashMap<>();
+    }
+}

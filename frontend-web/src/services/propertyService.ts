@@ -2,6 +2,14 @@ import { Property, PropertyMediaAsset, RoomTag } from '../types';
 
 const API_BASE_URL = 'http://localhost:8080/api/v1/properties';
 
+const getAdminAuthorizationHeader = (): Record<string, string> => {
+  const token = localStorage.getItem('pathome_auth_token');
+  if (!token) {
+    throw new Error('Your admin session has expired. Please sign in again before changing property listings.');
+  }
+  return { Authorization: `Bearer ${token}` };
+};
+
 export const propertyService = {
   /**
    * Fetches active properties from Spring Boot backend REST API
@@ -58,7 +66,8 @@ export const propertyService = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        ...getAdminAuthorizationHeader()
       },
       body: JSON.stringify(payload)
     });
@@ -98,6 +107,7 @@ export const propertyService = {
 
     const response = await fetch(`${API_BASE_URL}/${propertyId}/tagged-media`, {
       method: 'POST',
+      headers: getAdminAuthorizationHeader(),
       body: formData
     });
 
@@ -131,6 +141,7 @@ export const propertyService = {
 
     const response = await fetch(`${API_BASE_URL}/${propertyId}/photos`, {
       method: 'POST',
+      headers: getAdminAuthorizationHeader(),
       body: formData
     });
 
@@ -151,6 +162,7 @@ export const propertyService = {
 
     const response = await fetch(`${API_BASE_URL}/${propertyId}/video`, {
       method: 'POST',
+      headers: getAdminAuthorizationHeader(),
       body: formData
     });
 
@@ -163,14 +175,15 @@ export const propertyService = {
   },
 
   /**
-   * Calls Spring Boot backend REST API to parse natural language prompt and auto-save locality in PostgreSQL database
+   * Calls Spring Boot backend REST API to produce a read-only, reviewable parsing result.
    */
   async parsePropertyPrompt(prompt: string): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/parse-prompt`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        ...getAdminAuthorizationHeader()
       },
       body: JSON.stringify({ prompt })
     });
@@ -190,7 +203,8 @@ export const propertyService = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        ...getAdminAuthorizationHeader()
       },
       body: JSON.stringify(dto)
     });
@@ -210,7 +224,8 @@ export const propertyService = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        ...getAdminAuthorizationHeader()
       },
       body: JSON.stringify({ prompts })
     });
@@ -230,7 +245,8 @@ export const propertyService = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        ...getAdminAuthorizationHeader()
       },
       body: JSON.stringify({ listings })
     });

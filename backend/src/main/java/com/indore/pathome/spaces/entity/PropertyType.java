@@ -4,5 +4,8 @@ public enum PropertyType {
     FLAT,
     HOUSE,
     PLOT,
-    LAND
+    LAND,
+    PENTHOUSE,
+    STUDIO,
+    SERVICED_APARTMENT
 }

@@ -41,6 +41,7 @@ interface StagedProperty {
   mediaUrls: string[];
   localPhotos: File[];
   localPhotoPreviews: string[];
+  isConfirmed: boolean;
   isValid: boolean;
   missingFields: string[];
 }
@@ -58,6 +59,7 @@ const COLOR_PALETTES = [
   { border: 'border-amber-500/40', bg: 'bg-amber-500/10', text: 'text-amber-400', badge: 'bg-amber-500/20 text-amber-300' },
   { border: 'border-cyan-500/40', bg: 'bg-cyan-500/10', text: 'text-cyan-400', badge: 'bg-cyan-500/20 text-cyan-300' },
 ];
+const ADMIN_PHONE_PATTERN = /^\\+91\\s?[6-9]\\d{4}[\\s-]?\\d{5}$/;
 
 export const BatchPropertyIngestionStudio: React.FC<BatchPropertyIngestionStudioProps> = ({
   isOpen,
@@ -166,35 +168,44 @@ export const BatchPropertyIngestionStudio: React.FC<BatchPropertyIngestionStudio
     try {
       const dtos = await propertyService.parseBatchPrompts(rawPrompts);
       const mapped: StagedProperty[] = dtos.map((dto: any, idx: number) => {
-        const hasPhone = Boolean(dto.ownerPhone && dto.ownerPhone !== 'Not Specified' && dto.ownerPhone.startsWith('+'));
+        const hasPhone = Boolean(dto.ownerPhone && ADMIN_PHONE_PATTERN.test(dto.ownerPhone.trim()));
         const hasSector = Boolean(dto.sector && dto.sector !== 'Not Specified');
+        const hasCity = Boolean(dto.city && dto.city !== 'Not Specified');
         const hasRent = Boolean(dto.rentAmount && dto.rentAmount > 0);
+        const hasBhk = Boolean(dto.bhk && dto.bhk !== 'Unspecified');
+        const hasType = Boolean(dto.type && dto.type !== 'Not Specified');
+        const hasDeposit = Boolean(dto.depositVal && dto.depositVal !== 'Not Specified' && dto.depositVal !== 'Unspecified');
 
-        const missing: string[] = [];
-        if (!hasPhone) missing.push('Owner Phone (+91)');
-        if (!hasSector) missing.push('Locality / Sector');
-        if (!hasRent) missing.push('Monthly Rent');
+        const missing = new Set<string>();
+        if (!hasPhone) missing.add('Owner Phone (+91)');
+        if (!hasSector) missing.add('Locality / Sector');
+        if (!hasCity) missing.add('City');
+        if (!hasRent) missing.add('Monthly Rent');
+        if (!hasBhk) missing.add('BHK Layout');
+        if (!hasType) missing.add('Property Type');
+        if (!hasDeposit) missing.add('Security Deposit');
 
         return {
           id: `staged-${idx}-${Date.now()}`,
           promptIndex: dto.promptIndex || idx + 1,
-          title: dto.title || `${dto.bhk || '2 BHK'} in ${dto.sector || 'Indore'}`,
-          bhk: dto.bhk || '2 BHK',
-          type: dto.type || 'Flat',
+          title: dto.title || 'Untitled property',
+          bhk: dto.bhk === 'Unspecified' ? '' : (dto.bhk || ''),
+          type: dto.type === 'Not Specified' ? '' : (dto.type || ''),
           sector: dto.sector || '',
-          city: dto.city || 'Indore',
-          address: dto.address || `${dto.sector || ''}, Indore`,
-          rentAmount: dto.rentAmount || 18000,
-          rentVal: dto.rentVal || '₹18,000',
-          depositVal: dto.depositVal || '1+1 Security Deposit',
+          city: dto.city || '',
+          address: dto.address || '',
+          rentAmount: dto.rentAmount || 0,
+          rentVal: dto.rentVal || 'Unspecified',
+          depositVal: dto.depositVal || 'Unspecified',
           ownerPhone: dto.ownerPhone || '',
-          furnishingStatus: dto.furnishingStatus || 'Semi-Furnished',
-          vastuFacing: dto.vastuFacing || 'North-East Facing',
+          furnishingStatus: dto.furnishingStatus || 'UNSPECIFIED',
+          vastuFacing: dto.vastuFacing || 'Not Specified',
           mediaUrls: dto.mediaUrls || [],
           localPhotos: [],
           localPhotoPreviews: [],
-          isValid: missing.length === 0,
-          missingFields: missing
+          isConfirmed: false,
+          isValid: false,
+          missingFields: Array.from(missing)
         };
       });
 
@@ -279,19 +290,39 @@ export const BatchPropertyIngestionStudio: React.FC<BatchPropertyIngestionStudio
       prev.map((c) => {
         if (c.id !== cardId) return c;
         const updated = { ...c, [field]: value };
-        const hasPhone = Boolean(updated.ownerPhone && updated.ownerPhone.startsWith('+'));
+        const hasPhone = ADMIN_PHONE_PATTERN.test(updated.ownerPhone.trim());
         const hasSector = Boolean(updated.sector && updated.sector.trim().length > 0);
+        const hasCity = Boolean(updated.city && updated.city.trim().length > 0 && updated.city !== 'Not Specified');
         const hasRent = Boolean(updated.rentAmount && updated.rentAmount > 0);
+        const hasBhk = Boolean(updated.bhk && updated.bhk.trim().length > 0);
+        const hasType = Boolean(updated.type && updated.type.trim().length > 0 && updated.type !== 'Not Specified');
+        const hasDeposit = Boolean(updated.depositVal && updated.depositVal !== 'Unspecified');
         const missing: string[] = [];
         if (!hasPhone) missing.push('Owner Phone (+91)');
         if (!hasSector) missing.push('Locality / Sector');
+        if (!hasCity) missing.push('City');
         if (!hasRent) missing.push('Monthly Rent');
+        if (!hasBhk) missing.push('BHK Layout');
+        if (!hasType) missing.push('Property Type');
+        if (!hasDeposit) missing.push('Security Deposit');
 
-        updated.isValid = missing.length === 0;
+        updated.isValid = updated.isConfirmed && missing.length === 0;
         updated.missingFields = missing;
         return updated;
       })
     );
+  };
+
+  const handleConfirmCard = (cardId: string, isConfirmed: boolean) => {
+    setStagedCards((prev) => prev.map((card) => {
+      if (card.id !== cardId) return card;
+      const missing = [...card.missingFields];
+      return {
+        ...card,
+        isConfirmed,
+        isValid: isConfirmed && missing.length === 0
+      };
+    }));
   };
 
   // Batch Publish All Staged Properties
@@ -317,7 +348,8 @@ export const BatchPropertyIngestionStudio: React.FC<BatchPropertyIngestionStudio
         ownerPhone: c.ownerPhone,
         furnishingStatus: c.furnishingStatus,
         vastuFacing: c.vastuFacing,
-        mediaUrls: c.mediaUrls
+        mediaUrls: c.mediaUrls,
+        adminVerified: c.isConfirmed
       }));
 
       const res = await propertyService.createBatchProperties(payloadListings);
@@ -380,7 +412,7 @@ export const BatchPropertyIngestionStudio: React.FC<BatchPropertyIngestionStudio
                 <h2 className="text-lg font-black tracking-tight text-white flex items-center gap-2">
                   Multi-Property & Voice Ingestion Studio
                   <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                    $O(1)$ AI Parser
+                    Review Required
                   </span>
                 </h2>
                 <p className="text-xs text-slate-400">
@@ -460,7 +492,7 @@ export const BatchPropertyIngestionStudio: React.FC<BatchPropertyIngestionStudio
                   className="px-5 py-2.5 rounded-xl font-black text-xs bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 shadow-lg shadow-orange-500/20 hover:brightness-110 transition-all disabled:opacity-50 flex items-center gap-2"
                 >
                   {isParsing ? (
-                    <span>Parsing at $O(1)$ Speed...</span>
+                    <span>Extracting property details…</span>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4" />
@@ -565,6 +597,16 @@ export const BatchPropertyIngestionStudio: React.FC<BatchPropertyIngestionStudio
                             </div>
                           </div>
 
+                          <label className="mb-3 flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-2 text-[11px] text-slate-300 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={card.isConfirmed}
+                              onChange={(e) => handleConfirmCard(card.id, e.target.checked)}
+                              className="h-3.5 w-3.5 accent-emerald-500"
+                            />
+                            I reviewed this listing and confirm its values are ready to publish.
+                          </label>
+
                           {/* Inline Fields Row */}
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3 text-xs">
                             <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800">
@@ -588,6 +630,28 @@ export const BatchPropertyIngestionStudio: React.FC<BatchPropertyIngestionStudio
                             </div>
 
                             <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800">
+                              <label className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">City</label>
+                              <input
+                                type="text"
+                                value={card.city === 'Not Specified' ? '' : card.city}
+                                placeholder="Indore"
+                                onChange={(e) => handleUpdateField(card.id, 'city', e.target.value)}
+                                className="w-full bg-transparent font-bold text-slate-100 focus:outline-none"
+                              />
+                            </div>
+
+                            <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800">
+                              <label className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Property Type</label>
+                              <input
+                                type="text"
+                                value={card.type}
+                                placeholder="Flat, House, Plot"
+                                onChange={(e) => handleUpdateField(card.id, 'type', e.target.value)}
+                                className="w-full bg-transparent font-bold text-slate-100 focus:outline-none"
+                              />
+                            </div>
+
+                            <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800">
                               <label className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Rent (₹)</label>
                               <input
                                 type="number"
@@ -605,6 +669,17 @@ export const BatchPropertyIngestionStudio: React.FC<BatchPropertyIngestionStudio
                                 placeholder="+91 98260 12345"
                                 onChange={(e) => handleUpdateField(card.id, 'ownerPhone', e.target.value)}
                                 className={`w-full bg-transparent font-bold focus:outline-none ${!card.ownerPhone.startsWith('+') ? 'text-amber-400' : 'text-slate-100'}`}
+                              />
+                            </div>
+
+                            <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800">
+                              <label className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Security Deposit</label>
+                              <input
+                                type="text"
+                                value={card.depositVal === 'Unspecified' ? '' : card.depositVal}
+                                placeholder="₹60,000 or 2 months"
+                                onChange={(e) => handleUpdateField(card.id, 'depositVal', e.target.value || 'Unspecified')}
+                                className="w-full bg-transparent font-bold text-slate-100 focus:outline-none"
                               />
                             </div>
                           </div>

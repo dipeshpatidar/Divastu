@@ -21,6 +21,15 @@ public class RentalDetails extends Listing {
     @Column(name = "maintenance_charge")
     private BigDecimal maintenanceCharge;
 
+    @Column(name = "brokerage_amount")
+    private BigDecimal brokerageAmount;
+
+    @Column(name = "brokerage_days")
+    private Integer brokerageDays;
+
+    @Column(name = "security_deposit_months")
+    private Integer securityDepositMonths;
+
     @Column(name = "bachelor_allowed")
     private Boolean bachelorAllowed = true;
 
@@ -39,6 +48,15 @@ public class RentalDetails extends Listing {
 
     public BigDecimal getMaintenanceCharge() { return maintenanceCharge; }
     public void setMaintenanceCharge(BigDecimal maintenanceCharge) { this.maintenanceCharge = maintenanceCharge; }
+
+    public BigDecimal getBrokerageAmount() { return brokerageAmount; }
+    public void setBrokerageAmount(BigDecimal brokerageAmount) { this.brokerageAmount = brokerageAmount; }
+
+    public Integer getBrokerageDays() { return brokerageDays; }
+    public void setBrokerageDays(Integer brokerageDays) { this.brokerageDays = brokerageDays; }
+
+    public Integer getSecurityDepositMonths() { return securityDepositMonths; }
+    public void setSecurityDepositMonths(Integer securityDepositMonths) { this.securityDepositMonths = securityDepositMonths; }
 
     public Boolean getBachelorAllowed() { return bachelorAllowed; }
     public void setBachelorAllowed(Boolean bachelorAllowed) { this.bachelorAllowed = bachelorAllowed; }

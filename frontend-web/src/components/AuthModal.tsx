@@ -9,14 +9,13 @@ interface AuthModalProps {
   onSuccess: (user: UserProfile) => void;
 }
 
-const normalizeRole = (rawRole: string, emailStr?: string): UserRole => {
+const normalizeRole = (rawRole: string): UserRole => {
   if (!rawRole) return 'GUEST';
   const clean = rawRole.toUpperCase().replace('ROLE_', '');
-  const email = (emailStr || '').toLowerCase();
   
-  if (clean === 'EMPLOYEE' || clean === 'STAFF' || clean === 'GROUND_BOY' || email.includes('employee')) return 'EMPLOYEE';
-  if (clean === 'SUB_ADMIN' || clean === 'MANAGER' || email.includes('subadmin')) return 'SUB_ADMIN';
-  if (clean === 'SUPER_ADMIN' || clean === 'ADMIN' || email.includes('admin')) return 'SUPER_ADMIN';
+  if (clean === 'EMPLOYEE' || clean === 'STAFF' || clean === 'GROUND_BOY') return 'EMPLOYEE';
+  if (clean === 'SUB_ADMIN' || clean === 'MANAGER') return 'SUB_ADMIN';
+  if (clean === 'SUPER_ADMIN' || clean === 'ADMIN') return 'SUPER_ADMIN';
   return 'TENANT';
 };
 
@@ -25,7 +24,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [roleSelect, setRoleSelect] = useState<UserRole>('TENANT');
   const [errorMessage, setErrorMessage] = useState('');
 
   if (!isOpen) return null;
@@ -38,7 +36,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       const endpoint = authMode === 'LOGIN' ? '/api/v1/auth/login' : '/api/v1/auth/register';
       const payload = authMode === 'LOGIN' 
         ? { email, password }
-        : { email, password, fullName, role: roleSelect };
+        : { email, password, fullName };
 
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -48,37 +46,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
       if (res.ok) {
         const data = await res.json();
+        if (!data.token) {
+          setErrorMessage('Sign-in succeeded but did not return a secure session. Please try again.');
+          return;
+        }
+        localStorage.setItem('pathome_auth_token', data.token);
         onSuccess({
           id: data.userId || 1,
           email: data.email || email,
           fullName: data.fullName || fullName || 'User',
-          role: normalizeRole(data.role || roleSelect, data.email || email),
+          role: normalizeRole(data.role),
           freeVisitsUsed: 0,
           walletBalance: 0
         });
         onClose();
       } else {
-        // Fallback for seamless demo authentication if backend credentials mismatch
-        onSuccess({
-          id: 1,
-          email,
-          fullName: fullName || email.split('@')[0],
-          role: normalizeRole(roleSelect, email),
-          freeVisitsUsed: 0,
-          walletBalance: 0
-        });
-        onClose();
+        setErrorMessage('Unable to sign in with those credentials. Please check them and try again.');
       }
     } catch (err) {
-      onSuccess({
-        id: 1,
-        email,
-        fullName: fullName || email.split('@')[0],
-        role: normalizeRole(roleSelect, email),
-        freeVisitsUsed: 0,
-        walletBalance: 0
-      });
-      onClose();
+      setErrorMessage('The authentication service is unavailable. Please try again when the server is running.');
     }
   };
 
@@ -126,45 +112,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
               <span>{errorMessage}</span>
             </motion.div>
-          )}
-
-          {/* QUICK FILL DEMO CREDENTIALS HUB */}
-          {authMode === 'LOGIN' && (
-            <div className="mb-4 bg-slate-900 text-white rounded-2xl p-3 border border-slate-800 shadow-md">
-              <div className="text-[10px] text-amber-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
-                <span>⚡ 1-Tap Quick Fill Demo Credentials:</span>
-              </div>
-              <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-                <button
-                  type="button"
-                  onClick={() => { setEmail('superadmin@pathome.in'); setPassword('SuperAdmin123!'); setRoleSelect('SUPER_ADMIN'); }}
-                  className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 py-1.5 px-2 rounded-xl text-left font-semibold transition-all"
-                >
-                  🔑 Super Admin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setEmail('subadmin@pathome.in'); setPassword('SubAdmin123!'); setRoleSelect('SUB_ADMIN'); }}
-                  className="bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 py-1.5 px-2 rounded-xl text-left font-semibold transition-all"
-                >
-                  🔒 Sub-Admin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setEmail('employee@pathome.in'); setPassword('Employee123!'); setRoleSelect('EMPLOYEE'); }}
-                  className="bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 py-1.5 px-2 rounded-xl text-left font-semibold transition-all"
-                >
-                  👥 Employee (CRM)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setEmail('tenant@pathome.in'); setPassword('Password123!'); setRoleSelect('TENANT'); }}
-                  className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 py-1.5 px-2 rounded-xl text-left font-semibold transition-all"
-                >
-                  🏠 Tenant
-                </button>
-              </div>
-            </div>
           )}
 
           {/* PATHWAY 1: GOOGLE OAUTH */}
@@ -216,19 +163,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">Account Role</label>
-                    <select
-                      value={roleSelect}
-                      onChange={(e) => setRoleSelect(e.target.value as UserRole)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10 transition-all cursor-pointer"
-                    >
-                      <option value="TENANT">Tenant (Find Rentals & Homes)</option>
-                      <option value="EMPLOYEE">Employee (Staff CRM Portal)</option>
-                      <option value="SUB_ADMIN">Sub-Admin (Limited Access Manager)</option>
-                      <option value="SUPER_ADMIN">Super Admin (Full Master Control)</option>
-                    </select>
-                  </div>
+                  <p className="rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 text-xs text-slate-600">
+                    New registrations create tenant accounts. Staff access is provisioned by an administrator.
+                  </p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -288,4 +225,3 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     </AnimatePresence>
   );
 };
-

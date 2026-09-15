@@ -42,7 +42,9 @@ public class AuthController {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setFullName(request.getFullName());
         user.setPhoneNumber(request.getPhoneNumber());
-        user.setRole(request.getRole() != null ? request.getRole() : Role.ROLE_TENANT);
+        // Public registration must never grant an administrative role. Admin users
+        // are provisioned through the protected operational process.
+        user.setRole(Role.ROLE_TENANT);
         user.setFreeVisitsRemaining(5);
 
         user = userRepository.save(user);

@@ -763,6 +763,7 @@ export const Home: React.FC = () => {
         setUser(null);
         localStorage.removeItem('pathome_role');
         localStorage.removeItem('pathome_user');
+        localStorage.removeItem('pathome_auth_token');
         navigate('/', { replace: true });
         setShowAuthModal(true);
       }
@@ -812,6 +813,7 @@ export const Home: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('pathome_role');
     localStorage.removeItem('pathome_user');
+    localStorage.removeItem('pathome_auth_token');
     setUser(null);
     setRole('GUEST');
     navigate('/');
@@ -1025,4 +1027,3 @@ export const Home: React.FC = () => {
     </div>
   );
 };
-

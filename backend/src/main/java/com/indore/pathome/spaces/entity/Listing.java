@@ -36,10 +36,10 @@ public abstract class Listing {
     @Column(nullable = false)
     private ListingStatus status = ListingStatus.ACTIVE;
 
-    @Column(nullable = false)
+    @Column
     private Double latitude;
 
-    @Column(nullable = false)
+    @Column
     private Double longitude;
 
     @Column(nullable = false)
@@ -71,6 +71,27 @@ public abstract class Listing {
 
     @Column(name = "owner_phone_number", nullable = false)
     private String ownerPhoneNumber;
+
+    @Column(name = "owner_name")
+    private String ownerName;
+
+    @Column(name = "bathroom_count")
+    private Integer bathroomCount;
+
+    @Column(name = "colony")
+    private String colony;
+
+    @Column(name = "state")
+    private String state;
+
+    @Column(name = "pincode")
+    private String pincode;
+
+    @Column(name = "landmark")
+    private String landmark;
+
+    @Column(name = "possession_date_text")
+    private String possessionDateText;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -133,6 +154,27 @@ public abstract class Listing {
 
     public String getOwnerPhoneNumber() { return ownerPhoneNumber; }
     public void setOwnerPhoneNumber(String ownerPhoneNumber) { this.ownerPhoneNumber = ownerPhoneNumber; }
+
+    public String getOwnerName() { return ownerName; }
+    public void setOwnerName(String ownerName) { this.ownerName = ownerName; }
+
+    public Integer getBathroomCount() { return bathroomCount; }
+    public void setBathroomCount(Integer bathroomCount) { this.bathroomCount = bathroomCount; }
+
+    public String getColony() { return colony; }
+    public void setColony(String colony) { this.colony = colony; }
+
+    public String getState() { return state; }
+    public void setState(String state) { this.state = state; }
+
+    public String getPincode() { return pincode; }
+    public void setPincode(String pincode) { this.pincode = pincode; }
+
+    public String getLandmark() { return landmark; }
+    public void setLandmark(String landmark) { this.landmark = landmark; }
+
+    public String getPossessionDateText() { return possessionDateText; }
+    public void setPossessionDateText(String possessionDateText) { this.possessionDateText = possessionDateText; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

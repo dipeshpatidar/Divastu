@@ -28,7 +28,7 @@ public class PropertyMediaAsset {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private RoomTag roomTag = RoomTag.LIVING_ROOM;
+    private RoomTag roomTag = RoomTag.GENERAL;
 
     private String caption;
 
@@ -36,7 +36,7 @@ public class PropertyMediaAsset {
 
     private String sector;
 
-    private String city = "Indore";
+    private String city;
 
     private String priceTag;
 
@@ -46,7 +46,7 @@ public class PropertyMediaAsset {
 
     private String vastuFacing;
 
-    private String verificationStatus = "VERIFIED_BY_GROUND_ESCORT";
+    private String verificationStatus;
 
     private LocalDateTime uploadedAt = LocalDateTime.now();
 

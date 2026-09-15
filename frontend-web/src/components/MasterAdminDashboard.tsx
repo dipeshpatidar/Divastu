@@ -272,31 +272,6 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     notifySuccess('✅ Inline Edits Applied', 'Extracted property parameters updated successfully');
   };
 
-  const handleAutoFillDefaults = () => {
-    if (!lastExtractedResult) return;
-    const updated = {
-      ...lastExtractedResult,
-      bathrooms: lastExtractedResult.bathrooms || 2,
-      brokerageDays: lastExtractedResult.brokerageDays || 15,
-      brokerageVal: lastExtractedResult.brokerageVal && lastExtractedResult.brokerageVal !== 'None / Direct Owner' ? lastExtractedResult.brokerageVal : '15 Days Rent',
-      depositVal: lastExtractedResult.depositVal && lastExtractedResult.depositVal !== 'Not Specified' ? lastExtractedResult.depositVal : '',
-      areaSqFt: lastExtractedResult.areaSqFt && lastExtractedResult.areaSqFt !== 'Not Specified' ? lastExtractedResult.areaSqFt : '',
-      vastuFacing: lastExtractedResult.vastuFacing && lastExtractedResult.vastuFacing !== 'Not Specified' ? lastExtractedResult.vastuFacing : 'Not Specified',
-      furnishingStatus: lastExtractedResult.furnishingStatus && lastExtractedResult.furnishingStatus !== 'UNSPECIFIED' ? lastExtractedResult.furnishingStatus : 'UNSPECIFIED',
-      possessionDate: lastExtractedResult.possessionDate || 'Immediate',
-      address: lastExtractedResult.address || (lastExtractedResult.sector ? `${lastExtractedResult.sector}, ${lastExtractedResult.city || 'Indore'}` : (lastExtractedResult.city || 'Indore')),
-      state: lastExtractedResult.state || 'Madhya Pradesh',
-      pincode: lastExtractedResult.pincode || '',
-      landmark: lastExtractedResult.landmark || '',
-      ownerName: lastExtractedResult.ownerName && lastExtractedResult.ownerName !== 'Not Specified' ? lastExtractedResult.ownerName : '',
-      ownerPhone: lastExtractedResult.ownerPhone && lastExtractedResult.ownerPhone !== 'Not Specified' ? lastExtractedResult.ownerPhone : '',
-      missingFields: []
-    };
-    setLastExtractedResult(updated);
-    if (editForm) setEditForm(updated);
-    alert("⚡ Auto-filled standard default values for all missing attributes!");
-  };
-
   const handleSaveToDatabase = async () => {
     if (!lastExtractedResult) return;
     
@@ -304,6 +279,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     const missingReq: string[] = [];
     if (!lastExtractedResult.bhk || lastExtractedResult.bhk === 'Not Specified' || lastExtractedResult.bhk === 'Unspecified') {
       missingReq.push('BHK Layout Count');
+    }
+    if (!lastExtractedResult.type || lastExtractedResult.type === 'Not Specified' || lastExtractedResult.type === 'Unspecified') {
+      missingReq.push('Property Type');
     }
     const rentAmountNum = lastExtractedResult.rentAmount ? Number(lastExtractedResult.rentAmount) : (lastExtractedResult.rentVal ? Number(String(lastExtractedResult.rentVal).replace(/[^0-9]/g, '')) : 0);
     if (!rentAmountNum || rentAmountNum <= 0) {
@@ -317,6 +295,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     } else if (!lastExtractedResult.ownerPhone.trim().startsWith('+')) {
       missingReq.push('Owner Contact Country Code (Prefix "+" required, e.g. +91 98260 12345)');
     }
+    if (!lastExtractedResult.depositVal || lastExtractedResult.depositVal === 'Not Specified' || lastExtractedResult.depositVal === 'Unspecified') {
+      missingReq.push('Security Deposit');
+    }
 
     if (missingReq.length > 0) {
       alert(`⚠️ Cannot Publish Listing to Database!\n\nThe following REQUIRED non-null database fields are missing or invalid:\n\n• ${missingReq.join('\n• ')}\n\nPlease click [✏️ Edit Fields] to provide these required details before publishing.`);
@@ -328,34 +309,56 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     try {
       const payload = {
         title: lastExtractedResult.title || `${lastExtractedResult.bhk || ''} Property`,
-        propertyType: (lastExtractedResult.type || 'FLAT').toUpperCase(),
+        description: lastExtractedResult.description || lastExtractedResult.rawInput || lastExtractedResult.title,
         bhk: lastExtractedResult.bhk || '',
-        bathrooms: lastExtractedResult.bathrooms ? Number(lastExtractedResult.bathrooms) : 0,
+        type: lastExtractedResult.type || '',
+        status: lastExtractedResult.status || 'LIVE',
+        bathrooms: lastExtractedResult.bathrooms || '',
         rentAmount: rentAmountNum,
-        brokerageDays: lastExtractedResult.brokerageDays ? Number(lastExtractedResult.brokerageDays) : 0,
-        securityDeposit: lastExtractedResult.securityDeposit ? Number(lastExtractedResult.securityDeposit) : (lastExtractedResult.depositVal ? Number(String(lastExtractedResult.depositVal).replace(/[^0-9]/g, '')) : 0),
-        totalAreaSqFt: lastExtractedResult.areaSqFt ? Number(String(lastExtractedResult.areaSqFt).replace(/[^0-9]/g, '')) : 0,
+        rentVal: lastExtractedResult.rentVal || '',
+        brokerageVal: lastExtractedResult.brokerageVal || '',
+        brokerageDays: lastExtractedResult.brokerageDays || '',
+        depositVal: lastExtractedResult.depositVal || '',
+        areaSqFt: lastExtractedResult.areaSqFt || '',
         vastuFacing: lastExtractedResult.vastuFacing || 'Not Specified',
-        furnishingStatus: (lastExtractedResult.furnishingStatus || 'UNSPECIFIED').toUpperCase(),
-        possessionDate: lastExtractedResult.possessionDate || 'Immediate',
+        furnishingStatus: lastExtractedResult.furnishingStatus || '',
+        possessionDate: lastExtractedResult.possessionDate || '',
         address: lastExtractedResult.address || lastExtractedResult.sector || '',
         sector: lastExtractedResult.sector || '',
-        city: lastExtractedResult.city || 'Indore',
-        state: lastExtractedResult.state || 'Madhya Pradesh',
+        city: lastExtractedResult.city || '',
+        colony: lastExtractedResult.colony || '',
+        state: lastExtractedResult.state || '',
         pincode: lastExtractedResult.pincode || '',
         landmark: lastExtractedResult.landmark || '',
-        status: (lastExtractedResult.status || 'LIVE').toUpperCase(),
-        description: lastExtractedResult.rawInput || lastExtractedResult.title,
         ownerName: lastExtractedResult.ownerName && lastExtractedResult.ownerName !== 'Not Specified' ? lastExtractedResult.ownerName : '',
-        ownerPhoneNumber: lastExtractedResult.ownerPhone && lastExtractedResult.ownerPhone !== 'Not Specified' ? lastExtractedResult.ownerPhone : ''
+        ownerPhone: lastExtractedResult.ownerPhone && lastExtractedResult.ownerPhone !== 'Not Specified' ? lastExtractedResult.ownerPhone : '',
+        amenities: lastExtractedResult.amenities || [],
+        rawPrompt: lastExtractedResult.rawInput || '',
+        adminVerified: true
       };
 
       const saved = await propertyService.createPropertyFromParsed(payload);
-      setDbSaveSuccessMsg(`🎉 Property successfully committed to PostgreSQL Database! Listing ID: #${saved.id}`);
+      const propertyId = saved.propertyId;
+      if (propertyId && attachedMediaFiles.length > 0) {
+        for (let index = 0; index < attachedMediaFiles.length; index += 1) {
+          const file = attachedMediaFiles[index];
+          await propertyService.uploadTaggedMedia(propertyId, file, {
+            roomTag: attachedMediaTags[index] || (index === 0 ? 'LIVING_ROOM' : 'BEDROOM'),
+            mediaType: file.type.startsWith('video/') ? 'VIDEO_WALKTHROUGH' : 'IMAGE',
+            caption: payload.title,
+            isPrimaryCover: index === coverPhotoIndex,
+            sector: payload.sector,
+            priceTag: payload.rentVal || `₹${rentAmountNum.toLocaleString('en-IN')} / month`,
+            vastuFacing: payload.vastuFacing
+          });
+        }
+      }
+      setDbSaveSuccessMsg(`Property successfully published. Listing ID: #${propertyId}`);
       setLastExtractedResult((prev: any) => ({
         ...prev,
         savedToDatabase: true,
-        databaseId: saved.id,
+        adminVerified: true,
+        databaseId: propertyId,
         extractedAt: `Just now (PostgreSQL Listing #${saved.id})`
       }));
     } catch (err: any) {
@@ -430,20 +433,16 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   const [isPrimaryCover, setIsPrimaryCover] = useState<boolean>(false);
 
   const handleFillMediaFromExtracted = () => {
-    let result = lastExtractedResult;
-    if (!result && newBhkLabel && newBhkLabel.trim()) {
-      result = parseNaturalLanguageProperty(newBhkLabel);
-    }
+    const result = lastExtractedResult;
     
     if (result && (result.sector || result.rentVal || result.title || result.bhk)) {
       if (result.sector) setMediaSector(result.sector);
       if (result.rentVal) setMediaPriceTag(result.rentVal.includes('/ month') ? result.rentVal : `${result.rentVal} / month`);
       if (result.vastuFacing) setMediaVastu(result.vastuFacing);
       if (result.title) setMediaCaption(result.title);
-      if (!lastExtractedResult) setLastExtractedResult(result);
       notifySuccess("✅ Pre-filled CDN Metadata", `Tagged fields pre-populated with sector: ${result.sector || 'N/A'}, rent: ${result.rentVal || 'N/A'}`, undefined, 'PROPERTY');
     } else {
-      notifyInfo("ℹ️ Prompt Required", "Please type property details in the prompt box above or select a 1-Click Example Preset", undefined, 'PROPERTY');
+      notifyInfo("ℹ️ Extract property details first", "Extract the prompt on the backend before filling media metadata.", undefined, 'PROPERTY');
     }
   };
 
@@ -925,10 +924,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     };
   };
 
-  const liveExtractedPreview = React.useMemo(() => {
-    if (!newBhkLabel || !newBhkLabel.trim()) return null;
-    return parseNaturalLanguageProperty(newBhkLabel);
-  }, [newBhkLabel]);
+  const liveExtractedPreview = lastExtractedResult;
 
   const handleAddCustomBhk = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -941,136 +937,34 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     setPublishSuccessNotification(null);
 
     try {
-      // 1. Primary: Call Spring Boot Backend REST API & Auto-Save Locality / Property to PostgreSQL DB
+      // Parsing is read-only. The administrator must review the canonical backend
+      // result before the separate publish action can create a listing.
       const parsed = await propertyService.parsePropertyPrompt(newBhkLabel);
-      const createdRecord = await propertyService.createPropertyFromParsed(parsed);
-      const propertyId = createdRecord.propertyId;
-
-      // 2. Stream attached media files (photos/videos) directly to Cloudinary CDN via Spring Boot
-      if (attachedMediaFiles.length > 0 && propertyId) {
-        for (let i = 0; i < attachedMediaFiles.length; i++) {
-          const file = attachedMediaFiles[i];
-          const isVideo = file.type.startsWith('video/');
-          const fileRoomTag = attachedMediaTags[i] || (i === 0 ? 'LIVING_ROOM' : 'BEDROOM');
-          await propertyService.uploadTaggedMedia(propertyId, file, {
-            roomTag: fileRoomTag,
-            mediaType: isVideo ? 'VIDEO_WALKTHROUGH' : 'IMAGE',
-            caption: parsed ? (parsed.title || `${fileRoomTag.replace('_', ' ')} View`) : 'Property Media Asset',
-            isPrimaryCover: i === coverPhotoIndex,
-            sector: parsed ? (parsed.sector || '') : '',
-            priceTag: parsed ? (parsed.rentVal ? `${parsed.rentVal} / month` : '') : '',
-            vastuFacing: parsed ? (parsed.vastuFacing || '') : ''
-          });
-        }
-      }
-
-      const baseCleanId = (parsed ? `${parsed.bhk}-${parsed.sector}` : newBhkLabel).toUpperCase().replace(/\s+/g, '-');
-      const cleanId = `${baseCleanId}-${propertyId || Date.now()}`;
-      const displayLabel = parsed ? parsed.label : newBhkLabel;
-      const avgRent = parsed ? parsed.rentVal : '₹18,000';
-
-      setBhkConfigs((prev: any[]) => {
-        if (prev.some((c: any) => c.id === cleanId)) return prev;
-        return [...prev, {
-          id: cleanId,
-          label: displayLabel,
-          enabled: true,
-          demandScore: '94%',
-          avgRent: avgRent,
-          sector: parsed?.sector,
-          vastuFacing: parsed?.vastuFacing,
-          amenities: parsed?.amenities
-        }];
-      });
-
-      const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-      const extractedObj = {
+      setLastExtractedResult({
+        ...parsed,
         rawInput: newBhkLabel,
-        bhk: parsed.bhk,
-        type: parsed.type,
-        city: parsed.city || 'Indore',
-        sector: parsed.sector,
-        colony: parsed.colony || 'None Specified',
-        rentVal: parsed.rentVal,
-        rentAmount: parsed.rentAmount || (parsed.rentVal ? parseInt(parsed.rentVal.replace(/[^0-9]/g, '')) : 0),
-        brokerageVal: parsed.brokerageVal || 'None / Direct Owner',
-        areaSqFt: parsed.areaSqFt || 'Not Specified',
-        depositVal: parsed.depositVal || 'Not Specified',
-        ownerName: parsed.ownerName || 'Not Specified',
-        ownerPhone: parsed.ownerPhone || 'Not Specified',
-        vastuFacing: parsed.vastuFacing,
-        amenities: parsed.amenities || [],
-        title: parsed.title,
-        label: parsed.label,
-        savedToDatabase: true,
-        extractedAt: timeStr
-      };
-      setLastExtractedResult(extractedObj);
-      setMediaSector(parsed.sector);
-      setMediaPriceTag(`${parsed.rentVal} / month`);
-      setMediaVastu(parsed.vastuFacing);
-      setMediaCaption(parsed.title);
-
-      const mediaCount = attachedMediaFiles.length;
-
-      setPublishSuccessNotification({
-        title: parsed.title,
-        label: parsed.label,
-        sector: parsed.sector,
-        city: parsed.city || 'Indore',
-        rentVal: parsed.rentVal,
-        vastuFacing: parsed.vastuFacing,
-        amenities: parsed.amenities || [],
-        savedToDatabase: true,
-        mediaCount: mediaCount,
-        timestamp: timeStr
+        adminVerified: false,
+        extractedAt: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       });
-
-      setPublishedHistory(prev => [
-        {
-          id: cleanId,
-          title: parsed.title,
-          sector: parsed.sector,
-          rentVal: parsed.rentVal,
-          mediaCount: mediaCount,
-          savedToDatabase: true,
-          timestamp: timeStr
-        },
-        ...prev
-      ]);
-
-      // Notify application of live published property in PostgreSQL DB
-      window.dispatchEvent(new Event('pathome_property_published'));
-
-      notifySuccess(
-        '🎉 Property Listing Published!',
-        `Added '${parsed.label}' in ${parsed.sector}, ${parsed.city || 'Indore'}`,
-        `Rent: ${parsed.rentVal} / month • Vastu: ${parsed.vastuFacing} • Saved to PostgreSQL DB & Cloudinary CDN`,
+      notifyInfo(
+        'Review parsed property details',
+        parsed.requiresReview
+          ? 'Some values are missing or conflict. Review and correct them before publishing.'
+          : 'Review the extracted values, then use Save to Database to publish the listing.',
+        undefined,
         'PROPERTY'
       );
-
-      notifyAiMagic(
-        '⚡ AI Parameter Extraction Verified',
-        `Identified ${parsed.bhk} ${parsed.type} in ${parsed.sector}`,
-        `Owner: ${parsed.ownerName} (${parsed.ownerPhone}) • SqFt: ${parsed.areaSqFt}`,
-        'AI_ENGINE'
-      );
     } catch (err: any) {
-      console.error('Failed to publish property listing to backend PostgreSQL / Cloudinary:', err);
+      console.error('Failed to parse property listing:', err);
       notifyError(
-        '🚨 Property Upload Failed',
-        'Backend Spring Boot server is unreachable or returned an error.',
+        'Property extraction failed',
+        'The property details could not be extracted.',
         err.message || 'Internal Server Error (500)',
         'SYSTEM'
       );
     } finally {
       setIsSubmittingListing(false);
     }
-
-    setNewBhkLabel('');
-    setAttachedMediaFiles([]);
-    setCoverPhotoIndex(0);
   };
 
   const DEFAULT_SMART_TAG_SEQUENCE: RoomTag[] = [
@@ -1835,7 +1729,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                   }`}>
                     <div className="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-black text-xs shrink-0 border border-purple-500/30">4</div>
                     <div className="text-[11px] leading-tight min-w-0">
-                      <div className="font-black uppercase text-[9px] text-purple-400 tracking-wider">Step 4: Save & Publish</div>
+                      <div className="font-black uppercase text-[9px] text-purple-400 tracking-wider">Step 4: Review & Publish</div>
                       <div className="truncate font-sans font-bold text-slate-200">PostgreSQL DB</div>
                     </div>
                   </motion.div>
@@ -1984,12 +1878,12 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                                 {isSubmittingListing ? (
                                   <>
                                     <Sparkles className="w-4 h-4 text-emerald-300 animate-spin" />
-                                    <span>⚡ Persisting to PostgreSQL...</span>
+                                    <span>Extracting property details...</span>
                                   </>
                                 ) : (
                                   <>
                                     <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
-                                    <span>✨ Save & Publish Property Listing</span>
+                                    <span>Extract & Review Property Details</span>
                                   </>
                                 )}
                               </motion.button>
@@ -2051,7 +1945,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                     {/* LIVE REAL-TIME IDENTIFIED PROPERTY ATTRIBUTES (100% FULL WIDTH) */}
                     {liveExtractedPreview && (
                       <div className={`p-5 rounded-2xl border space-y-4 shadow-xl transition-all relative overflow-hidden w-full ${
-                        liveExtractedPreview.isGarbageInput
+                        liveExtractedPreview.requiresReview
                           ? 'bg-amber-950/40 border-amber-500/40'
                           : 'bg-slate-950/95 border-emerald-500/40'
                       }`}>
@@ -2062,19 +1956,19 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className={`text-xs sm:text-sm font-mono font-black uppercase tracking-wider flex items-center gap-1.5 ${
-                              liveExtractedPreview.isGarbageInput ? 'text-amber-400' : 'text-emerald-400'
+                              liveExtractedPreview.requiresReview ? 'text-amber-400' : 'text-emerald-400'
                             }`}>
-                              <Zap className={`w-4 h-4 fill-current ${liveExtractedPreview.isGarbageInput ? 'text-amber-400' : 'text-emerald-400 animate-pulse'}`} />
-                              {liveExtractedPreview.isGarbageInput
-                                ? '⚠️ Unrecognized Input - No property parameters detected'
-                                : 'Auto-Identified Property Attributes:'}
+                              <Zap className={`w-4 h-4 fill-current ${liveExtractedPreview.requiresReview ? 'text-amber-400' : 'text-emerald-400 animate-pulse'}`} />
+                              {liveExtractedPreview.requiresReview
+                                ? 'Review required before publishing'
+                                : 'Extracted property attributes'}
                             </span>
                             <span className={`text-[9px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
-                              liveExtractedPreview.isGarbageInput
+                              liveExtractedPreview.requiresReview
                                 ? 'text-amber-300 bg-amber-950/80 border-amber-700'
                                 : 'text-emerald-300 bg-emerald-950 border-emerald-800'
                             }`}>
-                              {liveExtractedPreview.isGarbageInput ? '⚠️ Unrecognized' : '✓ Verified & Auto-Parsed'}
+                              {liveExtractedPreview.requiresReview ? 'Review required' : 'Ready for review'}
                             </span>
                           </div>
 
@@ -2114,6 +2008,18 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                               >
                                 <Tag className="w-3.5 h-3.5 text-cyan-400" />
                                 <span>🏷️ Tag Photos</span>
+                              </motion.button>
+
+                              <motion.button
+                                whileHover={{ scale: 1.04 }}
+                                whileTap={{ scale: 0.96 }}
+                                type="button"
+                                onClick={handleSaveToDatabase}
+                                disabled={isSavingDb || liveExtractedPreview.savedToDatabase}
+                                className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white text-[11px] font-extrabold rounded-xl transition-all border border-emerald-400/40 flex items-center gap-1 cursor-pointer shadow-xs"
+                              >
+                                <Database className="w-3.5 h-3.5" />
+                                <span>{isSavingDb ? 'Publishing…' : liveExtractedPreview.savedToDatabase ? 'Published' : 'Publish Reviewed Listing'}</span>
                               </motion.button>
                             </div>
                           )}
@@ -2363,7 +2269,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                                 <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold tracking-wider">🛁 Bathrooms</span>
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   !liveExtractedPreview.bathrooms ? 'text-slate-500 italic' : 'text-cyan-300'
-                                }`}>{liveExtractedPreview.bathrooms ? `${liveExtractedPreview.bathrooms} Baths` : 'Unspecified'}</span>
+                                }`}>{liveExtractedPreview.bathrooms || 'Unspecified'}</span>
                               </motion.div>
 
                               {/* 13. Owner Name */}
@@ -2424,9 +2330,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                                 <span className={`text-xs font-black font-['Outfit'] truncate block mt-0.5 ${
                                   liveExtractedPreview.furnishingStatus === 'UNSPECIFIED' ? 'text-slate-500 italic' : 'text-fuchsia-300'
                                 }`}>
-                                  {liveExtractedPreview.furnishingStatus === 'FULLY_FURNISHED' ? 'Furnished' :
-                                   liveExtractedPreview.furnishingStatus === 'SEMI_FURNISHED' ? 'Semi-Furnished' :
-                                   liveExtractedPreview.furnishingStatus === 'UNFURNISHED' ? 'Unfurnished' :
+                                  {liveExtractedPreview.furnishingStatus === 'FULLY_FURNISHED' || liveExtractedPreview.furnishingStatus === 'Fully Furnished' ? 'Furnished' :
+                                   liveExtractedPreview.furnishingStatus === 'SEMI_FURNISHED' || liveExtractedPreview.furnishingStatus === 'Semi Furnished' ? 'Semi-Furnished' :
+                                   liveExtractedPreview.furnishingStatus === 'UNFURNISHED' || liveExtractedPreview.furnishingStatus === 'Unfurnished' ? 'Unfurnished' :
                                    'Unspecified'}
                                 </span>
                               </motion.div>
@@ -2455,6 +2361,17 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                           <div className="text-[10px] font-mono text-slate-500 pt-2 flex items-center gap-1.5 border-t border-slate-800/60">
                             <span className="text-slate-400 font-bold">💡 Unmentioned Attributes:</span>
                             <span className="italic truncate">{liveExtractedPreview.missingFields.join(' • ')}</span>
+                          </div>
+                        )}
+                        {liveExtractedPreview.conflicts && liveExtractedPreview.conflicts.length > 0 && (
+                          <div className="text-[10px] font-mono text-amber-300 pt-2 flex items-center gap-1.5 border-t border-amber-800/60">
+                            <span className="font-bold">Conflicting values:</span>
+                            <span className="italic truncate">{liveExtractedPreview.conflicts.join(' • ')}</span>
+                          </div>
+                        )}
+                        {dbSaveSuccessMsg && (
+                          <div className="text-[10px] font-mono text-emerald-300 pt-2 border-t border-emerald-800/60">
+                            {dbSaveSuccessMsg}
                           </div>
                         )}
                       </div>

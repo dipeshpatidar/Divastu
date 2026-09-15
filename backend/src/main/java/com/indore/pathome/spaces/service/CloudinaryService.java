@@ -27,7 +27,7 @@ public class CloudinaryService {
      */
     public String uploadImage(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            return "/assets/hero_luxury.jpg";
+            throw new IllegalArgumentException("Property photo cannot be empty");
         }
 
         try {
@@ -44,8 +44,8 @@ public class CloudinaryService {
             logger.info("Successfully uploaded property photo to Cloudinary: {}", url);
             return url;
         } catch (Exception e) {
-            logger.warn("Cloudinary photo upload fallback active: {}", e.getMessage());
-            return "/assets/hero_luxury.jpg";
+            logger.warn("Cloudinary photo upload failed: {}", e.getMessage());
+            throw new IllegalStateException("Property photo upload failed", e);
         }
     }
 
@@ -54,7 +54,7 @@ public class CloudinaryService {
      */
     public String uploadVideo(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            return "/assets/videos/property_walkthrough_1.mp4";
+            throw new IllegalArgumentException("Property video cannot be empty");
         }
 
         try {
@@ -70,8 +70,8 @@ public class CloudinaryService {
             logger.info("Successfully uploaded property video walkthrough to Cloudinary: {}", url);
             return url;
         } catch (Exception e) {
-            logger.warn("Cloudinary video upload fallback active: {}", e.getMessage());
-            return "/assets/videos/property_walkthrough_1.mp4";
+            logger.warn("Cloudinary video upload failed: {}", e.getMessage());
+            throw new IllegalStateException("Property video upload failed", e);
         }
     }
 }

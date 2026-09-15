@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "localities", indexes = {
+@Table(name = "localities", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_locality_city_sector", columnNames = {"city", "sectorName"})
+}, indexes = {
     @Index(name = "idx_locality_city_sector", columnList = "city, sectorName"),
     @Index(name = "idx_locality_sector", columnList = "sectorName")
 })

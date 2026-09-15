@@ -7,6 +7,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,6 +41,31 @@ public class PropertyParserService {
             "\\b(?:deposit|scurity|security\\s*deposit)\\s*(?:is|amount|of|=|-|:)?\\s*(\\d{1,2})\\s*(?:mahina|mahine|month|months)\\b|\\b(\\d{1,2})\\s*(?:mahina|mahine|month|months)\\s*(?:deposit|security|ka\\s*deposit)\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern IN_PROMPT_URL_PATTERN = Pattern.compile(
             "https?://[^\\s,;\"'<>]+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern TYPO_FLAT_PATTERN = Pattern.compile(
+            "\\b(flt|flts|flatt|appartment|appatment|apartmnt|apt|apts)\\b");
+    private static final Pattern TYPO_HOUSE_PATTERN = Pattern.compile(
+            "\\b(viila|vlla|vlia|bunglow|bunglows|independant|indepent)\\b");
+    private static final Pattern TYPO_PLOT_PATTERN = Pattern.compile("\\b(plott|pott|lnd)\\b");
+    private static final Pattern TYPO_SEMI_FURNISHED_PATTERN = Pattern.compile(
+            "\\b(semi\\s*furnishd|semifurnished|semi\\-furnished|semifurnish)\\b");
+    private static final Pattern TYPO_FULLY_FURNISHED_PATTERN = Pattern.compile(
+            "\\b(fully\\s*furnishd|full\\s*furnished|fully\\-furnished|fullfurnish)\\b");
+    private static final Pattern TYPO_UNFURNISHED_PATTERN = Pattern.compile("\\b(unfurnishd|un\\-furnished|bare)\\b");
+    private static final Pattern TYPO_EAST_FACING_PATTERN = Pattern.compile("\\b(est\\s*facing|east\\s*faceing|east\\s*dacing)\\b");
+    private static final Pattern TYPO_WEST_FACING_PATTERN = Pattern.compile("\\b(wst\\s*facing|west\\s*faceing|west\\s*dacing)\\b");
+    private static final Pattern TYPO_NORTH_FACING_PATTERN = Pattern.compile("\\b(noth\\s*facing|north\\s*faceing|north\\s*dacing)\\b");
+    private static final Pattern TYPO_SOUTH_FACING_PATTERN = Pattern.compile("\\b(suth\\s*facing|south\\s*faceing|south\\s*dacing)\\b");
+    private static final Pattern TYPO_RENT_PATTERN = Pattern.compile("\\b(rnt|ren|mothly\\s*rent|pm|p\\.m\\.)\\b");
+    private static final Pattern TYPO_DEPOSIT_PATTERN = Pattern.compile(
+            "\\b(depost|deposite|diposite|diposit|scurity\\s*deposit|scurity\\s*dep|securuity\\s*deposit|securuity)\\b");
+    private static final Pattern TYPO_NEAR_PATTERN = Pattern.compile("\\b(near\\s*by|nearby|near\\s*to|opp\\s*to|infront\\s*of)\\b");
+    private static final Pattern TYPO_BROKERAGE_PATTERN = Pattern.compile("\\b(brokraj|brokrage|brookerage|brokerg|brokorage|commission)\\b");
+    private static final Pattern TYPO_SAKET_NAGAR_PATTERN = Pattern.compile("\\b(saket\\s*nagr|saketnagar)\\b");
+    private static final Pattern TYPO_VIJAY_NAGAR_PATTERN = Pattern.compile("\\b(vijay\\s*nagr|vijayngr|vijaynagar)\\b");
+    private static final Pattern TYPO_NANDA_NAGAR_PATTERN = Pattern.compile("\\b(nanda\\s*nagr|nandanagar)\\b");
+    private static final Pattern TYPO_BHAWARKUA_PATTERN = Pattern.compile("\\b(bhawarkwa|bhawar\\s*kua)\\b");
+    private static final Pattern TYPO_PALASIA_PATTERN = Pattern.compile("\\b(palasiaa)\\b");
+    private static final Pattern TYPO_NIPANIA_PATTERN = Pattern.compile("\\b(nipaniya|nipaniyaa)\\b");
 
     private static final Pattern NUM_BHK_PATTERN = Pattern.compile(
             "\\b([1-9](?:\\.5)?|10)\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk|flat|flt|flats|flatt|apartment|house|villa)\\b", Pattern.CASE_INSENSITIVE);
@@ -127,6 +153,24 @@ public class PropertyParserService {
     private static final Pattern NOISE_PREFIX_PATTERN = Pattern.compile("^.*?\\b(?:in|at|near|around)\\s+",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
+    private static final Pattern DIRECTION_TOKEN_PATTERN = Pattern.compile(
+            "\\b(north-east|north-west|south-east|south-west|northeast|northwest|southeast|southwest|north|south|east|west)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern ONE_PLUS_ONE_PATTERN = Pattern.compile("\\b([1-3])\\s*\\+\\s*([1-3])\\b");
+    private static final Pattern MONTH_COUNT_PATTERN = Pattern.compile(
+            "\\b(\\d{1,2})\\s*(?:month|months|mahina|mahine)\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern FALLBACK_BHK_DIGIT_PATTERN = Pattern.compile("\\b([1-9]\\d?(?:\\.5)?)\\b");
+    private static final Pattern BHK_KEYWORD_PATTERN = Pattern.compile(
+            "(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern HOUSE_TYPE_PATTERN = Pattern.compile(
+            "\\b(?:house|bungalow|independent|villa|duplex|bunglow|viila|vlla)\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern OWNER_NAME_NOISE_PATTERN = Pattern.compile(
+            "\\b(is|live|facing|flat|house|villa|apartment|plot|furnished|fully|semi|unfurnished|bhk|rk|bedroom|bath|baths)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern NON_DIGIT_PATTERN = Pattern.compile("\\D");
+    private static final Pattern SECTOR_LONG_NUMBER_PATTERN = Pattern.compile(".*\\b\\d{4,}\\b.*");
+    private static final Pattern LEADING_BATCH_MARKER_PATTERN = Pattern.compile("^(?:\\[?\\d+[\\]\\)\\.\\:\\-]|#\\d+)\\s*");
+    private static final Pattern MEDIA_URL_EXTENSION_PATTERN = Pattern.compile(".*\\.(jpg|jpeg|png|webp|mp4|gif).*", Pattern.CASE_INSENSITIVE);
 
     // Master Indian Cities & Tier-1/Tier-2 Metros Allow-list for fail-safe extraction
     private static final Set<String> MASTER_INDIAN_CITIES = Set.of(
@@ -162,8 +206,8 @@ public class PropertyParserService {
         try {
             List<Locality> all = localityRepository.findAll();
             for (Locality loc : all) {
-                if (loc.getSectorName() != null) {
-                    localityCache.put(loc.getSectorName().toLowerCase(), loc);
+                if (loc.getSectorName() != null && loc.getCity() != null) {
+                    localityCache.put(localityCacheKey(loc.getCity(), loc.getSectorName()), loc);
                 }
                 if (loc.getCity() != null) {
                     cityCache.add(loc.getCity().toLowerCase());
@@ -176,7 +220,56 @@ public class PropertyParserService {
         }
     }
 
+    /**
+     * Parses text without changing persistent state. Localities are stored only
+     * after an administrator confirms the staged listing for publication.
+     */
+    public ParsedPropertyDTO parse(String prompt) {
+        return parseInternal(prompt);
+    }
+
+    /**
+     * Compatibility entry point for existing clients. It is intentionally
+     * read-only despite the historical method name.
+     */
+    @Deprecated(forRemoval = false)
     public ParsedPropertyDTO parseAndSave(String prompt) {
+        return parseInternal(prompt);
+    }
+
+    @Transactional
+    public Locality confirmLocality(String city, String sector, double rentAmount) {
+        if (isMissingValue(city) || isMissingValue(sector)) {
+            return null;
+        }
+
+        String normalizedCity = capitalizeWords(city.trim());
+        String normalizedSector = capitalizeWords(sector.trim());
+        String cacheKey = localityCacheKey(normalizedCity, normalizedSector);
+        Locality cached = localityCache.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
+        Optional<Locality> existing = localityRepository
+                .findByCityIgnoreCaseAndSectorNameIgnoreCase(normalizedCity, normalizedSector);
+        if (existing.isPresent()) {
+            Locality locality = existing.get();
+            localityCache.put(cacheKey, locality);
+            cityCache.add(normalizedCity.toLowerCase(Locale.ROOT));
+            return locality;
+        }
+
+        Locality locality = new Locality(normalizedCity, normalizedSector, cacheKey, 92, rentAmount);
+        Locality saved = localityRepository.save(locality);
+        Locality resolved = saved != null ? saved : locality;
+        localityCache.put(cacheKey, resolved);
+        cityCache.add(normalizedCity.toLowerCase(Locale.ROOT));
+        log.info("Persisted confirmed locality: City={}, Sector={}", normalizedCity, normalizedSector);
+        return resolved;
+    }
+
+    private ParsedPropertyDTO parseInternal(String prompt) {
         if (prompt == null || prompt.isBlank()) {
             return new ParsedPropertyDTO();
         }
@@ -185,27 +278,7 @@ public class PropertyParserService {
         String cleanLower = input.toLowerCase();
 
         // 0. Pre-Pass: Typo Auto-Correction & Normalization
-        String normalized = cleanLower;
-        normalized = normalized.replaceAll("\\b(flt|flts|flatt|appartment|appatment|apartmnt|apt|apts)\\b", "flat");
-        normalized = normalized.replaceAll("\\b(viila|vlla|vlia|bunglow|bunglows|independant|indepent)\\b", "house");
-        normalized = normalized.replaceAll("\\b(plott|pott|lnd)\\b", "plot");
-        normalized = normalized.replaceAll("\\b(semi\\s*furnishd|semifurnished|semi\\-furnished|semifurnish)\\b", "semi furnished");
-        normalized = normalized.replaceAll("\\b(fully\\s*furnishd|full\\s*furnished|fully\\-furnished|fullfurnish)\\b", "fully furnished");
-        normalized = normalized.replaceAll("\\b(unfurnishd|un\\-furnished|bare)\\b", "unfurnished");
-        normalized = normalized.replaceAll("\\b(est\\s*facing|east\\s*faceing|east\\s*dacing)\\b", "east facing");
-        normalized = normalized.replaceAll("\\b(wst\\s*facing|west\\s*faceing|west\\s*dacing)\\b", "west facing");
-        normalized = normalized.replaceAll("\\b(noth\\s*facing|north\\s*faceing|north\\s*dacing)\\b", "north facing");
-        normalized = normalized.replaceAll("\\b(suth\\s*facing|south\\s*faceing|south\\s*dacing)\\b", "south facing");
-        normalized = normalized.replaceAll("\\b(rnt|ren|mothly\\s*rent|pm|p\\.m\\.)\\b", "rent");
-        normalized = normalized.replaceAll("\\b(depost|deposite|diposite|diposit|scurity\\s*deposit|scurity\\s*dep|securuity\\s*deposit|securuity)\\b", "deposit");
-        normalized = normalized.replaceAll("\\b(near\\s*by|nearby|near\\s*to|opp\\s*to|infront\\s*of)\\b", "near");
-        normalized = normalized.replaceAll("\\b(brokraj|brokrage|brookerage|brokerg|brokorage|commission)\\b", "brokerage");
-        normalized = normalized.replaceAll("\\b(saket\\s*nagr|saketnagar)\\b", "saket nagar");
-        normalized = normalized.replaceAll("\\b(vijay\\s*nagr|vijayngr|vijaynagar)\\b", "vijay nagar");
-        normalized = normalized.replaceAll("\\b(nanda\\s*nagr|nandanagar)\\b", "nanda nagar");
-        normalized = normalized.replaceAll("\\b(bhawarkwa|bhawar\\s*kua)\\b", "bhawarkua");
-        normalized = normalized.replaceAll("\\b(palasiaa)\\b", "palasia");
-        normalized = normalized.replaceAll("\\b(nipaniya|nipaniyaa)\\b", "nipania");
+        String normalized = normalizeTypos(cleanLower);
 
         // Hinglish / Indian Slang Rent Normalization: e.g. "18 hazar" -> "18000", "1.5 lakh" -> "150000"
         Matcher hazarMatcher = HINDI_HAZAR_RENT_PATTERN.matcher(normalized);
@@ -264,8 +337,8 @@ public class PropertyParserService {
             bhk = "Luxury Penthouse";
         } else {
             // Global Fallback Extractor: If any single number exists and prompt contains BHK/RK/Bed tokens or typos anywhere
-            Matcher anyDigit = Pattern.compile("\\b([1-9]\\d?(?:\\.5)?)\\b").matcher(input);
-            if (anyDigit.find() && Pattern.compile("(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk)", Pattern.CASE_INSENSITIVE).matcher(input).find()) {
+            Matcher anyDigit = FALLBACK_BHK_DIGIT_PATTERN.matcher(input);
+            if (anyDigit.find() && BHK_KEYWORD_PATTERN.matcher(input).find()) {
                 bhk = anyDigit.group(1) + " BHK";
             }
         }
@@ -292,7 +365,7 @@ public class PropertyParserService {
             type = "Flat";
         } else if (normalized.contains("plot") || normalized.contains("land")) {
             type = "Plot";
-        } else if (Pattern.compile("\\b(?:house|bungalow|independent|villa|duplex|bunglow|viila|vlla)\\b", Pattern.CASE_INSENSITIVE).matcher(normalized).find()) {
+        } else if (HOUSE_TYPE_PATTERN.matcher(normalized).find()) {
             type = "House";
         }
 
@@ -313,7 +386,7 @@ public class PropertyParserService {
         String ownerName = null;
         Matcher ownerMatcher = OWNER_NAME_PATTERN.matcher(input);
         if (ownerMatcher.find() && ownerMatcher.group(1) != null && !ownerMatcher.group(1).isBlank()) {
-            String candidate = ownerMatcher.group(1).replaceAll("(?i)\\b(is|live|facing|flat|house|villa|apartment|plot|furnished|fully|semi|unfurnished|bhk|rk|bedroom|bath|baths)\\b", "").trim();
+            String candidate = OWNER_NAME_NOISE_PATTERN.matcher(ownerMatcher.group(1)).replaceAll("").trim();
             if (!candidate.isBlank()) {
                 ownerName = capitalizeWords(candidate);
             }
@@ -321,7 +394,7 @@ public class PropertyParserService {
         if (ownerName == null) {
             Matcher revOwnerMatcher = REV_OWNER_NAME_PATTERN.matcher(input);
             if (revOwnerMatcher.find() && revOwnerMatcher.group(1) != null) {
-                String candidate = revOwnerMatcher.group(1).replaceAll("(?i)\\b(is|live|facing|flat|house|villa|apartment|plot|furnished|fully|semi|unfurnished|bhk|rk|bedroom|bath|baths)\\b", "").trim();
+                String candidate = OWNER_NAME_NOISE_PATTERN.matcher(revOwnerMatcher.group(1)).replaceAll("").trim();
                 if (!candidate.isBlank()) {
                     ownerName = capitalizeWords(candidate);
                 }
@@ -331,7 +404,7 @@ public class PropertyParserService {
         String ownerPhone = null;
         Matcher phoneMatcher = PHONE_PATTERN.matcher(input);
         if (phoneMatcher.find()) {
-            String rawDigits = phoneMatcher.group(0).replaceAll("\\D", "");
+            String rawDigits = NON_DIGIT_PATTERN.matcher(phoneMatcher.group(0)).replaceAll("");
             if (rawDigits.startsWith("91") && rawDigits.length() > 10) {
                 rawDigits = rawDigits.substring(2);
             }
@@ -443,8 +516,6 @@ public class PropertyParserService {
         Matcher daysMatcher = BROKERAGE_DAYS_PATTERN.matcher(input);
         if (daysMatcher.find()) {
             brokerageDays = daysMatcher.group(1) + " Days";
-        } else if (!"Unmentioned".equals(brokerageVal)) {
-            brokerageDays = "15 Days"; // Default brokerage terms
         }
 
         // 3C. Explicit Sqft Area Extractor
@@ -558,17 +629,20 @@ public class PropertyParserService {
         String sector = "";
         String city = "";
 
-        // Step 4A: Check L1 Locality Cache
-        for (Map.Entry<String, Locality> entry : localityCache.entrySet()) {
-            if (cleanLower.contains(entry.getKey())) {
-                Locality loc = entry.getValue();
-                sector = loc.getSectorName();
-                city = loc.getCity();
-                break;
+        // Step 4A: Resolve an explicit known city before using locality data.
+        city = resolveKnownCity(cleanLower);
+
+        // Step 4B: Match cached localities only when the city is explicit or
+        // the sector name is unique across the cache.
+        Locality cachedLocality = resolveCachedLocality(cleanLower, city);
+        if (cachedLocality != null) {
+            sector = cachedLocality.getSectorName();
+            if (city.isBlank()) {
+                city = cachedLocality.getCity();
             }
         }
 
-        // Step 4B: Check Known Core Indore Sectors (Hard-bind locality to Indore, sort by length descending)
+        // Step 4C: Check Known Core Indore Sectors (Hard-bind locality to Indore, sort by length descending)
         if (sector.isBlank()) {
             List<String> sortedSectors = KNOWN_INDORE_SECTORS.stream()
                     .sorted((a, b) -> Integer.compare(b.length(), a.length()))
@@ -582,7 +656,7 @@ public class PropertyParserService {
             }
         }
 
-        // Step 4C: Check City Cache or Master Indian Cities Allow-list
+        // Step 4D: Check City Cache or Master Indian Cities Allow-list
         if (city.isBlank()) {
             for (String c : cityCache) {
                 if (cleanLower.contains(c) && MASTER_INDIAN_CITIES.contains(c)) {
@@ -601,7 +675,7 @@ public class PropertyParserService {
             }
         }
 
-        // Step 4D: Dynamic City Scanner for explicit city declarations (strictly validated against Master Indian Cities)
+        // Step 4E: Dynamic City Scanner for explicit city declarations (strictly validated against Master Indian Cities)
         if (city.isBlank()) {
             Matcher cityMatcher = CITY_NER_PATTERN.matcher(input);
             if (cityMatcher.find()) {
@@ -612,7 +686,7 @@ public class PropertyParserService {
             }
         }
 
-        // Step 4E: Dynamic Sector / Street / Suffix Scanner
+        // Step 4F: Dynamic Sector / Street / Suffix Scanner
         if (sector.isBlank()) {
             Matcher suffixMatcher = SUFFIX_LOCALITY_PATTERN.matcher(normalized);
             if (suffixMatcher.find()) {
@@ -621,7 +695,7 @@ public class PropertyParserService {
             }
         }
 
-        // Step 4F: Dynamic Preposition NER Scanner
+        // Step 4G: Dynamic Preposition NER Scanner
         if (sector.isBlank()) {
             Matcher prepMatcher = PREP_LOCALITY_PATTERN.matcher(normalized);
             if (prepMatcher.find()) {
@@ -638,7 +712,7 @@ public class PropertyParserService {
             if (!city.isBlank() && sector.toLowerCase().endsWith(" " + city.toLowerCase())) {
                 sector = sector.substring(0, sector.length() - city.length()).trim();
             }
-            if (sector.matches(".*\\b\\d{4,}\\b.*")) {
+            if (SECTOR_LONG_NUMBER_PATTERN.matcher(sector).matches()) {
                 sector = "";
             }
         }
@@ -646,8 +720,8 @@ public class PropertyParserService {
         if (sector.isBlank()) {
             sector = "Not Specified";
         }
-        if (city.isBlank() || !MASTER_INDIAN_CITIES.contains(city.toLowerCase())) {
-            city = "Indore"; // Baseline fallback to primary metro hub
+        if (city.isBlank() || !MASTER_INDIAN_CITIES.contains(city.toLowerCase(Locale.ROOT))) {
+            city = "Not Specified";
         }
 
         // 5. Dynamic Society / Project Name Detection
@@ -704,8 +778,14 @@ public class PropertyParserService {
         List<String> missingFields = new ArrayList<>();
         if (!rentFound)
             missingFields.add("Monthly Rent");
+        if ("Unspecified".equalsIgnoreCase(bhk))
+            missingFields.add("BHK Layout");
+        if (type == null)
+            missingFields.add("Property Type");
         if (sector.equalsIgnoreCase("Not Specified"))
             missingFields.add("Locality / Sector");
+        if (ownerPhone == null)
+            missingFields.add("Owner Contact Number");
         if (bathrooms == null)
             missingFields.add("Bathrooms Count");
         if (areaSqFt == null)
@@ -718,42 +798,20 @@ public class PropertyParserService {
             missingFields.add("Vastu Facing Direction");
         if (furnishingStatus == null)
             missingFields.add("Furnishing Status");
+        if (depositVal == null)
+            missingFields.add("Security Deposit");
+        List<String> conflicts = detectConflicts(normalized);
 
-        // 9. PostgreSQL Auto-Persistence & Null-Safe L1 Cache Update
+        // 9. Parsing must not persist inferred localities. The publish workflow
+        // persists a confirmed locality in the same transaction as its listing.
         boolean newlySaved = false;
-        final String finalCity = city;
-        final String finalSector = sector;
 
-        if (!finalSector.equalsIgnoreCase("Not Specified")) {
-            Locality cachedLocality = localityCache.get(finalSector.toLowerCase());
-            if (cachedLocality == null) {
-                Optional<Locality> existing = localityRepository.findByCityIgnoreCaseAndSectorNameIgnoreCase(finalCity,
-                        finalSector);
-                if (existing.isEmpty()) {
-                    Locality newLocality = new Locality(finalCity, finalSector, finalSector.toLowerCase(), 92,
-                            rentAmount);
-                    Locality saved = localityRepository.save(newLocality);
-                    Locality entityToCache = (saved != null) ? saved : newLocality;
-                    localityCache.put(finalSector.toLowerCase(), entityToCache);
-                    if (finalCity != null)
-                        cityCache.add(finalCity.toLowerCase());
-                    newlySaved = true;
-                    log.info("Persisted new locality to PostgreSQL & L1 Cache: City={}, Sector={}", finalCity,
-                            finalSector);
-                } else {
-                    localityCache.put(finalSector.toLowerCase(), existing.get());
-                    if (finalCity != null)
-                        cityCache.add(finalCity.toLowerCase());
-                }
-            }
-        }
-
-        String locationPart = city != null ? sector + ", " + city : sector;
+        String locationPart = !isMissingValue(city) ? sector + ", " + city : sector;
         String fullLocation = !colony.isBlank() ? locationPart + " (" + colony + ")" : locationPart;
         String title = bhk + " " + type + " in " + (!colony.isBlank() ? colony + ", " : "") + locationPart
                 + (!vastuFacing.equals("Not Specified") ? " (" + vastuFacing + ")" : "");
         String label = bhk + " " + type + " (" + fullLocation + ")";
-        String address = sector + (city != null ? ", " + city : "") + (state != null ? ", " + state : "")
+        String address = sector + (!isMissingValue(city) ? ", " + city : "") + (state != null ? ", " + state : "")
                 + (pincode != null ? " - " + pincode : "");
 
         StringBuilder descBuilder = new StringBuilder();
@@ -771,7 +829,7 @@ public class PropertyParserService {
         if (furnishingStatus != null && !furnishingStatus.equalsIgnoreCase("UNSPECIFIED")) descBuilder.append(" Furnishing: ").append(furnishingStatus).append(".");
         descBuilder.append(" Monthly Rent: ").append(rentVal).append(".");
         if (depositVal != null && !depositVal.equals("Not Specified")) descBuilder.append(" Security Deposit: ").append(depositVal).append(".");
-        if (brokerageVal != null) descBuilder.append(" Brokerage Fee: ").append(brokerageVal).append(".");
+        if (brokerageVal != null && !brokerageVal.equalsIgnoreCase("Unmentioned")) descBuilder.append(" Brokerage Fee: ").append(brokerageVal).append(".");
         if (possessionDate != null) descBuilder.append(" Possession: ").append(possessionDate).append(".");
         if (amenities != null && !amenities.isEmpty()) descBuilder.append(" Key Amenities: ").append(String.join(", ", amenities)).append(".");
         if (ownerName != null && !ownerName.equals("Not Specified")) {
@@ -792,19 +850,19 @@ public class PropertyParserService {
         dto.setColony(colony);
         dto.setRentVal(rentVal);
         dto.setRentAmount(rentAmount);
-        dto.setBrokerageVal(brokerageVal != null ? brokerageVal : "15 Days Rent");
-        dto.setBrokerageDays(brokerageDays != null ? brokerageDays : "15 Days");
+        dto.setBrokerageVal(brokerageVal != null ? brokerageVal : "Unmentioned");
+        dto.setBrokerageDays(brokerageDays);
         dto.setAreaSqFt(areaSqFt != null ? areaSqFt : "Not Specified");
-        dto.setDepositVal(depositVal != null ? depositVal : "1+1 Security Deposit");
+        dto.setDepositVal(depositVal);
         dto.setBathrooms(bathrooms != null ? bathrooms : "Not Specified");
-        dto.setFurnishingStatus(furnishingStatus != null ? furnishingStatus : "Semi-Furnished");
-        dto.setPossessionDate(possessionDate != null ? possessionDate : "Immediate / Ready to Move");
+        dto.setFurnishingStatus(furnishingStatus);
+        dto.setPossessionDate(possessionDate);
         dto.setAddress(address);
-        dto.setState(state != null ? state : "Madhya Pradesh");
+        dto.setState(state);
         dto.setPincode(pincode != null ? pincode : "Not Specified");
         dto.setLandmark(landmark != null ? landmark : "Not Specified");
         dto.setDescription(synthesizedDescription);
-        dto.setOwnerName(ownerName != null ? ownerName : "Direct Owner");
+        dto.setOwnerName(ownerName != null ? ownerName : "Not Specified");
         dto.setOwnerPhone(ownerPhone != null ? ownerPhone : "Not Specified");
         dto.setVastuFacing(vastuFacing);
         dto.setAmenities(amenities);
@@ -812,8 +870,136 @@ public class PropertyParserService {
         dto.setTitle(title);
         dto.setLabel(label);
         dto.setSavedToDatabase(newlySaved);
+        dto.setRawPrompt(input);
+        dto.setConflicts(conflicts);
+        dto.setRequiresReview(!missingFields.isEmpty() || !conflicts.isEmpty());
+        dto.setSourceSnippets(buildSourceSnippets(rentVal, brokerageVal, depositVal, ownerPhone, sector));
 
         return dto;
+    }
+
+    private List<String> detectConflicts(String normalized) {
+        List<String> conflicts = new ArrayList<>();
+        addMonetaryConflict(conflicts, "Monthly Rent", normalized, FWD_RENT_PATTERN, REV_RENT_PATTERN);
+        addMonetaryConflict(conflicts, "Brokerage", normalized, FWD_BROKERAGE_PATTERN, REV_BROKERAGE_PATTERN);
+        addMonetaryConflict(conflicts, "Security Deposit", normalized, FWD_DEPOSIT_PATTERN, REV_DEPOSIT_PATTERN);
+        addTokenConflict(conflicts, "Furnishing", normalized, FURNISHING_PATTERN);
+        addTokenConflict(conflicts, "Facing Direction", normalized, DIRECTION_TOKEN_PATTERN);
+        return conflicts;
+    }
+
+    private void addMonetaryConflict(List<String> conflicts, String field, String text, Pattern forward, Pattern reverse) {
+        Set<String> values = new HashSet<>();
+        collectMatcherValues(values, forward.matcher(text));
+        collectMatcherValues(values, reverse.matcher(text));
+        if (values.size() > 1) {
+            conflicts.add(field + " has multiple values: " + String.join(", ", values));
+        }
+    }
+
+    private void collectMatcherValues(Set<String> values, Matcher matcher) {
+        while (matcher.find()) {
+            String value = matcher.group(1);
+            if (value != null && !value.isBlank()) {
+                values.add(value.replace(",", "").toLowerCase(Locale.ROOT));
+            }
+        }
+    }
+
+    private void addTokenConflict(List<String> conflicts, String field, String text, Pattern pattern) {
+        Set<String> values = new HashSet<>();
+        Matcher matcher = pattern.matcher(text);
+        while (matcher.find()) {
+            values.add(matcher.group(1).toLowerCase(Locale.ROOT));
+        }
+        if (values.size() > 1) {
+            conflicts.add(field + " has conflicting values: " + String.join(", ", values));
+        }
+    }
+
+    private Map<String, String> buildSourceSnippets(String rentVal, String brokerageVal, String depositVal,
+                                                     String ownerPhone, String sector) {
+        Map<String, String> snippets = new LinkedHashMap<>();
+        addSourceSnippet(snippets, "rent", rentVal);
+        addSourceSnippet(snippets, "brokerage", brokerageVal);
+        addSourceSnippet(snippets, "deposit", depositVal);
+        addSourceSnippet(snippets, "ownerPhone", ownerPhone);
+        addSourceSnippet(snippets, "sector", sector);
+        return snippets;
+    }
+
+    private void addSourceSnippet(Map<String, String> snippets, String key, String value) {
+        if (!isMissingValue(value) && !"Unmentioned".equalsIgnoreCase(value)) {
+            snippets.put(key, value);
+        }
+    }
+
+    private String normalizeTypos(String value) {
+        String normalized = TYPO_FLAT_PATTERN.matcher(value).replaceAll("flat");
+        normalized = TYPO_HOUSE_PATTERN.matcher(normalized).replaceAll("house");
+        normalized = TYPO_PLOT_PATTERN.matcher(normalized).replaceAll("plot");
+        normalized = TYPO_SEMI_FURNISHED_PATTERN.matcher(normalized).replaceAll("semi furnished");
+        normalized = TYPO_FULLY_FURNISHED_PATTERN.matcher(normalized).replaceAll("fully furnished");
+        normalized = TYPO_UNFURNISHED_PATTERN.matcher(normalized).replaceAll("unfurnished");
+        normalized = TYPO_EAST_FACING_PATTERN.matcher(normalized).replaceAll("east facing");
+        normalized = TYPO_WEST_FACING_PATTERN.matcher(normalized).replaceAll("west facing");
+        normalized = TYPO_NORTH_FACING_PATTERN.matcher(normalized).replaceAll("north facing");
+        normalized = TYPO_SOUTH_FACING_PATTERN.matcher(normalized).replaceAll("south facing");
+        normalized = TYPO_RENT_PATTERN.matcher(normalized).replaceAll("rent");
+        normalized = TYPO_DEPOSIT_PATTERN.matcher(normalized).replaceAll("deposit");
+        normalized = TYPO_NEAR_PATTERN.matcher(normalized).replaceAll("near");
+        normalized = TYPO_BROKERAGE_PATTERN.matcher(normalized).replaceAll("brokerage");
+        normalized = TYPO_SAKET_NAGAR_PATTERN.matcher(normalized).replaceAll("saket nagar");
+        normalized = TYPO_VIJAY_NAGAR_PATTERN.matcher(normalized).replaceAll("vijay nagar");
+        normalized = TYPO_NANDA_NAGAR_PATTERN.matcher(normalized).replaceAll("nanda nagar");
+        normalized = TYPO_BHAWARKUA_PATTERN.matcher(normalized).replaceAll("bhawarkua");
+        normalized = TYPO_PALASIA_PATTERN.matcher(normalized).replaceAll("palasia");
+        return TYPO_NIPANIA_PATTERN.matcher(normalized).replaceAll("nipania");
+    }
+
+    private String resolveKnownCity(String normalizedPrompt) {
+        for (String cachedCity : cityCache) {
+            if (MASTER_INDIAN_CITIES.contains(cachedCity) && normalizedPrompt.contains(cachedCity)) {
+                return capitalizeWords(cachedCity);
+            }
+        }
+        for (String knownCity : MASTER_INDIAN_CITIES) {
+            if (normalizedPrompt.contains(knownCity)) {
+                return capitalizeWords(knownCity);
+            }
+        }
+        return "";
+    }
+
+    private Locality resolveCachedLocality(String normalizedPrompt, String resolvedCity) {
+        Locality matched = null;
+        for (Locality locality : localityCache.values()) {
+            if (locality.getSectorName() == null
+                    || !normalizedPrompt.contains(locality.getSectorName().toLowerCase(Locale.ROOT))) {
+                continue;
+            }
+            if (!resolvedCity.isBlank()) {
+                if (locality.getCity() != null && locality.getCity().equalsIgnoreCase(resolvedCity)) {
+                    return locality;
+                }
+                continue;
+            }
+            if (matched != null && locality.getCity() != null && matched.getCity() != null
+                    && !locality.getCity().equalsIgnoreCase(matched.getCity())) {
+                return null;
+            }
+            matched = locality;
+        }
+        return matched;
+    }
+
+    private String localityCacheKey(String city, String sector) {
+        return city.trim().toLowerCase(Locale.ROOT) + "|" + sector.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private boolean isMissingValue(String value) {
+        return value == null || value.isBlank() || "Not Specified".equalsIgnoreCase(value)
+                || "Unspecified".equalsIgnoreCase(value);
     }
 
     private String findNearestPrecedingKeyword(String fullText, int numberIndex) {
@@ -870,9 +1056,9 @@ public class PropertyParserService {
         for (String chunk : chunks) {
             String trimmed = chunk != null ? chunk.trim() : "";
             // Strip leading prompt markers if left over like "1)" or "1." or "#1"
-            trimmed = trimmed.replaceFirst("^(?:\\[?\\d+[\\]\\)\\.\\:\\-]|#\\d+)\\s*", "").trim();
+            trimmed = LEADING_BATCH_MARKER_PATTERN.matcher(trimmed).replaceFirst("").trim();
             if (trimmed.length() >= 5) {
-                ParsedPropertyDTO dto = parseAndSave(trimmed);
+                ParsedPropertyDTO dto = parse(trimmed);
                 dto.setPromptIndex(index++);
 
                 // Extract any in-prompt media URLs
@@ -880,7 +1066,7 @@ public class PropertyParserService {
                 List<String> extractedUrls = new ArrayList<>();
                 while (urlMatcher.find()) {
                     String u = urlMatcher.group();
-                    if (u.matches("(?i).*\\.(jpg|jpeg|png|webp|mp4|gif).*") || u.contains("cloudinary") || u.contains("drive.google")) {
+                    if (MEDIA_URL_EXTENSION_PATTERN.matcher(u).matches() || u.contains("cloudinary") || u.contains("drive.google")) {
                         extractedUrls.add(u);
                     }
                 }
@@ -893,7 +1079,7 @@ public class PropertyParserService {
         }
 
         if (results.isEmpty() && !multiPrompt.isBlank()) {
-            ParsedPropertyDTO single = parseAndSave(multiPrompt.trim());
+            ParsedPropertyDTO single = parse(multiPrompt.trim());
             single.setPromptIndex(1);
             results.add(single);
         }

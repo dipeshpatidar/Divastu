@@ -4,6 +4,7 @@ import com.indore.pathome.spaces.security.JwtAuthenticationFilter;
 import com.indore.pathome.spaces.security.OAuth2AuthenticationSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -40,7 +41,6 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/v1/auth/**",
                     "/api/v1/webhooks/**",
-                    "/api/v1/properties/**",
                     "/api/v1/notifications/**",
                     "/login/oauth2/**",
                     "/oauth2/**",
@@ -48,6 +48,8 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/swagger-ui/**"
                 ).permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/properties/**").permitAll()
+                .requestMatchers("/api/v1/properties/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .exceptionHandling(exception -> exception

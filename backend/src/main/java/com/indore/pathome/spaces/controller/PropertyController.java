@@ -8,6 +8,7 @@ import com.indore.pathome.spaces.service.CloudinaryService;
 import com.indore.pathome.spaces.service.PropertyParserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,6 +22,13 @@ import java.util.*;
 @RequestMapping("/api/v1/properties")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class PropertyController {
+
+    private static final java.util.regex.Pattern NUMERIC_DEPOSIT_PATTERN = java.util.regex.Pattern.compile("(\\d{4,6})");
+    private static final java.util.regex.Pattern MONTHS_DEPOSIT_PATTERN = java.util.regex.Pattern.compile("(\\d+)\\s*(?:month|mahina)", java.util.regex.Pattern.CASE_INSENSITIVE);
+    private static final java.util.regex.Pattern ONE_PLUS_ONE_PATTERN = java.util.regex.Pattern.compile("\\b([1-3])\\s*\\+\\s*([1-3])\\b");
+    private static final java.util.regex.Pattern NUMERIC_VALUE_PATTERN = java.util.regex.Pattern.compile("\\d+(?:\\.\\d+)?");
+    private static final java.util.regex.Pattern BATHROOM_COUNT_PATTERN = java.util.regex.Pattern.compile("\\b(\\d{1,2})\\b");
+    private static final java.util.regex.Pattern PHONE_PATTERN = java.util.regex.Pattern.compile("^\\+91\\s?[6-9]\\d{4}[\\s-]?\\d{5}$");
 
     private final ListingRepository listingRepository;
     private final PropertyMediaAssetRepository mediaAssetRepository;
@@ -78,7 +86,7 @@ public class PropertyController {
     public ResponseEntity<?> uploadTaggedMediaAsset(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "roomTag", defaultValue = "LIVING_ROOM") String roomTagStr,
+            @RequestParam(value = "roomTag", defaultValue = "GENERAL") String roomTagStr,
             @RequestParam(value = "mediaType", defaultValue = "IMAGE") String mediaTypeStr,
             @RequestParam(value = "caption", required = false) String caption,
             @RequestParam(value = "isPrimaryCover", defaultValue = "false") Boolean isPrimaryCover,
@@ -106,39 +114,67 @@ public class PropertyController {
      * POST /api/v1/properties - Admin Endpoint to create a new property listing.
      */
     @PostMapping
+    @Transactional
     public ResponseEntity<Listing> createProperty(@RequestBody Map<String, Object> body) {
         Objects.requireNonNull(body, "Property payload must not be null");
 
-        String ownerPhone = (String) body.get("ownerPhoneNumber");
-        String sector = (String) body.get("sector");
+        String ownerPhone = readString(body, "ownerPhoneNumber");
+        if (isMissingValue(ownerPhone)) {
+            ownerPhone = readString(body, "ownerPhone");
+        }
+        String sector = readString(body, "sector");
         Object rentObj = body.getOrDefault("monthlyRent", body.get("price"));
-        String bhkCount = (String) body.getOrDefault("bhkCount", body.get("bhk"));
+        String bhkCount = readString(body, "bhkCount");
+        if (isMissingValue(bhkCount)) {
+            bhkCount = readString(body, "bhk");
+        }
+        String propertyType = readString(body, "propertyType");
+        if (isMissingValue(propertyType)) {
+            propertyType = readString(body, "type");
+        }
 
         validateRequiredFields(ownerPhone, sector, rentObj, bhkCount);
+        if (isMissingValue(propertyType)) {
+            throw new IllegalArgumentException("Property Creation Rejected: Property Type must be provided");
+        }
+        String city = readString(body, "city");
+        if (isMissingValue(city)) {
+            throw new IllegalArgumentException("Property Creation Rejected: City must be provided");
+        }
+        Double rentAmount = readDouble(rentObj);
+        Double securityDeposit = readDouble(body.get("securityDeposit"));
+        if (securityDeposit == null || securityDeposit <= 0) {
+            throw new IllegalArgumentException("Property Creation Rejected: Security Deposit must be provided and greater than 0");
+        }
 
         RentalDetails rental = new RentalDetails();
-        rental.setTitle((String) body.getOrDefault("title", bhkCount + " Flat in " + sector));
-        rental.setDescription((String) body.getOrDefault("description", "Vetted zero brokerage home in " + sector));
-        rental.setAddress((String) body.getOrDefault("address", sector + ", Indore"));
+        rental.setTitle(!isMissingValue(readString(body, "title"))
+                ? readString(body, "title") : bhkCount + " " + propertyType + " in " + sector);
+        rental.setDescription(emptyToNull(readString(body, "description")));
+        rental.setAddress(!isMissingValue(readString(body, "address")) ? readString(body, "address") : sector);
         rental.setSector(sector);
-        rental.setCity((String) body.getOrDefault("city", "Indore"));
+        rental.setCity(city.trim());
         rental.setBhkCount(bhkCount);
-        rental.setFurnishingStatus((String) body.getOrDefault("furnishingStatus", "Semi-Furnished"));
-        rental.setVastuFacing((String) body.getOrDefault("vastuFacing", "North-East Facing"));
+        rental.setFurnishingStatus(emptyToNull(readString(body, "furnishingStatus")));
+        rental.setVastuFacing(emptyToNull(readString(body, "vastuFacing")));
         if (body.containsKey("amenities")) {
             Object am = body.get("amenities");
-            rental.setAmenities(am instanceof List ? String.join(", ", (List<String>) am) : am.toString());
+            rental.setAmenities(am instanceof List<?> list
+                    ? String.join(", ", list.stream().filter(Objects::nonNull).map(Object::toString).toList())
+                    : am != null ? am.toString() : null);
         }
         rental.setOwnerPhoneNumber(ownerPhone.trim());
-        rental.setLatitude(Double.valueOf(body.getOrDefault("latitude", 22.7533).toString()));
-        rental.setLongitude(Double.valueOf(body.getOrDefault("longitude", 75.8937).toString()));
-        rental.setTotalAreaSqFt(Double.valueOf(body.getOrDefault("totalAreaSqFt", 1500).toString()));
-        rental.setMonthlyRent(new BigDecimal(rentObj.toString().replaceAll("[^0-9.]", "")));
-        rental.setSecurityDeposit(new BigDecimal(body.getOrDefault("securityDeposit", String.valueOf(rental.getMonthlyRent().doubleValue() * 2)).toString()));
-        rental.setStatus(ListingStatus.ACTIVE);
-        rental.setPropertyType(PropertyType.FLAT);
+        rental.setOwnerName(emptyToNull(readString(body, "ownerName")));
+        rental.setLatitude(readDouble(body.get("latitude")));
+        rental.setLongitude(readDouble(body.get("longitude")));
+        rental.setTotalAreaSqFt(readDouble(body.get("totalAreaSqFt")));
+        rental.setMonthlyRent(BigDecimal.valueOf(rentAmount));
+        rental.setSecurityDeposit(BigDecimal.valueOf(securityDeposit));
+        rental.setStatus(toListingStatus(readString(body, "status")));
+        rental.setPropertyType(toPropertyType(propertyType));
 
         Listing saved = listingRepository.save(rental);
+        propertyParserService.confirmLocality(rental.getCity(), sector, rentAmount);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
@@ -182,9 +218,11 @@ public class PropertyController {
         Listing listing = listingOpt.get();
         String videoUrl = cloudinaryService.uploadVideo(file);
 
-        PropertyMediaAsset asset = new PropertyMediaAsset(id, videoUrl, MediaType.VIDEO_WALKTHROUGH, RoomTag.LIVING_ROOM, "HD Video Walkthrough");
+        PropertyMediaAsset asset = new PropertyMediaAsset(id, videoUrl, MediaType.VIDEO_WALKTHROUGH, RoomTag.GENERAL, "Video walkthrough");
         asset.setSector(listing.getSector());
-        asset.setPriceTag("₹22,000 / mo");
+        asset.setCity(listing.getCity());
+        asset.setPriceTag(monthlyRentPriceTag(listing));
+        asset.setVastuFacing(listing.getVastuFacing());
         mediaAssetRepository.save(asset);
 
         updateListingGallery(listing, videoUrl);
@@ -197,14 +235,14 @@ public class PropertyController {
     }
 
     /**
-     * POST /api/v1/properties/parse-prompt - Backend Natural Language Property Parser & Locality Auto-Save.
+     * POST /api/v1/properties/parse-prompt - Read-only backend natural-language property parser.
      */
     @PostMapping("/parse-prompt")
     public ResponseEntity<ParsedPropertyDTO> parseNaturalLanguagePrompt(@RequestBody Map<String, String> request) {
         if (request == null || !request.containsKey("prompt")) {
             return ResponseEntity.badRequest().build();
         }
-        ParsedPropertyDTO result = propertyParserService.parseAndSave(request.get("prompt"));
+        ParsedPropertyDTO result = propertyParserService.parse(request.get("prompt"));
         return ResponseEntity.ok(result);
     }
 
@@ -212,11 +250,13 @@ public class PropertyController {
      * POST /api/v1/properties/create-from-parsed - Persist verified ParsedPropertyDTO to PostgreSQL DB listings.
      */
     @PostMapping("/create-from-parsed")
+    @Transactional
     public ResponseEntity<Map<String, Object>> createFromParsedPrompt(@RequestBody ParsedPropertyDTO dto) {
         Objects.requireNonNull(dto, "ParsedPropertyDTO must not be null");
 
         RentalDetails listing = buildRentalDetailsFromDTO(dto);
         Listing saved = listingRepository.save(listing);
+        propertyParserService.confirmLocality(listing.getCity(), listing.getSector(), listing.getMonthlyRent().doubleValue());
 
         return ResponseEntity.ok(Map.of(
                 "status", "SUCCESS",
@@ -271,12 +311,16 @@ public class PropertyController {
                     listing.setMediaGalleryUrls(String.join(",", dto.getMediaUrls()));
                 }
                 Listing saved = listingRepository.save(listing);
+                propertyParserService.confirmLocality(
+                        listing.getCity(), listing.getSector(), listing.getMonthlyRent().doubleValue());
 
                 if (dto.getMediaUrls() != null) {
                     for (String url : dto.getMediaUrls()) {
-                        PropertyMediaAsset asset = new PropertyMediaAsset(saved.getId(), url, MediaType.IMAGE, RoomTag.LIVING_ROOM, "Batch Ingestion Photo");
+                        PropertyMediaAsset asset = new PropertyMediaAsset(saved.getId(), url, MediaType.IMAGE, RoomTag.GENERAL, "Batch ingestion photo");
                         asset.setSector(saved.getSector());
-                        asset.setPriceTag("₹" + (listing.getMonthlyRent() != null ? listing.getMonthlyRent() : "20,000"));
+                        asset.setCity(saved.getCity());
+                        asset.setPriceTag(monthlyRentPriceTag(listing));
+                        asset.setVastuFacing(saved.getVastuFacing());
                         mediaAssetRepository.save(asset);
                     }
                 }
@@ -308,24 +352,34 @@ public class PropertyController {
 
     private ParsedPropertyDTO convertMapToParsedDTO(Map<String, Object> map) {
         ParsedPropertyDTO dto = new ParsedPropertyDTO();
-        dto.setTitle((String) map.get("title"));
-        dto.setDescription((String) map.get("description"));
-        dto.setBhk((String) map.get("bhk"));
-        dto.setType((String) map.get("type"));
-        dto.setSector((String) map.get("sector"));
-        dto.setCity((String) map.get("city"));
-        dto.setAddress((String) map.get("address"));
-        dto.setOwnerPhone((String) map.get("ownerPhone"));
-        dto.setFurnishingStatus((String) map.get("furnishingStatus"));
-        dto.setVastuFacing((String) map.get("vastuFacing"));
-        dto.setDepositVal((String) map.get("depositVal"));
+        dto.setRawPrompt(readString(map, "rawPrompt"));
+        dto.setTitle(readString(map, "title"));
+        dto.setDescription(readString(map, "description"));
+        dto.setBhk(readString(map, "bhk"));
+        dto.setType(readString(map, "type"));
+        dto.setStatus(readString(map, "status"));
+        dto.setSector(readString(map, "sector"));
+        dto.setCity(readString(map, "city"));
+        dto.setColony(readString(map, "colony"));
+        dto.setAddress(readString(map, "address"));
+        dto.setState(readString(map, "state"));
+        dto.setPincode(readString(map, "pincode"));
+        dto.setLandmark(readString(map, "landmark"));
+        dto.setOwnerName(readString(map, "ownerName"));
+        dto.setOwnerPhone(readString(map, "ownerPhone"));
+        dto.setFurnishingStatus(readString(map, "furnishingStatus"));
+        dto.setVastuFacing(readString(map, "vastuFacing"));
+        dto.setBathrooms(readString(map, "bathrooms"));
+        dto.setAreaSqFt(readString(map, "areaSqFt"));
+        dto.setRentVal(readString(map, "rentVal"));
+        dto.setBrokerageVal(readString(map, "brokerageVal"));
+        dto.setBrokerageDays(readString(map, "brokerageDays"));
+        dto.setDepositVal(readString(map, "depositVal"));
+        dto.setPossessionDate(readString(map, "possessionDate"));
+        dto.setAdminVerified(Boolean.TRUE.equals(map.get("adminVerified")));
 
-        Object rentObj = map.get("rentAmount");
-        if (rentObj != null) {
-            try {
-                dto.setRentAmount(Double.valueOf(rentObj.toString()));
-            } catch (Exception ignored) {}
-        }
+        Double rentAmount = readDouble(map.get("rentAmount"));
+        dto.setRentAmount(rentAmount);
         Object mediaObj = map.get("mediaUrls");
         if (mediaObj instanceof List<?> l) {
             List<String> urls = new ArrayList<>();
@@ -334,33 +388,38 @@ public class PropertyController {
             }
             dto.setMediaUrls(urls);
         }
+        Object amenitiesObj = map.get("amenities");
+        if (amenitiesObj instanceof List<?> l) {
+            List<String> amenities = new ArrayList<>();
+            for (Object amenity : l) {
+                if (amenity != null && !amenity.toString().isBlank()) {
+                    amenities.add(amenity.toString());
+                }
+            }
+            dto.setAmenities(amenities);
+        }
         return dto;
     }
 
     private void validateRequiredFields(String ownerPhone, String sector, Object rentObj, String bhkCount) {
         List<String> missing = new ArrayList<>();
 
-        if (ownerPhone == null || ownerPhone.isBlank() || ownerPhone.equalsIgnoreCase("Not Specified") || ownerPhone.equalsIgnoreCase("Unspecified")) {
+        if (isMissingValue(ownerPhone)) {
             missing.add("Owner Phone Number (Must not be null)");
-        } else if (!ownerPhone.trim().startsWith("+")) {
-            missing.add("Owner Phone Country Code (Prefix '+' required, e.g. +91 98260 12345)");
+        } else if (!PHONE_PATTERN.matcher(ownerPhone.trim()).matches()) {
+            missing.add("Owner Phone Number (use a valid Indian number, e.g. +91 98260 12345)");
         }
 
-        if (sector == null || sector.isBlank() || sector.equalsIgnoreCase("Not Specified") || sector.equalsIgnoreCase("Unspecified")) {
+        if (isMissingValue(sector)) {
             missing.add("Locality / Sector Name (Must not be null)");
         }
 
-        double rentVal = 0.0;
-        if (rentObj != null) {
-            try {
-                rentVal = Double.parseDouble(rentObj.toString().replaceAll("[^0-9.]", ""));
-            } catch (Exception ignored) {}
-        }
-        if (rentVal <= 0) {
+        Double rentVal = readDouble(rentObj);
+        if (rentVal == null || rentVal <= 0) {
             missing.add("Monthly Rent Amount (Must be greater than 0)");
         }
 
-        if (bhkCount == null || bhkCount.isBlank() || bhkCount.equalsIgnoreCase("Not Specified") || bhkCount.equalsIgnoreCase("Unspecified")) {
+        if (isMissingValue(bhkCount)) {
             missing.add("BHK Layout Count (Must not be null)");
         }
 
@@ -370,33 +429,136 @@ public class PropertyController {
     }
 
     private RentalDetails buildRentalDetailsFromDTO(ParsedPropertyDTO dto) {
+        if (!dto.isAdminVerified()) {
+            throw new IllegalArgumentException("Property Creation Rejected: an administrator must review and confirm the parsed values before publishing");
+        }
         validateRequiredFields(
                 dto.getOwnerPhone(),
                 dto.getSector(),
                 dto.getRentAmount() != null ? dto.getRentAmount() : dto.getRentVal(),
                 dto.getBhk()
         );
+        if (isMissingValue(dto.getType())) {
+            throw new IllegalArgumentException("Property Creation Rejected: Property Type must be confirmed before publishing");
+        }
+        if (isMissingValue(dto.getCity())) {
+            throw new IllegalArgumentException("Property Creation Rejected: City must be confirmed before publishing");
+        }
 
         RentalDetails listing = new RentalDetails();
-        listing.setTitle(dto.getTitle() != null && !dto.getTitle().isBlank() ? dto.getTitle() : (dto.getBhk() + " Flat in " + dto.getSector()));
-        listing.setDescription(dto.getDescription() != null && !dto.getDescription().isBlank() ? dto.getDescription() : (dto.getBhk() + " Flat located in " + dto.getSector() + ", " + (dto.getCity() != null ? dto.getCity() : "Indore")));
+        listing.setTitle(!isMissingValue(dto.getTitle()) ? dto.getTitle() : dto.getBhk() + " " + dto.getType() + " in " + dto.getSector());
+        listing.setDescription(!isMissingValue(dto.getDescription()) ? dto.getDescription()
+                : dto.getBhk() + " " + dto.getType() + " located in " + dto.getSector());
         listing.setSector(dto.getSector());
-        listing.setAddress(dto.getAddress() != null && !dto.getAddress().isBlank() ? dto.getAddress() : (dto.getSector() + ", " + (dto.getCity() != null ? dto.getCity() : "Indore")));
-        listing.setCity(dto.getCity() != null && !dto.getCity().isBlank() ? dto.getCity() : "Indore");
+        listing.setAddress(!isMissingValue(dto.getAddress()) ? dto.getAddress() : dto.getSector() + ", " + dto.getCity());
+        listing.setCity(dto.getCity().trim());
         listing.setBhkCount(dto.getBhk());
-        listing.setFurnishingStatus(dto.getFurnishingStatus() != null && !dto.getFurnishingStatus().isBlank() ? dto.getFurnishingStatus() : "Semi-Furnished");
-        listing.setVastuFacing(dto.getVastuFacing() != null && !dto.getVastuFacing().isBlank() ? dto.getVastuFacing() : "East Facing");
+        listing.setOwnerName(emptyToNull(dto.getOwnerName()));
+        listing.setBathroomCount(readInteger(dto.getBathrooms(), BATHROOM_COUNT_PATTERN));
+        listing.setColony(emptyToNull(dto.getColony()));
+        listing.setState(emptyToNull(dto.getState()));
+        listing.setPincode(emptyToNull(dto.getPincode()));
+        listing.setLandmark(emptyToNull(dto.getLandmark()));
+        listing.setPossessionDateText(emptyToNull(dto.getPossessionDate()));
+        listing.setFurnishingStatus(emptyToNull(dto.getFurnishingStatus()));
+        listing.setVastuFacing(emptyToNull(dto.getVastuFacing()));
         if (dto.getAmenities() != null && !dto.getAmenities().isEmpty()) {
             listing.setAmenities(String.join(", ", dto.getAmenities()));
         }
+        listing.setTotalAreaSqFt(readDouble(dto.getAreaSqFt()));
         listing.setMonthlyRent(BigDecimal.valueOf(dto.getRentAmount()));
-        listing.setSecurityDeposit(BigDecimal.valueOf(dto.getRentAmount() * 2));
+
+        DepositTerms depositTerms = parseDeposit(dto.getDepositVal(), dto.getRentAmount());
+        if (depositTerms.amount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Property Creation Rejected: Security Deposit must be explicitly confirmed before publishing");
+        }
+        listing.setSecurityDeposit(depositTerms.amount());
+        listing.setSecurityDepositMonths(depositTerms.months());
+        listing.setBrokerageAmount(toBigDecimal(dto.getBrokerageVal()));
+        listing.setBrokerageDays(readInteger(dto.getBrokerageDays(), BATHROOM_COUNT_PATTERN));
         listing.setOwnerPhoneNumber(dto.getOwnerPhone().trim());
-        listing.setLatitude(22.7533);
-        listing.setLongitude(75.8937);
-        listing.setStatus(ListingStatus.ACTIVE);
-        listing.setPropertyType(dto.getType() != null && dto.getType().equalsIgnoreCase("House") ? PropertyType.HOUSE : PropertyType.FLAT);
+        listing.setStatus(toListingStatus(dto.getStatus()));
+        listing.setPropertyType(toPropertyType(dto.getType()));
         return listing;
+    }
+
+    private DepositTerms parseDeposit(String depositValue, Double rentAmount) {
+        if (isMissingValue(depositValue)) {
+            return new DepositTerms(BigDecimal.ZERO, null);
+        }
+
+        String normalized = depositValue.replace(",", "");
+        java.util.regex.Matcher amountMatcher = NUMERIC_DEPOSIT_PATTERN.matcher(normalized);
+        BigDecimal amount = amountMatcher.find() ? new BigDecimal(amountMatcher.group(1)) : BigDecimal.ZERO;
+        Integer months = readInteger(normalized, MONTHS_DEPOSIT_PATTERN);
+        java.util.regex.Matcher onePlusOneMatcher = ONE_PLUS_ONE_PATTERN.matcher(normalized);
+        if (months == null && onePlusOneMatcher.find()) {
+            months = Integer.parseInt(onePlusOneMatcher.group(1)) + Integer.parseInt(onePlusOneMatcher.group(2));
+        }
+        if (amount.compareTo(BigDecimal.ZERO) <= 0 && months != null && rentAmount != null && rentAmount > 0) {
+            amount = BigDecimal.valueOf(rentAmount).multiply(BigDecimal.valueOf(months));
+        }
+        return new DepositTerms(amount, months);
+    }
+
+    private PropertyType toPropertyType(String type) {
+        if (type == null) return PropertyType.FLAT;
+        String normalized = type.toUpperCase(Locale.ROOT);
+        if (normalized.contains("PENTHOUSE")) return PropertyType.PENTHOUSE;
+        if (normalized.contains("STUDIO")) return PropertyType.STUDIO;
+        if (normalized.contains("AIRBNB") || normalized.contains("SERVICED")) return PropertyType.SERVICED_APARTMENT;
+        if (normalized.contains("PLOT")) return PropertyType.PLOT;
+        if (normalized.contains("LAND")) return PropertyType.LAND;
+        if (normalized.contains("HOUSE") || normalized.contains("VILLA") || normalized.contains("DUPLEX")) return PropertyType.HOUSE;
+        return PropertyType.FLAT;
+    }
+
+    private ListingStatus toListingStatus(String status) {
+        if (status == null) return ListingStatus.ACTIVE;
+        return switch (status.toUpperCase(Locale.ROOT)) {
+            case "PENDING" -> ListingStatus.PENDING;
+            case "SOLD", "EXPIRED", "RENTED", "REMOVED", "CLOSED" -> ListingStatus.CLOSED;
+            default -> ListingStatus.ACTIVE;
+        };
+    }
+
+    private BigDecimal toBigDecimal(String value) {
+        Double number = readDouble(value);
+        return number == null ? null : BigDecimal.valueOf(number);
+    }
+
+    private Integer readInteger(String value, java.util.regex.Pattern pattern) {
+        if (value == null) return null;
+        java.util.regex.Matcher matcher = pattern.matcher(value);
+        return matcher.find() ? Integer.valueOf(matcher.group(1)) : null;
+    }
+
+    private Double readDouble(Object value) {
+        if (value == null) return null;
+        java.util.regex.Matcher matcher = NUMERIC_VALUE_PATTERN.matcher(value.toString().replace(",", ""));
+        if (!matcher.find()) return null;
+        try {
+            return Double.valueOf(matcher.group());
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private String readString(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        return value == null ? null : value.toString();
+    }
+
+    private String emptyToNull(String value) {
+        return isMissingValue(value) ? null : value.trim();
+    }
+
+    private boolean isMissingValue(String value) {
+        return value == null || value.isBlank() || "Not Specified".equalsIgnoreCase(value)
+                || "Unspecified".equalsIgnoreCase(value) || "UNSPECIFIED".equalsIgnoreCase(value);
+    }
+
+    private record DepositTerms(BigDecimal amount, Integer months) {
     }
 
     private RoomTag parseRoomTag(String roomTagStr) {
@@ -433,11 +595,11 @@ public class PropertyController {
         asset.setRoomTag(roomTag);
         asset.setCaption(caption != null && !caption.isBlank() ? caption.trim() : roomTag.getDisplayName());
         asset.setIsPrimaryCover(isPrimaryCover);
-        asset.setSector(sector != null && !sector.isBlank() ? sector : (listing != null ? listing.getSector() : "Vijay Nagar"));
-        asset.setCity("Indore");
-        asset.setPriceTag(priceTag != null && !priceTag.isBlank() ? priceTag : "₹22,000 / month");
-        asset.setVastuFacing(vastuFacing != null && !vastuFacing.isBlank() ? vastuFacing : "North-East Facing");
-        asset.setVerificationStatus("VERIFIED_BY_GROUND_ESCORT");
+        asset.setSector(sector != null && !sector.isBlank() ? sector : (listing != null ? listing.getSector() : null));
+        asset.setCity(listing != null ? listing.getCity() : null);
+        asset.setPriceTag(priceTag != null && !priceTag.isBlank() ? priceTag : monthlyRentPriceTag(listing));
+        asset.setVastuFacing(vastuFacing != null && !vastuFacing.isBlank() ? vastuFacing : (listing != null ? listing.getVastuFacing() : null));
+        asset.setVerificationStatus("ADMIN_UPLOADED");
 
         return mediaAssetRepository.save(asset);
     }
@@ -456,9 +618,11 @@ public class PropertyController {
             String cdnUrl = cloudinaryService.uploadImage(file);
             uploadedUrls.add(cdnUrl);
 
-            PropertyMediaAsset asset = new PropertyMediaAsset(id, cdnUrl, MediaType.IMAGE, RoomTag.LIVING_ROOM, "Property Photo");
+            PropertyMediaAsset asset = new PropertyMediaAsset(id, cdnUrl, MediaType.IMAGE, RoomTag.GENERAL, "Property photo");
             asset.setSector(listing.getSector());
-            asset.setPriceTag("₹22,000 / mo");
+            asset.setCity(listing.getCity());
+            asset.setPriceTag(monthlyRentPriceTag(listing));
+            asset.setVastuFacing(listing.getVastuFacing());
             mediaAssetRepository.save(asset);
         }
         return uploadedUrls;
@@ -473,5 +637,11 @@ public class PropertyController {
         listing.setMediaGalleryUrls(updatedGallery);
         listingRepository.save(listing);
     }
-}
 
+    private String monthlyRentPriceTag(Listing listing) {
+        if (!(listing instanceof RentalDetails rental) || rental.getMonthlyRent() == null) {
+            return null;
+        }
+        return "₹" + rental.getMonthlyRent().toPlainString() + " / month";
+    }
+}
