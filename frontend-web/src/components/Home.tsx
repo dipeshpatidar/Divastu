@@ -23,18 +23,10 @@ import { propertyService } from '../services/propertyService';
 
 const getInitialSession = (): { role: UserRole; user: UserProfile | null } => {
   try {
-    const savedRole = (localStorage.getItem('pathome_role') || localStorage.getItem('divyavastu_role')) as UserRole | null;
-    const savedUserStr = localStorage.getItem('pathome_user') || localStorage.getItem('divyavastu_user');
+    const savedRole = localStorage.getItem('pathome_role') as UserRole | null;
+    const savedUserStr = localStorage.getItem('pathome_user');
     if (savedRole && savedUserStr) {
-      let parsedUser = JSON.parse(savedUserStr);
-      if (parsedUser) {
-        if (parsedUser.fullName) {
-          parsedUser.fullName = parsedUser.fullName.replace(/divyavastu/gi, 'Pathome');
-        }
-        if (parsedUser.email) {
-          parsedUser.email = parsedUser.email.replace(/divyavastu/gi, 'pathome');
-        }
-      }
+      const parsedUser = JSON.parse(savedUserStr);
       return { role: savedRole, user: parsedUser };
     }
   } catch (err) {
@@ -722,18 +714,18 @@ export const Home: React.FC = () => {
     const handlePropertyPublished = () => {
       loadLiveProperties();
     };
-    window.addEventListener('divyavastu_property_published', handlePropertyPublished);
+    window.addEventListener('pathome_property_published', handlePropertyPublished);
     return () => {
-      window.removeEventListener('divyavastu_property_published', handlePropertyPublished);
+      window.removeEventListener('pathome_property_published', handlePropertyPublished);
     };
   }, []);
 
   // 1. MULTI-TAB & MULTI-WINDOW CROSS-TAB SESSION SYNCHRONIZATION
   useEffect(() => {
     const handleCrossTabSync = (e: StorageEvent) => {
-      if (e.key === 'divyavastu_user' || e.key === 'divyavastu_role' || e.key === null) {
-        const storedUser = localStorage.getItem('divyavastu_user');
-        const storedRole = localStorage.getItem('divyavastu_role');
+      if (e.key === 'pathome_user' || e.key === 'pathome_role' || e.key === null) {
+        const storedUser = localStorage.getItem('pathome_user');
+        const storedRole = localStorage.getItem('pathome_role');
 
         if (!storedUser || !storedRole) {
           // LOGOUT IN ANOTHER WINDOW/TAB DETECTED!
@@ -769,8 +761,8 @@ export const Home: React.FC = () => {
         // BLOCK ACCESS! Redirect to landing page & prompt login modal
         setRole('GUEST');
         setUser(null);
-        localStorage.removeItem('divyavastu_role');
-        localStorage.removeItem('divyavastu_user');
+        localStorage.removeItem('pathome_role');
+        localStorage.removeItem('pathome_user');
         navigate('/', { replace: true });
         setShowAuthModal(true);
       }
@@ -779,8 +771,8 @@ export const Home: React.FC = () => {
 
     // GUARD CHECK 2: Logged-in user role routing enforcement
     if (user) {
-      localStorage.setItem('divyavastu_role', role);
-      localStorage.setItem('divyavastu_user', JSON.stringify(user));
+      localStorage.setItem('pathome_role', role);
+      localStorage.setItem('pathome_user', JSON.stringify(user));
 
       if (role === 'TENANT' && path !== '/tenant') {
         navigate('/tenant', { replace: true });
@@ -820,8 +812,6 @@ export const Home: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('pathome_role');
     localStorage.removeItem('pathome_user');
-    localStorage.removeItem('divyavastu_role');
-    localStorage.removeItem('divyavastu_user');
     setUser(null);
     setRole('GUEST');
     navigate('/');

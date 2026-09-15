@@ -1,10 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
   BarChart3, Users, CheckSquare, ShieldCheck, TrendingUp, DollarSign,
   CheckCircle2, XCircle, ArrowUpRight, Award, FileText, Zap, ChevronRight, ChevronLeft,
   SlidersHorizontal, Plus, ToggleLeft, ToggleRight, Settings, UploadCloud, Camera, Video, MapPin, Sparkles, AlertCircle, Menu,
-  Database, Copy, Check, Compass, Tag, Layers, Home, Info, X, Star
+  Database, Copy, Check, Compass, Tag, Layers, Home, Info, X, Star, Mic, MicOff
 } from 'lucide-react';
 import { propertyService } from '../services/propertyService';
 import { useNotification } from '../context/NotificationContext';
@@ -14,6 +14,7 @@ import { RevenueAreaChart } from './analytics/RevenueAreaChart';
 import { FunnelStepGraph } from './analytics/FunnelStepGraph';
 import { SectorPerformanceBarChart } from './analytics/SectorPerformanceBarChart';
 import { BhkDemandGaugeGrid } from './analytics/BhkDemandGaugeGrid';
+import { BatchPropertyIngestionStudio } from './BatchPropertyIngestionStudio';
 
 interface MasterAdminDashboardProps {
   activeTab: string;
@@ -367,6 +368,60 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   };
 
   // Rich Media Metadata Tagging State (Zero hardcoded fallbacks)
+  const [isBatchStudioOpen, setIsBatchStudioOpen] = useState<boolean>(false);
+  const [isSingleMicListening, setIsSingleMicListening] = useState<boolean>(false);
+  const singleRecognitionRef = useRef<any>(null);
+  const singleMicBaseTextRef = useRef<string>('');
+
+  useEffect(() => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-IN';
+
+    recognition.onresult = (event: any) => {
+      let finalTranscript = '';
+      let interimTranscript = '';
+
+      for (let i = 0; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += (finalTranscript ? ' ' : '') + transcript.trim();
+        } else {
+          interimTranscript += (interimTranscript ? ' ' : '') + transcript.trim();
+        }
+      }
+
+      const base = singleMicBaseTextRef.current || '';
+      const combined = [base, finalTranscript, interimTranscript].filter(Boolean).join(' ');
+      setNewBhkLabel(combined);
+    };
+
+    recognition.onerror = () => setIsSingleMicListening(false);
+    recognition.onend = () => setIsSingleMicListening(false);
+    singleRecognitionRef.current = recognition;
+  }, []);
+
+  const toggleSingleMic = () => {
+    if (!singleRecognitionRef.current) return;
+    if (isSingleMicListening) {
+      singleRecognitionRef.current.stop();
+      setIsSingleMicListening(false);
+    } else {
+      try {
+        singleMicBaseTextRef.current = newBhkLabel.trim();
+        singleRecognitionRef.current.start();
+        setIsSingleMicListening(true);
+      } catch (err) {
+        console.warn('Mic error', err);
+      }
+    }
+  };
+
   const [selectedRoomTag, setSelectedRoomTag] = useState<RoomTag>('LIVING_ROOM');
   const [mediaCaption, setMediaCaption] = useState<string>('');
   const [mediaPriceTag, setMediaPriceTag] = useState<string>('');
@@ -456,9 +511,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
   React.useEffect(() => {
     // Clean up any old stale local storage property/filter keys
-    localStorage.removeItem('divyavastu_bhk_configs');
-    localStorage.removeItem('divyavastu_custom_properties');
-    localStorage.removeItem('divyavastu_tenant_filters');
+    localStorage.removeItem('pathome_bhk_configs');
+    localStorage.removeItem('pathome_custom_properties');
+    localStorage.removeItem('pathome_tenant_filters');
   }, []);
 
   const handleToggleBhk = (id: string) => {
@@ -987,7 +1042,6 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
       // Notify application of live published property in PostgreSQL DB
       window.dispatchEvent(new Event('pathome_property_published'));
-      window.dispatchEvent(new Event('divyavastu_property_published'));
 
       notifySuccess(
         '🎉 Property Listing Published!',
@@ -1645,12 +1699,26 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                         Indore Locality Registry
                       </span>
                     </div>
-                    <h2 className="text-xl sm:text-2xl font-black text-white font-['Outfit'] flex items-center gap-2">
-                      <UploadCloud className="w-6 h-6 text-emerald-400" /> Property Upload & Prompt Parser Console
-                    </h2>
-                    <p className="text-xs text-slate-400">
-                      Type or paste property description & attach property photos/videos. All key parameters are automatically identified and verified.
-                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h2 className="text-xl sm:text-2xl font-black text-white font-['Outfit'] flex items-center gap-2">
+                          <UploadCloud className="w-6 h-6 text-emerald-400" /> Property Upload & Prompt Parser Console
+                        </h2>
+                        <p className="text-xs text-slate-400">
+                          Type or paste property description & attach property photos/videos. All key parameters are automatically identified and verified.
+                        </p>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        type="button"
+                        onClick={() => setIsBatchStudioOpen(true)}
+                        className="px-4 py-2.5 rounded-xl font-black text-xs bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 shadow-lg shadow-orange-500/20 hover:brightness-110 transition-all flex items-center gap-2 shrink-0 self-start sm:self-auto cursor-pointer"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        <span>⚡ Multi-Unit & Voice AI Studio</span>
+                      </motion.button>
+                    </div>
                   </div>
                 </div>
 
@@ -1832,14 +1900,30 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
                     {/* WORLD-CLASS AI SMART LISTING PROMPT COMPOSER STUDIO (100% FULL WIDTH) */}
                     <div className="space-y-2 w-full">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
                         <label className="text-xs font-extrabold text-slate-300 flex items-center gap-1.5 font-mono uppercase tracking-wide">
                           <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
                           Property Description & AI Prompt Composer:
                         </label>
-                        <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-800/80">
-                          {newBhkLabel.length} characters typed
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <motion.button
+                            whileHover={{ scale: 1.04 }}
+                            whileTap={{ scale: 0.96 }}
+                            type="button"
+                            onClick={toggleSingleMic}
+                            className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
+                              isSingleMicListening
+                                ? 'bg-rose-500 text-white border-rose-400 shadow-lg shadow-rose-500/30 animate-pulse'
+                                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-700 hover:border-emerald-500/50'
+                            }`}
+                          >
+                            {isSingleMicListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5 text-emerald-400" />}
+                            <span>{isSingleMicListening ? 'Listening Live...' : '🎤 Voice Input'}</span>
+                          </motion.button>
+                          <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded-full border border-emerald-800/80">
+                            {newBhkLabel.length} chars
+                          </span>
+                        </div>
                       </div>
 
                       {/* LUXURY GLOWING FULL-WIDTH PROMPT COMPOSER BOX */}
@@ -3126,6 +3210,20 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
           </div>
         </div>
       )}
+
+      {/* MULTI-UNIT & VOICE BATCH INGESTION STUDIO */}
+      <BatchPropertyIngestionStudio
+        isOpen={isBatchStudioOpen}
+        onClose={() => setIsBatchStudioOpen(false)}
+        onSuccess={(count) => {
+          notifySuccess(
+            "🎉 Batch Listings Published!",
+            `Successfully published ${count} properties directly to PostgreSQL database.`,
+            undefined,
+            "PROPERTY"
+          );
+        }}
+      />
     </div>
   );
 };

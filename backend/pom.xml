@@ -7,10 +7,10 @@
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.3.0</version>
     </parent>
-    <groupId>com.indore.divyavastu</groupId>
-    <artifactId>divyavastu-spaces-backend</artifactId>
+    <groupId>com.indore.pathome</groupId>
+    <artifactId>pathome-spaces-backend</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <name>Divyavastu Spaces Backend</name>
+    <name>Pathome Spaces Backend</name>
     <properties><java.version>17</java.version></properties>
     <dependencies>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>

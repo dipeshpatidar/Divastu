@@ -1,0 +1,75 @@
+package com.indore.pathome.spaces.controller;
+
+import com.indore.pathome.spaces.dto.AuthResponse;
+import com.indore.pathome.spaces.dto.LoginRequest;
+import com.indore.pathome.spaces.dto.RegisterRequest;
+import com.indore.pathome.spaces.entity.Role;
+import com.indore.pathome.spaces.entity.User;
+import com.indore.pathome.spaces.repository.UserRepository;
+import com.indore.pathome.spaces.security.JwtUtils;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/v1/auth")
+public class AuthController {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtils jwtUtils;
+
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtils jwtUtils) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtils = jwtUtils;
+    }
+
+    /**
+     * Pathway 1: Conventional Email & Password Registration
+     */
+    @PostMapping("/register")
+    public ResponseEntity<?> registerUser(@RequestBody RegisterRequest request) {
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: Email is already registered!");
+        }
+
+        User user = new User();
+        user.setEmail(request.getEmail());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setFullName(request.getFullName());
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setRole(request.getRole() != null ? request.getRole() : Role.ROLE_TENANT);
+        user.setFreeVisitsRemaining(5);
+
+        user = userRepository.save(user);
+
+        String token = jwtUtils.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+
+        return ResponseEntity.ok(new AuthResponse(
+                token, user.getId(), user.getEmail(), user.getFullName(), user.getRole().name(), user.getFreeVisitsRemaining()
+        ));
+    }
+
+    /**
+     * Pathway 1: Conventional Email & Password Login
+     */
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUser(@RequestBody LoginRequest request) {
+        Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        if (userOpt.isEmpty() || request.getPassword() == null ||
+                !passwordEncoder.matches(request.getPassword(), userOpt.get().getPasswordHash())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
+        }
+
+        User user = userOpt.get();
+        String token = jwtUtils.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+
+        return ResponseEntity.ok(new AuthResponse(
+                token, user.getId(), user.getEmail(), user.getFullName(), user.getRole().name(), user.getFreeVisitsRemaining()
+        ));
+    }
+}

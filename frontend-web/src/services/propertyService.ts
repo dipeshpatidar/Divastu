@@ -200,5 +200,45 @@ export const propertyService = {
     }
 
     return await response.json();
+  },
+
+  /**
+   * High-Performance Multi-Prompt & Voice Batch Parser API
+   */
+  async parseBatchPrompts(prompts: string): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/parse-batch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ prompts })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to parse batch prompts: status ${response.status}`);
+    }
+
+    return await response.json();
+  },
+
+  /**
+   * Batch Persist Verified Property Listings to PostgreSQL
+   */
+  async createBatchProperties(listings: any[]): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/create-batch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ listings })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create batch properties: status ${response.status}`);
+    }
+
+    return await response.json();
   }
 };
