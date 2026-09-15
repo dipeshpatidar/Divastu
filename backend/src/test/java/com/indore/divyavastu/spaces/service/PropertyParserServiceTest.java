@@ -264,7 +264,7 @@ public class PropertyParserServiceTest {
         assertEquals("Mahalaxmi Nagar", dto1.getSector());
 
         // Exact Prompt 2 from screenshot
-        String prompt2 = "1bhk flat on rent near opal homes chikatsak nagar mahalaxmi nagar 17000 rent 36000 securuity deposit 8500 brokerage & possession date is 25th of sep owner name dipesh patidar 845888248 east dacing semi furnished brokerage is 7000";
+        String prompt2 = "1bhk flat on rent near opal homes chikatsak nagar mahalaxmi nagar 17000 rent 36000 securuity deposit 8500 brokerage & possession date is 25th of sep owner name dipesh patidar 8458888248 east dacing semi furnished brokerage is 7000 and bathromm 2";
         ParsedPropertyDTO dto2 = propertyParserService.parseAndSave(prompt2);
 
         assertNotNull(dto2);
@@ -273,7 +273,10 @@ public class PropertyParserServiceTest {
         assertEquals(17000.0, dto2.getRentAmount());
         assertEquals("₹7,000", dto2.getBrokerageVal());
         assertEquals("Dipesh Patidar", dto2.getOwnerName());
+        assertEquals("+91 84588 88248", dto2.getOwnerPhone());
         assertEquals("East Facing", dto2.getVastuFacing());
         assertEquals("Semi Furnished", dto2.getFurnishingStatus());
+        assertEquals("2 Baths", dto2.getBathrooms());
+        assertEquals("Mahalaxmi Nagar", dto2.getSector());
     }
 }

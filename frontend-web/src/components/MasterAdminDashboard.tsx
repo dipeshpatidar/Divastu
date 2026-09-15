@@ -223,7 +223,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         title: activeData.title || (activeData.bhk ? `${activeData.bhk} ${typeVal} in ${activeData.sector || 'Indore'}` : ''),
         bhk: activeData.bhk && activeData.bhk !== 'Unspecified' ? activeData.bhk : '',
         type: typeVal,
-        bathrooms: activeData.bathrooms ? (typeof activeData.bathrooms === 'number' ? activeData.bathrooms : parseInt(String(activeData.bathrooms))) : 2,
+        bathrooms: activeData.bathrooms ? (typeof activeData.bathrooms === 'number' ? activeData.bathrooms : parseInt(String(activeData.bathrooms))) : '',
         rentAmount: parsedRentAmount || '',
         rentVal: activeData.rentVal && activeData.rentVal !== 'Unspecified' ? activeData.rentVal : (parsedRentAmount ? `₹${parsedRentAmount.toLocaleString('en-IN')}` : ''),
         brokerageVal: activeData.brokerageVal && activeData.brokerageVal !== 'Unmentioned' ? activeData.brokerageVal : '',
@@ -486,6 +486,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
     normalized = normalized.replace(/\b(depost|deposite|diposite|diposit|scurity\s*deposit|scurity\s*dep|securuity\s*deposit|securuity)\b/g, 'deposit');
     normalized = normalized.replace(/\b(near\s*by|nearby|near\s*to|opp\s*to|infront\s*of)\b/g, 'near');
     normalized = normalized.replace(/\b(brokraj|brokrage|brookerage|brokerg|brokorage|commission)\b/g, 'brokerage');
+    normalized = normalized.replace(/\b(bathromm|bathrom|bathrm|washrom|toilett|bth)\b/g, 'bathroom');
 
     // 1. Universal Fault-Tolerant BHK / Layout Extractor
     let bhk = 'Unspecified';
@@ -567,9 +568,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
     // 3B. Bathrooms Extractor (No fake default - undefined if unmentioned)
     let bathrooms: number | undefined = undefined;
-    const bathMatch = normalized.match(/\b(\d+)\s*(?:bath|baths|bathroom|bathrooms|washroom|toilet)\b/i);
+    const bathMatch = normalized.match(/\b(\d+)\s*(?:bath|baths|bathroom|bathrooms|washroom|toilet)\b|\b(?:bath|baths|bathroom|bathrooms|washroom|toilet)\s*[:\-]?\s*(\d+)\b/i);
     if (bathMatch) {
-      bathrooms = parseInt(bathMatch[1]);
+      bathrooms = parseInt(bathMatch[1] || bathMatch[2]);
     }
 
     // 3C. Area Sqft Extractor (Supports comma formatting e.g. 1,800 sqft)
@@ -2421,204 +2422,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
         </AnimatePresence>
 
-        {/* INLINE QUICK EDIT MODAL DIALOG */}
-        {isInlineEditOpen && editForm && (
-          <div className="fixed inset-0 z-[9999] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-            <div className="bg-slate-900 text-white rounded-3xl border border-slate-800 p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl my-auto">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <div>
-                  <h3 className="text-lg font-bold font-['Outfit'] text-emerald-400 flex items-center gap-2">
-                    ✏️ Inline Edit Extracted Property Parameters
-                  </h3>
-                  <p className="text-xs text-slate-400">Modify extracted property fields directly before persisting to PostgreSQL</p>
-                </div>
-                <button
-                  onClick={() => setIsInlineEditOpen(false)}
-                  className="text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800 font-bold"
-                >
-                  ✕
-                </button>
-              </div>
 
-              <form onSubmit={handleSaveInlineEdits} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Listing Title:</label>
-                    <input
-                      type="text"
-                      value={editForm.title || ''}
-                      onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Property Type:</label>
-                    <select
-                      value={editForm.type || 'FLAT'}
-                      onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
-                    >
-                      <option value="FLAT">FLAT / APARTMENT</option>
-                      <option value="HOUSE">HOUSE / VILLA</option>
-                      <option value="PLOT">PLOT / LAND</option>
-                      <option value="PENTHOUSE">PENTHOUSE</option>
-                      <option value="STUDIO">STUDIO APARTMENT</option>
-                      <option value="AIRBNB">AIRBNB / VACATION STAY</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">BHK Configuration:</label>
-                    <input
-                      type="text"
-                      value={editForm.bhk || ''}
-                      onChange={(e) => setEditForm({ ...editForm, bhk: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Bathrooms Count:</label>
-                    <input
-                      type="number"
-                      value={editForm.bathrooms || 2}
-                      onChange={(e) => setEditForm({ ...editForm, bathrooms: Number(e.target.value) })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Monthly Rent Amount (₹):</label>
-                    <input
-                      type="number"
-                      value={editForm.rentAmount ?? ''}
-                      onChange={(e) => setEditForm({ ...editForm, rentAmount: Number(e.target.value), rentVal: `₹${Number(e.target.value).toLocaleString('en-IN')}` })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-amber-400 font-bold focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Brokerage Fee / Terms:</label>
-                    <input
-                      type="text"
-                      value={editForm.brokerageVal || ''}
-                      onChange={(e) => setEditForm({ ...editForm, brokerageVal: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-purple-300 font-bold focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Security Deposit Terms:</label>
-                    <input
-                      type="text"
-                      value={editForm.depositVal || ''}
-                      onChange={(e) => setEditForm({ ...editForm, depositVal: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-blue-300 font-bold focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Carpet Area (SqFt):</label>
-                    <input
-                      type="text"
-                      value={editForm.areaSqFt || ''}
-                      onChange={(e) => setEditForm({ ...editForm, areaSqFt: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-teal-300 font-bold focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Vastu Facing Direction:</label>
-                    <select
-                      value={editForm.vastuFacing || 'Not Specified'}
-                      onChange={(e) => setEditForm({ ...editForm, vastuFacing: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-cyan-300 font-bold focus:outline-none focus:border-emerald-500"
-                    >
-                      <option value="Not Specified">Not Specified</option>
-                      <option value="East Facing">East Facing</option>
-                      <option value="North Facing">North Facing</option>
-                      <option value="North-East Facing">North-East Facing</option>
-                      <option value="West Facing">West Facing</option>
-                      <option value="South Facing">South Facing</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Furnishing Status:</label>
-                    <select
-                      value={editForm.furnishingStatus || 'UNSPECIFIED'}
-                      onChange={(e) => setEditForm({ ...editForm, furnishingStatus: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-indigo-300 font-bold focus:outline-none focus:border-emerald-500"
-                    >
-                      <option value="UNSPECIFIED">UNSPECIFIED</option>
-                      <option value="FULLY_FURNISHED">FULLY FURNISHED</option>
-                      <option value="SEMI_FURNISHED">SEMI FURNISHED</option>
-                      <option value="UNFURNISHED">UNFURNISHED</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Locality / Sector:</label>
-                    <input
-                      type="text"
-                      value={editForm.sector || ''}
-                      onChange={(e) => setEditForm({ ...editForm, sector: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-emerald-300 font-bold focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Target City:</label>
-                    <input
-                      type="text"
-                      value={editForm.city || ''}
-                      onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Owner Name:</label>
-                    <input
-                      type="text"
-                      value={editForm.ownerName || ''}
-                      onChange={(e) => setEditForm({ ...editForm, ownerName: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-pink-300 font-bold focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Owner Phone Number:</label>
-                    <input
-                      type="text"
-                      value={editForm.ownerPhone || ''}
-                      onChange={(e) => setEditForm({ ...editForm, ownerPhone: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-pink-300 font-bold focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => setIsInlineEditOpen(false)}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold text-xs"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs shadow-md shadow-emerald-600/30 flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Apply Inline Edits</span>
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
 
         {/* FULLSCREEN ROOT-LEVEL MEDIA UPLOAD POPUP WITH TOTAL SCREEN BLUR */}
         <AnimatePresence>
@@ -3044,6 +2848,206 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
         </AnimatePresence>
 
       </main>
+
+      {/* TOP-LEVEL VIEWPORT-CENTERED INLINE QUICK EDIT MODAL DIALOG */}
+      {isInlineEditOpen && editForm && (
+        <div className="fixed inset-0 z-[9999] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          <div className="bg-slate-900 text-white rounded-3xl border border-slate-800 p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl my-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div>
+                <h3 className="text-lg font-bold font-['Outfit'] text-emerald-400 flex items-center gap-2">
+                  ✏️ Inline Edit Extracted Property Parameters
+                </h3>
+                <p className="text-xs text-slate-400">Modify extracted property fields directly before persisting to PostgreSQL</p>
+              </div>
+              <button
+                onClick={() => setIsInlineEditOpen(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800 font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveInlineEdits} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Listing Title:</label>
+                  <input
+                    type="text"
+                    value={editForm.title || ''}
+                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Property Type:</label>
+                  <select
+                    value={editForm.type || 'FLAT'}
+                    onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="FLAT">FLAT / APARTMENT</option>
+                    <option value="HOUSE">HOUSE / VILLA</option>
+                    <option value="PLOT">PLOT / LAND</option>
+                    <option value="PENTHOUSE">PENTHOUSE</option>
+                    <option value="STUDIO">STUDIO APARTMENT</option>
+                    <option value="AIRBNB">AIRBNB / VACATION STAY</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">BHK Configuration:</label>
+                  <input
+                    type="text"
+                    value={editForm.bhk || ''}
+                    onChange={(e) => setEditForm({ ...editForm, bhk: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Bathrooms Count:</label>
+                  <input
+                    type="number"
+                    value={editForm.bathrooms ?? ''}
+                    onChange={(e) => setEditForm({ ...editForm, bathrooms: e.target.value ? Number(e.target.value) : '' })}
+                    placeholder="e.g. 2"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Monthly Rent Amount (₹):</label>
+                  <input
+                    type="number"
+                    value={editForm.rentAmount ?? ''}
+                    onChange={(e) => setEditForm({ ...editForm, rentAmount: e.target.value ? Number(e.target.value) : '', rentVal: e.target.value ? `₹${Number(e.target.value).toLocaleString('en-IN')}` : '' })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-amber-400 font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Brokerage Fee / Terms:</label>
+                  <input
+                    type="text"
+                    value={editForm.brokerageVal || ''}
+                    onChange={(e) => setEditForm({ ...editForm, brokerageVal: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-purple-300 font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Security Deposit Terms:</label>
+                  <input
+                    type="text"
+                    value={editForm.depositVal || ''}
+                    onChange={(e) => setEditForm({ ...editForm, depositVal: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-blue-300 font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Carpet Area (SqFt):</label>
+                  <input
+                    type="text"
+                    value={editForm.areaSqFt || ''}
+                    onChange={(e) => setEditForm({ ...editForm, areaSqFt: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-teal-300 font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Vastu Facing Direction:</label>
+                  <select
+                    value={editForm.vastuFacing || 'Not Specified'}
+                    onChange={(e) => setEditForm({ ...editForm, vastuFacing: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-cyan-300 font-bold focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="Not Specified">Not Specified</option>
+                    <option value="East Facing">East Facing</option>
+                    <option value="North Facing">North Facing</option>
+                    <option value="North-East Facing">North-East Facing</option>
+                    <option value="West Facing">West Facing</option>
+                    <option value="South Facing">South Facing</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Furnishing Status:</label>
+                  <select
+                    value={editForm.furnishingStatus || 'UNSPECIFIED'}
+                    onChange={(e) => setEditForm({ ...editForm, furnishingStatus: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-indigo-300 font-bold focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="UNSPECIFIED">UNSPECIFIED</option>
+                    <option value="FULLY_FURNISHED">FULLY FURNISHED</option>
+                    <option value="SEMI_FURNISHED">SEMI FURNISHED</option>
+                    <option value="UNFURNISHED">UNFURNISHED</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Locality / Sector:</label>
+                  <input
+                    type="text"
+                    value={editForm.sector || ''}
+                    onChange={(e) => setEditForm({ ...editForm, sector: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-emerald-300 font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Target City:</label>
+                  <input
+                    type="text"
+                    value={editForm.city || ''}
+                    onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Owner Name:</label>
+                  <input
+                    type="text"
+                    value={editForm.ownerName || ''}
+                    onChange={(e) => setEditForm({ ...editForm, ownerName: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-pink-300 font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block font-mono text-[10px] uppercase font-bold mb-1">Owner Phone Number:</label>
+                  <input
+                    type="text"
+                    value={editForm.ownerPhone || ''}
+                    onChange={(e) => setEditForm({ ...editForm, ownerPhone: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-pink-300 font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsInlineEditOpen(false)}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs shadow-md shadow-emerald-600/30 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Apply Inline Edits</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

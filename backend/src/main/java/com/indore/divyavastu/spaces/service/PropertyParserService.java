@@ -34,7 +34,7 @@ public class PropertyParserService {
             "\\b(one|two|three|four|five|six|seven|eight|nine|ten)\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:bhk|rk|bedroom|bedrooms|bed|beds|room|rooms|bk|bhkk|bhkks|dfbhk|sdfbhk)\\b",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern BATHROOMS_PATTERN = Pattern.compile(
-            "\\b([1-9]|10)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:bath|baths|bathroom|bathrooms|toilet|washroom)\\b|\\b(?:bath|baths|bathroom|bathrooms|toilet|washroom)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?([1-9]|10)\\b",
+            "\\b([1-9]|10)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?(?:bath|baths|bathroom|bathrooms|bathromm|bathrom|toilet|washroom)\\b|\\b(?:bath|baths|bathroom|bathrooms|bathromm|bathrom|toilet|washroom)\\b\\s*(?:[a-zA-Z0-9\\-\\_]{1,30}\\s+){0,10}?([1-9]|10)\\b",
             Pattern.CASE_INSENSITIVE);
 
     // Immediate & High-Precision Forward/Reverse Rent Patterns (Strict word boundaries & zero cross-field bleeding)
@@ -241,7 +241,10 @@ public class PropertyParserService {
         String bathrooms = null;
         Matcher bathMatcher = BATHROOMS_PATTERN.matcher(input);
         if (bathMatcher.find()) {
-            bathrooms = bathMatcher.group(1) + " Baths";
+            String bCount = bathMatcher.group(1) != null ? bathMatcher.group(1) : bathMatcher.group(2);
+            if (bCount != null) {
+                bathrooms = bCount + " Baths";
+            }
         }
 
         // 2. Property Type Extractor (Penthouse prioritized to prevent 'house' substring collision)
