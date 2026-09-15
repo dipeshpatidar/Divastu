@@ -4,7 +4,7 @@ import {
   BarChart3, Users, CheckSquare, ShieldCheck, TrendingUp, DollarSign,
   CheckCircle2, XCircle, ArrowUpRight, Award, FileText, Zap, ChevronRight, ChevronLeft,
   SlidersHorizontal, Plus, ToggleLeft, ToggleRight, Settings, UploadCloud, Camera, Video, MapPin, Sparkles, AlertCircle, Menu,
-  Database, Copy, Check, Compass, Tag, Layers, Home, Info, X
+  Database, Copy, Check, Compass, Tag, Layers, Home, Info, X, Star
 } from 'lucide-react';
 import { propertyService } from '../services/propertyService';
 import { useNotification } from '../context/NotificationContext';
@@ -152,6 +152,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
   const [newBhkLabel, setNewBhkLabel] = useState('');
   const [attachedMediaFiles, setAttachedMediaFiles] = useState<File[]>([]);
   const [attachedMediaTags, setAttachedMediaTags] = useState<Record<number, RoomTag>>({});
+  const [coverPhotoIndex, setCoverPhotoIndex] = useState<number>(0);
   const [isDragOverMedia, setIsDragOverMedia] = useState<boolean>(false);
   const [isMediaUploadModalOpen, setIsMediaUploadModalOpen] = useState<boolean>(false);
   const [previewLightboxIndex, setPreviewLightboxIndex] = useState<number | null>(null);
@@ -900,7 +901,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
             roomTag: fileRoomTag,
             mediaType: isVideo ? 'VIDEO_WALKTHROUGH' : 'IMAGE',
             caption: parsed ? (parsed.title || `${fileRoomTag.replace('_', ' ')} View`) : 'Property Media Asset',
-            isPrimaryCover: i === 0,
+            isPrimaryCover: i === coverPhotoIndex,
             sector: parsed ? (parsed.sector || '') : '',
             priceTag: parsed ? (parsed.rentVal ? `${parsed.rentVal} / month` : '') : '',
             vastuFacing: parsed ? (parsed.vastuFacing || '') : ''
@@ -1015,6 +1016,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
 
     setNewBhkLabel('');
     setAttachedMediaFiles([]);
+    setCoverPhotoIndex(0);
   };
 
   const DEFAULT_SMART_TAG_SEQUENCE: RoomTag[] = [
@@ -1070,6 +1072,11 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
       if (attachedMediaTags[origKey]) updatedTags[newIdx] = attachedMediaTags[origKey];
     });
     setAttachedMediaTags(updatedTags);
+    if (coverPhotoIndex === index) {
+      setCoverPhotoIndex(0);
+    } else if (coverPhotoIndex > index) {
+      setCoverPhotoIndex(coverPhotoIndex - 1);
+    }
     if (previewLightboxIndex === index) setPreviewLightboxIndex(null);
     else if (previewLightboxIndex !== null && previewLightboxIndex > index) {
       setPreviewLightboxIndex(previewLightboxIndex - 1);
@@ -1916,21 +1923,38 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                           {attachedMediaFiles.map((file, idx) => (
                             <div
                               key={idx}
-                              className="bg-slate-900 text-slate-200 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg border border-slate-700 flex items-center gap-1.5 shrink-0 shadow-xs"
+                              className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg border flex items-center gap-1.5 shrink-0 shadow-xs transition-all ${
+                                coverPhotoIndex === idx
+                                  ? 'bg-amber-950/80 border-amber-500/60 text-amber-200'
+                                  : 'bg-slate-900 border-slate-700 text-slate-200'
+                              }`}
                             >
                               {file.type.startsWith('video/') ? (
                                 <Video className="w-3 h-3 text-indigo-400 shrink-0" />
                               ) : (
                                 <Camera className="w-3 h-3 text-cyan-400 shrink-0" />
                               )}
-                              <span className="max-w-[150px] truncate">{file.name}</span>
-                              <span className="text-[9px] text-slate-400">
-                                ({(file.size / 1024 / 1024).toFixed(1)} MB)
-                              </span>
+                              <span className="max-w-[130px] truncate">{file.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCoverPhotoIndex(idx);
+                                  notifySuccess('⭐ Cover Photo Selected', `Photo #${idx + 1} (${file.name}) set as primary listing cover`);
+                                }}
+                                title={coverPhotoIndex === idx ? "Primary Cover Photo" : "Click to set as primary cover"}
+                                className={`px-1.5 py-0.5 rounded text-[9px] font-extrabold flex items-center gap-0.5 transition-all cursor-pointer ${
+                                  coverPhotoIndex === idx
+                                    ? 'bg-amber-400 text-slate-950 ring-1 ring-amber-300'
+                                    : 'text-slate-400 hover:text-amber-300 bg-slate-800'
+                                }`}
+                              >
+                                <Star className={`w-2.5 h-2.5 ${coverPhotoIndex === idx ? 'fill-current text-slate-950' : 'text-slate-400'}`} />
+                                <span>{coverPhotoIndex === idx ? 'Cover' : 'Set Cover'}</span>
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => handleRemoveAttachedMedia(idx)}
-                                className="text-rose-400 hover:text-rose-300 ml-1 font-black cursor-pointer"
+                                className="text-rose-400 hover:text-rose-300 ml-0.5 font-black cursor-pointer"
                               >
                                 ✕
                               </button>
@@ -1998,7 +2022,10 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                                 whileHover={{ scale: 1.04 }}
                                 whileTap={{ scale: 0.96 }}
                                 type="button"
-                                onClick={handleFillMediaFromExtracted}
+                                onClick={() => {
+                                  handleFillMediaFromExtracted();
+                                  handleOpenMediaUpload();
+                                }}
                                 className="px-3 py-1.5 bg-cyan-950/90 hover:bg-cyan-900 text-cyan-200 text-[11px] font-extrabold rounded-xl transition-all border border-cyan-500/40 flex items-center gap-1 cursor-pointer shadow-xs"
                               >
                                 <Tag className="w-3.5 h-3.5 text-cyan-400" />
@@ -2576,6 +2603,22 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                                 onClick={() => isImage && setPreviewLightboxIndex(idx)}
                                 className="relative h-28 w-full bg-slate-900 cursor-pointer overflow-hidden flex items-center justify-center"
                               >
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCoverPhotoIndex(idx);
+                                    notifySuccess('⭐ Cover Photo Selected', `Photo #${idx + 1} (${file.name}) set as primary listing cover`);
+                                  }}
+                                  className={`absolute top-1.5 left-1.5 px-2 py-0.5 rounded-lg text-[9px] font-extrabold flex items-center gap-1 shadow-md z-10 transition-all cursor-pointer ${
+                                    coverPhotoIndex === idx
+                                      ? 'bg-amber-400 text-slate-950 ring-2 ring-amber-300 shadow-amber-500/40 scale-105'
+                                      : 'bg-slate-950/80 hover:bg-slate-900 text-slate-300 hover:text-amber-300 border border-white/20'
+                                  }`}
+                                >
+                                  <Star className={`w-3 h-3 ${coverPhotoIndex === idx ? 'fill-current text-slate-950' : 'text-slate-400'}`} />
+                                  <span>{coverPhotoIndex === idx ? 'Cover Photo' : 'Set Cover'}</span>
+                                </button>
                                 {isImage && imgUrl ? (
                                   <>
                                     <img
@@ -2678,6 +2721,21 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                               </div>
 
                               <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setCoverPhotoIndex(idx);
+                                    notifySuccess('⭐ Cover Photo Selected', `Photo #${idx + 1} (${file.name}) set as primary listing cover`);
+                                  }}
+                                  className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                                    coverPhotoIndex === idx
+                                      ? 'bg-amber-400 text-slate-950 ring-1 ring-amber-300 font-extrabold shadow-sm'
+                                      : 'bg-slate-900 text-slate-400 hover:text-amber-300 border border-slate-700'
+                                  }`}
+                                >
+                                  <Star className={`w-3 h-3 ${coverPhotoIndex === idx ? 'fill-current text-slate-950' : 'text-slate-400'}`} />
+                                  <span>{coverPhotoIndex === idx ? 'Cover Photo' : 'Set as Cover'}</span>
+                                </button>
                                 <select
                                   value={currentTag}
                                   onChange={(e) => setAttachedMediaTags({ ...attachedMediaTags, [idx]: e.target.value as RoomTag })}
@@ -2753,13 +2811,33 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({ acti
                   </span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setPreviewLightboxIndex(null)}
-                  className="w-9 h-9 rounded-full bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white flex items-center justify-center font-bold text-sm transition-colors cursor-pointer"
-                >
-                  ✕
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (previewLightboxIndex !== null) {
+                        setCoverPhotoIndex(previewLightboxIndex);
+                        notifySuccess('⭐ Cover Photo Selected', `Photo #${previewLightboxIndex + 1} (${attachedMediaFiles[previewLightboxIndex].name}) set as primary listing cover`);
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      coverPhotoIndex === previewLightboxIndex
+                        ? 'bg-amber-400 text-slate-950 ring-2 ring-amber-300 font-extrabold shadow-md'
+                        : 'bg-slate-900 text-slate-300 hover:text-amber-300 border border-slate-700'
+                    }`}
+                  >
+                    <Star className={`w-3.5 h-3.5 ${coverPhotoIndex === previewLightboxIndex ? 'fill-current text-slate-950' : 'text-slate-400'}`} />
+                    <span>{coverPhotoIndex === previewLightboxIndex ? 'Primary Cover Photo' : 'Make Cover Photo'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPreviewLightboxIndex(null)}
+                    className="w-9 h-9 rounded-full bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white flex items-center justify-center font-bold text-sm transition-colors cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
 
               {/* MAIN IMAGE DISPLAY AREA */}
